@@ -1,5 +1,16 @@
 # Değişiklik Günlüğü
 
+## 0.4.0 — Profesyonel Arayüz
+- Marka kimliği, modern üst menü ve kapsamlı mobil alt menü yenilendi.
+- Ana sayfa premium pazar yeri tasarımına dönüştürüldü.
+- Kategori ikonları, güven şeridi, son ilan kartları ve popüler aramalar eklendi.
+- İlan Şehri Tam Yönetim ve Kazanç Ağı bölümleri profesyonel biçimde sunuldu.
+- İlan listeleme sayfası gelişmiş arama, kategori çipleri ve yeni kart tasarımıyla yenilendi.
+- İlan verme ekranı adımlı, açıklamalı ve fotoğraf önizlemeli forma dönüştürüldü.
+- İlan detay sayfasına galeri, ilan bilgileri, güvenli işlem uyarısı ve gelişmiş teklif paneli eklendi.
+- Kullanıcı paneli, giriş ve üyelik ekranları yeniden tasarlandı.
+- Test ortamındaki statik dosya manifest düzeltmesi korundu.
+
 ## 0.3.0
 - GitHub Codespaces tek tık önizleme eklendi.
 - Codespaces için güvenli host ve CSRF ayarları eklendi.
