@@ -1,0 +1,39 @@
+{
+  "version": "v1.12.1.1",
+  "name": "AI Düğmesi Görünürlük Düzeltmesi",
+  "base_version": "v1.12.1",
+  "changed_file_count": 11,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/ai_listing/templatetags/ai_listing_tags.py",
+    "apps/ai_listing/tests.py",
+    "apps/core/views.py",
+    "docs/AI_BUTTON_VISIBILITY_FIX.md",
+    "static/css/v112-ai.css",
+    "static/js/v112-ai.js",
+    "templates/base.html",
+    "templates/listings/form.html"
+  ],
+  "fixes": [
+    "AI kartının sessizce tamamen kaybolması engellendi",
+    "Özellik kapalıysa açık durum mesajı gösteriliyor",
+    "Test sağlayıcısının yalnız personel hesabında çalıştığı açıklanıyor",
+    "AI düğmesi fotoğraf seçilene kadar görünür ve pasif kalıyor",
+    "Fotoğraf sayısı ve hazır olma durumu gösteriliyor",
+    "CSS ve JavaScript için önbellek kırıcı sürüm eklendi",
+    "PWA önbelleği v1.12.1.1 olarak yenilendi"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "python_ast": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "css_brace_balance": "passed",
+    "django_template_tag_balance": "passed",
+    "hidden_ai_condition_scan": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload"
+  }
+}

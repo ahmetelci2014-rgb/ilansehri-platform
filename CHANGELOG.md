@@ -1,4 +1,13 @@
-# İlan Şehri Değişiklik Günlüğü
+# İlan Şehri v1.12.1.1 — AI Düğmesi Görünürlük Düzeltmesi
+
+- AI kartı artık fotoğraf adımında sessizce kaybolmuyor.
+- Özellik kapalıysa veya test sağlayıcısı normal kullanıcıya kapalıysa nedeni açıkça gösteriliyor.
+- Yetkili kullanıcıda düğme fotoğraf seçilene kadar görünür fakat pasif kalıyor.
+- Fotoğraf sayısı ve hazır olma durumu kart üzerinde anlık gösteriliyor.
+- AI CSS ve JavaScript dosyalarına önbellek kırıcı sürüm eklendi.
+- PWA önbelleği `ilansehri-v11211` olarak yenilendi.
+
+# v1.11 — Bildirim ve Moderasyon Operasyonu
 
 - Bildirim tercihleri modeli ve kullanıcı ayar ekranı eklendi.
 - İsteğe bağlı uygulama içi bildirimler tür bazında kapatılabilir hale getirildi.
@@ -31,14 +40,3 @@
 ## v1.9 — Kullanıcı Akışları ve Hesap Güvenliği
 
 - Hesaba bağlı ilan taslakları, şifre yenileme, veri indirme ve hesap kapatma talebi eklendi.
-
-## v1.12.1 — Yapay Zekâ ile İlan Hazırla çekirdeği
-
-- Yapay zekâ özelliği ayrı `apps.ai_listing` uygulamasına alındı.
-- Tekil yönetim ayarları, kullanıcı/site günlük limitleri ve API bağlantı testi eklendi.
-- Analiz, hata, güvenlik ve kullanıcı değişiklik kayıt modelleri eklendi.
-- JPG/JPEG/PNG/WEBP gerçek dosya doğrulaması, EXIF temizleme ve güvenli küçültme eklendi.
-- Aynı istek ve aynı görsel grubunun tekrar analiz edilmesini engelleyen koruma eklendi.
-- Fiyatı kesinlikle kabul etmeyen kontrollü JSON doğrulama katmanı eklendi.
-- Değiştirilebilir `mock` ve `http_json` sağlayıcı katmanı eklendi.
-- Özellik varsayılan olarak kapalıdır; mevcut ilan verme akışı etkilenmez.

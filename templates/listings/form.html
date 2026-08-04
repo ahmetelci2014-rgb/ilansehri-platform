@@ -49,9 +49,10 @@
       <section class="v16-wizard-section" data-v16-section="5">
         <div class="v16-step-head"><span>05</span><div><h2>Fotoğrafları ekle ve yayınla</h2><p>Aydınlık, net ve farklı açılardan çekilmiş fotoğraflar daha fazla mesaj getirir.</p></div></div>
         <div class="v16-field-grid"><div class="field field-wide">{{ form.images.label_tag }}{{ form.images }}{% if form.images.help_text %}<small>{{ form.images.help_text }}</small>{% endif %}{% for error in form.images.errors %}<div class="field-error">{{ error }}</div>{% endfor %}<div class="image-preview-grid" data-image-preview></div></div></div>
-        {% if not object and ai_config.enabled %}<div class="ai-listing-assistant" data-ai-listing-assistant data-analyze-url="{% url 'ai_listing:analyze' %}" data-max-images="{{ ai_config.max_images }}" hidden>
+        {% if not object and ai_config.available %}<div class="ai-listing-assistant{% if not ai_config.can_analyze %} is-locked{% endif %}" data-ai-listing-assistant data-analyze-url="{% url 'ai_listing:analyze' %}" data-max-images="{{ ai_config.max_images }}" data-ai-can-analyze="{{ ai_config.can_analyze|yesno:'1,0' }}" data-ai-status-message="{{ ai_config.status_message|escape }}">
           <div class="ai-listing-head"><span>✦</span><div><h3>Yapay Zekâ ile İlan Hazırla</h3><p>Fotoğraflar güvenli biçimde küçültülür; başlık, açıklama ve ürün bilgileri öneri olarak hazırlanır.</p></div></div>
-          <button type="button" class="ai-listing-button" data-ai-analyze>✦ Yapay Zekâ ile İlan Hazırla</button>
+          <div class="ai-listing-status{% if not ai_config.can_analyze %} warning{% endif %}" data-ai-status>{{ ai_config.status_message }}</div>
+          <button type="button" class="ai-listing-button" data-ai-analyze disabled>✦ Yapay Zekâ ile İlan Hazırla</button>
           <div class="ai-listing-progress" data-ai-progress hidden><i class="ai-listing-spinner"></i><span>Fotoğraflar inceleniyor, ilanınız hazırlanıyor…</span></div>
           <div class="ai-listing-result" data-ai-result aria-live="polite"></div>
           <small class="ai-listing-disclaimer">Yapay zekâ sonucu doğrudan yayınlanmaz. Emin olunmayan bilgiler forma yazılmaz ve son karar her zaman kullanıcıya aittir.</small>

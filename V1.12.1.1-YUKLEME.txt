@@ -1,0 +1,29 @@
+İLAN ŞEHRİ v1.12.1.1 — AI DÜĞMESİ GÖRÜNÜRLÜK DÜZELTMESİ
+
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.12.1.1 AI düğmesi düzeltmesi
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+9. Eski görünüm sürerse:
+   F12 > Application > Service Workers > Unregister
+   ardından sayfayı yeniden açın.
+
+KONTROL
+- /ilanlar/yeni/ sayfasında 5. Fotoğraflar adımına geçin.
+- AI kartı artık fotoğraf seçmeden önce de görünmelidir.
+- Özellik kapalıysa kart bunun nedenini yazmalıdır.
+- Test sağlayıcısında normal kullanıcıyla giriş yapıldıysa
+  demo_admin hesabı gerektiğini belirtmelidir.
+- demo_admin + özellik açık durumunda fotoğraf seçildikten sonra
+  düğme aktif hale gelmelidir.
+
+Bu sürüm yeni veritabanı alanı eklemez; migration gerekmez.

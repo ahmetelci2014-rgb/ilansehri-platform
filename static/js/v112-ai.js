@@ -6,9 +6,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const button = assistant.querySelector("[data-ai-analyze]");
   const progress = assistant.querySelector("[data-ai-progress]");
   const resultBox = assistant.querySelector("[data-ai-result]");
+  const statusBox = assistant.querySelector("[data-ai-status]");
   const analysisInput = form?.querySelector("[data-ai-analysis-id]");
   const maxImages = Number(assistant.dataset.maxImages || 8);
   const endpoint = assistant.dataset.analyzeUrl;
+  const canAnalyze = assistant.dataset.aiCanAnalyze === "1";
+  const lockedMessage = assistant.dataset.aiStatusMessage || "Yapay zekâ özelliği şu anda kullanılamıyor.";
 
   const escapeHtml = (value) => String(value || "").replace(/[&<>'"]/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
@@ -19,11 +22,31 @@ document.addEventListener("DOMContentLoaded", () => {
     resultBox.innerHTML = `<div class="ai-listing-message ${type}">${escapeHtml(message)}</div>`;
   };
 
+  const setStatus = (message, type = "") => {
+    if (!statusBox) return;
+    statusBox.textContent = message;
+    statusBox.className = `ai-listing-status ${type}`.trim();
+  };
+
   const updateVisibility = () => {
     const count = imageInput?.files?.length || 0;
-    assistant.hidden = count === 0;
-    if (button) button.disabled = count === 0 || count > maxImages;
-    if (count > maxImages) setMessage(`En fazla ${maxImages} fotoğraf analiz edilebilir.`, "error");
+    const tooMany = count > maxImages;
+    if (button) button.disabled = !canAnalyze || count === 0 || tooMany;
+
+    if (!canAnalyze) {
+      setStatus(lockedMessage, "warning");
+      return;
+    }
+    if (count === 0) {
+      setStatus(`Önce en fazla ${maxImages} fotoğraf seçin.`, "");
+      return;
+    }
+    if (tooMany) {
+      setStatus(`En fazla ${maxImages} fotoğraf analiz edilebilir.`, "error");
+      setMessage(`En fazla ${maxImages} fotoğraf analiz edilebilir.`, "error");
+      return;
+    }
+    setStatus(`${count} fotoğraf hazır. Yapay zekâ analizini başlatabilirsiniz.`, "success");
   };
 
   const markSuggested = (field) => {
@@ -87,9 +110,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   button?.addEventListener("click", async () => {
     const files = Array.from(imageInput?.files || []);
+    if (!canAnalyze) {
+      setMessage(lockedMessage, "error");
+      return;
+    }
     if (!files.length || files.length > maxImages || !endpoint) return;
     button.disabled = true;
     progress.hidden = false;
+    setStatus("Fotoğraflar inceleniyor, ilanınız hazırlanıyor…", "loading");
     resultBox.innerHTML = "";
     const payload = new FormData();
     files.forEach((file) => payload.append("images", file));
@@ -115,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setMessage(`${error.message} Normal ilan verme işlemine devam edebilirsin.`, "error");
     } finally {
       progress.hidden = true;
-      button.disabled = false;
+      updateVisibility();
     }
   });
 });

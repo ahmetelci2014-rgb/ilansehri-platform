@@ -3,12 +3,13 @@ from io import BytesIO
 from PIL import Image
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.listings.models import Category
 
 from .models import AIAnalysis, AISettings
+from .templatetags.ai_listing_tags import ai_listing_config
 from .services.image_processor import prepare_images
 from .services.schemas import validate_analysis_payload
 
@@ -23,6 +24,38 @@ class AIListingCoreTests(TestCase):
         buffer = BytesIO()
         Image.new("RGB", (640, 480), "white").save(buffer, format="PNG")
         return SimpleUploadedFile(name, buffer.getvalue(), content_type="image/png")
+
+
+    def test_ai_card_state_is_explained_for_normal_user_on_mock_provider(self):
+        normal = get_user_model().objects.create_user(username="normal_card", password="StrongPass123!")
+        self.config.is_enabled = True
+        self.config.provider = AISettings.Provider.MOCK
+        self.config.save()
+        request = RequestFactory().get("/ilanlar/yeni/")
+        request.user = normal
+        payload = ai_listing_config({"request": request})
+        self.assertTrue(payload["available"])
+        self.assertTrue(payload["enabled"])
+        self.assertFalse(payload["can_analyze"])
+        self.assertIn("demo_admin", payload["status_message"])
+
+    def test_ai_card_is_available_for_staff_when_enabled(self):
+        self.config.is_enabled = True
+        self.config.provider = AISettings.Provider.MOCK
+        self.config.save()
+        request = RequestFactory().get("/ilanlar/yeni/")
+        request.user = self.user
+        payload = ai_listing_config({"request": request})
+        self.assertTrue(payload["available"])
+        self.assertTrue(payload["can_analyze"])
+
+    def test_ai_card_explains_when_feature_is_disabled(self):
+        request = RequestFactory().get("/ilanlar/yeni/")
+        request.user = self.user
+        payload = ai_listing_config({"request": request})
+        self.assertTrue(payload["available"])
+        self.assertFalse(payload["can_analyze"])
+        self.assertIn("yönetim panelinden", payload["status_message"])
 
     def test_settings_is_singleton(self):
         self.assertEqual(AISettings.load().pk, self.config.pk)
