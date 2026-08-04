@@ -73,3 +73,19 @@
 - Favoriler
 - Kayıtlı özel mesajlaşma
 - Mesaj ve favori merkezleri
+
+
+## v0.6 tamamlandı
+
+- Konum önerileri
+- Kategoriye özel ilan alanları
+- Bildirim merkezi
+- Şikâyet ve moderasyon
+
+## Sonraki odak: v0.7
+
+- Fotoğraf sıralama ve kapak seçimi
+- Teklif kabul / red akışı
+- Kullanıcı doğrulama adımları
+- E-posta ve uygulama içi bildirim tercihleri
+- Harita ve mesafe filtresi
