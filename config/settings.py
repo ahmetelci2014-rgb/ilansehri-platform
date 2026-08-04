@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys
 
 import dj_database_url
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ ALLOWED_HOSTS = [x.strip() for x in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1
 AUTO_PUBLISH_LISTINGS = os.getenv("AUTO_PUBLISH_LISTINGS", "False").lower() == "true"
 CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if x.strip()]
 
+IS_TESTING = "test" in sys.argv
 IS_CODESPACES = os.getenv("CODESPACES", "false").lower() == "true"
 if IS_CODESPACES:
     ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, ".app.github.dev"]))
@@ -88,7 +90,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if IS_TESTING
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
+    },
 }
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
