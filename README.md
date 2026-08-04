@@ -75,3 +75,11 @@ docker compose up --build
 ## Önemli
 
 Bu depo ilk çalışan mimari iskelettir. Sonraki sürümlerde sırayla kayıt ekranları, çoklu fotoğraf yönetimi, konum/mesafe arama, mesajlaşma, teklif ekranları, tam yönetim operasyon paneli, görev pazarı, doğrulama, ödeme ve yapay zekâlı ilan oluşturma eklenecektir.
+
+## v0.6 özellikleri
+
+- Türkiye şehir seçimi ve konuma bağlı ilçe/mahalle önerileri
+- Kategoriye özel yapılandırılmış ilan alanları
+- Gelişmiş arama ve filtreleme
+- Teklif, mesaj ve ilan durumu bildirimleri
+- Kullanıcı şikâyetleri ve personel moderasyon paneli
