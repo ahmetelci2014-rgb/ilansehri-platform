@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Hesabım | İlan Şehri{% endblock %}
+{% block content %}
+<section class="page-head dashboard-head">
+  <span class="eyebrow">KULLANICI PANELİ</span>
+  <h1>Hoş geldin, {{ user.first_name|default:user.username }}</h1>
+  <p>{{ user.city }}{% if user.district %} / {{ user.district }}{% endif %} · {{ user.get_user_type_display }}</p>
+  <div class="hero-actions">
+    <a class="button" href="{% url 'listings:create' %}">Yeni İlan Ver</a>
+    <a class="button secondary" href="{% url 'listings:list' %}">İlanları Keşfet</a>
+  </div>
+</section>
+<section class="section dashboard-section">
+  <div class="section-title"><div><span class="eyebrow">İLANLARIM</span><h2>Yayın ve başvuru durumları</h2></div></div>
+  <div class="listing-grid">
+    {% for listing in my_listings %}
+      <article class="listing-card">
+        {% with cover=listing.images.first %}
+          {% if cover %}<img class="card-image" src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder">{{ listing.get_kind_display }}</div>{% endif %}
+        {% endwith %}
+        <div class="listing-body">
+          <span class="badge">{{ listing.get_status_display }}</span>
+          <h3><a href="{% if listing.status == 'published' %}{{ listing.get_absolute_url }}{% else %}#{% endif %}">{{ listing.title }}</a></h3>
+          <p>{{ listing.city }} / {{ listing.district }}</p>
+          <a class="text-link" href="{% url 'listings:update' listing.slug %}">İlanı düzenle →</a>
+        </div>
+      </article>
+    {% empty %}
+      <div class="empty">Henüz ilan vermedin. İlk ilanını ücretsiz oluşturabilirsin.</div>
+    {% endfor %}
+  </div>
+</section>
+{% if sent_offers %}
+<section class="section soft dashboard-section">
+  <div class="section-title"><div><span class="eyebrow">TEKLİFLERİM</span><h2>Gönderdiğin teklifler</h2></div></div>
+  <div class="data-list">
+    {% for offer in sent_offers %}<a href="{{ offer.listing.get_absolute_url }}"><strong>{{ offer.listing.title }}</strong><span>{{ offer.amount|default:'Tutar belirtilmedi' }} TL · {{ offer.get_status_display }}</span></a>{% endfor %}
+  </div>
+</section>
+{% endif %}
+{% if managed_requests %}
+<section class="section dashboard-section">
+  <div class="section-title"><div><span class="eyebrow">TAM YÖNETİM</span><h2>İlan Şehri’nin yönettiği işler</h2></div></div>
+  <div class="data-list">
+    {% for item in managed_requests %}<div><strong>{{ item.listing.title }}</strong><span>{{ item.get_package_display }} · {{ item.get_status_display }}</span></div>{% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
