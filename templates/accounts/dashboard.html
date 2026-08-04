@@ -1,49 +1,17 @@
 {% extends 'base.html' %}
 {% block title %}Hesabım | İlan Şehri{% endblock %}
 {% block content %}
-<section class="page-head dashboard-head">
-  <span class="eyebrow">KULLANICI PANELİ</span>
-  <h1>Hoş geldin, {{ user.first_name|default:user.username }}</h1>
-  <p>{{ user.city }}{% if user.district %} / {{ user.district }}{% endif %} · {{ user.get_user_type_display }}</p>
-  <div class="hero-actions">
-    <a class="button" href="{% url 'listings:create' %}">Yeni İlan Ver</a>
-    <a class="button secondary" href="{% url 'listings:list' %}">İlanları Keşfet</a>
+<section class="dashboard-hero"><div class="shell dashboard-hero-inner"><div><span class="section-label light-label">KULLANICI PANELİ</span><h1>Merhaba, {{ user.first_name|default:user.username }} 👋</h1><p>{{ user.city|default:"Konum eklenmedi" }}{% if user.district %} / {{ user.district }}{% endif %} · {{ user.get_user_type_display }}</p></div><div class="dashboard-actions"><a class="button button-light" href="{% url 'listings:create' %}">+ Yeni İlan Ver</a><a class="button button-ghost-light" href="{% url 'listings:list' %}">İlanları Keşfet</a></div></div></section>
+<section class="section dashboard-main"><div class="shell">
+  <div class="dashboard-stats"><article><span class="stat-icon">📣</span><div><strong>{{ my_listings|length }}</strong><small>İlanım</small></div></article><article><span class="stat-icon">💬</span><div><strong>{{ sent_offers|length }}</strong><small>Gönderdiğim teklif</small></div></article><article><span class="stat-icon">✨</span><div><strong>{{ managed_requests|length }}</strong><small>Tam yönetim işi</small></div></article><article><span class="stat-icon">🛡️</span><div><strong>{% if user.is_phone_verified %}Doğrulandı{% else %}Başlangıç{% endif %}</strong><small>Güven seviyesi</small></div></article></div>
+
+  <div class="dashboard-panel-head"><div><span class="section-label">İLANLARIM</span><h2>İlanlarını yönet</h2></div><a class="see-all" href="{% url 'listings:create' %}">Yeni ilan <span>+</span></a></div>
+  <div class="listing-grid premium-grid dashboard-grid">
+    {% for listing in my_listings %}<article class="listing-card premium-card"><div class="card-media">{% with cover=listing.images.first %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}<span class="status-pin status-{{ listing.status }}">{{ listing.get_status_display }}</span></div><div class="listing-body"><div class="card-location">{{ listing.city }} · {{ listing.district }}</div><h3><a href="{% if listing.status == 'published' %}{{ listing.get_absolute_url }}{% else %}#{% endif %}">{{ listing.title }}</a></h3><div class="card-footer"><strong>{% if listing.price_on_request %}Teklif Alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% endif %}</strong><a class="edit-link" href="{% url 'listings:update' listing.slug %}">Düzenle →</a></div></div></article>{% empty %}<div class="empty-state"><div class="empty-icon">📣</div><h3>Henüz ilan vermedin</h3><p>İlk ilanını ücretsiz oluştur ve şehrine hemen ulaş.</p><a class="button" href="{% url 'listings:create' %}">İlk İlanımı Ver</a></div>{% endfor %}
   </div>
-</section>
-<section class="section dashboard-section">
-  <div class="section-title"><div><span class="eyebrow">İLANLARIM</span><h2>Yayın ve başvuru durumları</h2></div></div>
-  <div class="listing-grid">
-    {% for listing in my_listings %}
-      <article class="listing-card">
-        {% with cover=listing.images.first %}
-          {% if cover %}<img class="card-image" src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder">{{ listing.get_kind_display }}</div>{% endif %}
-        {% endwith %}
-        <div class="listing-body">
-          <span class="badge">{{ listing.get_status_display }}</span>
-          <h3><a href="{% if listing.status == 'published' %}{{ listing.get_absolute_url }}{% else %}#{% endif %}">{{ listing.title }}</a></h3>
-          <p>{{ listing.city }} / {{ listing.district }}</p>
-          <a class="text-link" href="{% url 'listings:update' listing.slug %}">İlanı düzenle →</a>
-        </div>
-      </article>
-    {% empty %}
-      <div class="empty">Henüz ilan vermedin. İlk ilanını ücretsiz oluşturabilirsin.</div>
-    {% endfor %}
-  </div>
-</section>
-{% if sent_offers %}
-<section class="section soft dashboard-section">
-  <div class="section-title"><div><span class="eyebrow">TEKLİFLERİM</span><h2>Gönderdiğin teklifler</h2></div></div>
-  <div class="data-list">
-    {% for offer in sent_offers %}<a href="{{ offer.listing.get_absolute_url }}"><strong>{{ offer.listing.title }}</strong><span>{{ offer.amount|default:'Tutar belirtilmedi' }} TL · {{ offer.get_status_display }}</span></a>{% endfor %}
-  </div>
-</section>
-{% endif %}
-{% if managed_requests %}
-<section class="section dashboard-section">
-  <div class="section-title"><div><span class="eyebrow">TAM YÖNETİM</span><h2>İlan Şehri’nin yönettiği işler</h2></div></div>
-  <div class="data-list">
-    {% for item in managed_requests %}<div><strong>{{ item.listing.title }}</strong><span>{{ item.get_package_display }} · {{ item.get_status_display }}</span></div>{% endfor %}
-  </div>
-</section>
-{% endif %}
+</div></section>
+
+{% if sent_offers %}<section class="section dashboard-soft"><div class="shell"><div class="dashboard-panel-head"><div><span class="section-label">TEKLİFLERİM</span><h2>Gönderdiğin teklifler</h2></div></div><div class="data-list premium-list">{% for offer in sent_offers %}<a href="{{ offer.listing.get_absolute_url }}"><div><span class="list-icon">💬</span><div><strong>{{ offer.listing.title }}</strong><small>{{ offer.created_at|timesince }} önce</small></div></div><span class="offer-status">{{ offer.amount|default:'Tutar belirtilmedi' }} TL · {{ offer.get_status_display }}</span></a>{% endfor %}</div></div></section>{% endif %}
+
+{% if managed_requests %}<section class="section"><div class="shell"><div class="dashboard-panel-head"><div><span class="section-label">TAM YÖNETİM</span><h2>Ekibimizin yönettiği işler</h2></div></div><div class="data-list premium-list">{% for item in managed_requests %}<div><div><span class="list-icon">✨</span><div><strong>{{ item.listing.title }}</strong><small>{{ item.get_package_display }}</small></div></div><span class="offer-status managed-status">{{ item.get_status_display }}</span></div>{% endfor %}</div></div></section>{% endif %}
 {% endblock %}
