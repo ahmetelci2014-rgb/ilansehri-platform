@@ -1,0 +1,2 @@
+{% extends 'base.html' %}
+{% block content %}<section class="form-page narrow"><span class="eyebrow">HOŞ GELDİN</span><h1>Hesabına giriş yap</h1><form method="post" class="panel-form">{% csrf_token %}{{ form.as_p }}<button class="button full">Giriş Yap</button></form></section>{% endblock %}
