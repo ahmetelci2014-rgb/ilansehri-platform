@@ -1,0 +1,340 @@
+/* İlan Şehri v1.8 — canlı mavi/turuncu marketplace tasarım sistemi */
+:root{
+  --v18-blue:#2563eb;
+  --v18-blue-dark:#1d4ed8;
+  --v18-blue-deep:#172554;
+  --v18-cyan:#06b6d4;
+  --v18-orange:#f97316;
+  --v18-orange-dark:#ea580c;
+  --v18-green:#10b981;
+  --v18-violet:#7c3aed;
+  --v18-red:#dc2626;
+  --v18-surface:#ffffff;
+  --v18-canvas:#f8fafc;
+  --v18-soft-blue:#eff6ff;
+  --v18-soft-orange:#fff7ed;
+  --v18-text:#0f172a;
+  --v18-muted:#64748b;
+  --v18-line:#e2e8f0;
+  --v18-shadow:0 18px 48px rgba(15,23,42,.11);
+  --v18-shadow-hover:0 24px 64px rgba(37,99,235,.18);
+}
+
+html{background:var(--v18-canvas)}
+body.v18-theme{background:var(--v18-canvas);color:var(--v18-text)}
+body.v18-theme main{min-height:56vh}
+body.v18-theme ::selection{background:#bfdbfe;color:#172554}
+body.v18-theme :focus-visible{outline:3px solid rgba(249,115,22,.38);outline-offset:3px}
+
+/* Ortak yüzey ve metin düzeni */
+body.v18-theme .shell{max-width:1280px}
+body.v18-theme .section-label,
+body.v18-theme .v16-feed-label,
+body.v18-theme .v18-result-kicker{color:var(--v18-blue);font-weight:900;letter-spacing:.1em}
+body.v18-theme .button,
+body.v18-theme .v16-wizard-submit,
+body.v18-theme .v16-wizard-next{
+  border:0;background:linear-gradient(135deg,var(--v18-blue),var(--v18-blue-dark));color:#fff;
+  box-shadow:0 10px 24px rgba(37,99,235,.24)
+}
+body.v18-theme .button:hover,
+body.v18-theme .v16-wizard-submit:hover,
+body.v18-theme .v16-wizard-next:hover{background:linear-gradient(135deg,#3b82f6,var(--v18-blue));transform:translateY(-1px)}
+body.v18-theme .market-post-button,
+body.v18-theme .v16-market-banner a,
+body.v18-theme .mobile-contact-bar button{
+  background:linear-gradient(135deg,var(--v18-orange),var(--v18-orange-dark));color:#fff;
+  border-color:transparent;box-shadow:0 10px 24px rgba(249,115,22,.25)
+}
+body.v18-theme .market-post-button:hover,
+body.v18-theme .v16-market-banner a:hover{filter:saturate(1.12) brightness(1.03);transform:translateY(-1px)}
+body.v18-theme .market-secondary-button,
+body.v18-theme .v16-wizard-back{
+  background:#fff;color:var(--v18-blue-dark);border:1px solid #bfdbfe;box-shadow:none
+}
+body.v18-theme .market-secondary-button:hover,
+body.v18-theme .v16-wizard-back:hover{background:var(--v18-soft-blue);border-color:#93c5fd}
+
+/* Üst şerit ve başlık */
+body.v18-theme .market-utility{background:linear-gradient(90deg,var(--v18-blue-deep),#1e3a8a 55%,#0e7490);color:#dbeafe}
+body.v18-theme .market-utility a:hover{color:#fff}
+body.v18-theme .market-header{background:rgba(255,255,255,.96);border-bottom:1px solid rgba(148,163,184,.28);backdrop-filter:blur(18px)}
+body.v18-theme .market-header.is-scrolled{box-shadow:0 14px 34px rgba(15,23,42,.11)}
+body.v18-theme .market-brand>span,
+body.v18-theme .brand-mark{
+  background:linear-gradient(145deg,var(--v18-blue),var(--v18-cyan));
+  box-shadow:0 10px 25px rgba(37,99,235,.28);color:#fff
+}
+body.v18-theme .market-brand b{color:var(--v18-blue-deep)}
+body.v18-theme .header-search{border:1px solid #cbd5e1;background:#f8fafc;box-shadow:0 6px 16px rgba(15,23,42,.05)}
+body.v18-theme .header-search:focus-within{background:#fff;border-color:#60a5fa;box-shadow:0 0 0 4px rgba(37,99,235,.1)}
+body.v18-theme .header-search>span{color:var(--v18-blue)}
+body.v18-theme .header-search button{background:var(--v18-blue);color:#fff}
+body.v18-theme .market-location{background:var(--v18-soft-blue);border-color:#bfdbfe;color:var(--v18-blue-dark)}
+body.v18-theme .market-icon-link{background:#fff;border-color:#dbe3ec;color:#334155}
+body.v18-theme .market-icon-link:hover{background:var(--v18-soft-blue);border-color:#93c5fd;color:var(--v18-blue)}
+body.v18-theme .market-icon-link i{background:var(--v18-orange);color:#fff;border-color:#fff}
+body.v18-theme .market-account{color:var(--v18-blue-deep)}
+body.v18-theme .market-nav{background:#fff;border-top:1px solid #edf2f7;border-bottom:1px solid #e2e8f0}
+body.v18-theme .market-nav a{color:#334155;position:relative}
+body.v18-theme .market-nav a:hover,
+body.v18-theme .market-nav a.is-current{color:var(--v18-blue);background:var(--v18-soft-blue)}
+body.v18-theme .market-nav a.is-current:after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;border-radius:5px 5px 0 0;background:var(--v18-orange)}
+
+/* Ana sayfa */
+body.v18-theme .v16-home-hero{
+  background:
+    radial-gradient(circle at 82% 16%,rgba(6,182,212,.24),transparent 31%),
+    radial-gradient(circle at 17% 90%,rgba(249,115,22,.17),transparent 34%),
+    linear-gradient(135deg,#eff6ff 0%,#f8fbff 48%,#fff7ed 100%);
+  border-bottom:1px solid #dbeafe
+}
+body.v18-theme .v16-eyebrow{background:#fff;border:1px solid #bfdbfe;color:var(--v18-blue-dark);box-shadow:0 8px 22px rgba(37,99,235,.09)}
+body.v18-theme .v16-eyebrow i{background:var(--v18-orange);box-shadow:0 0 0 6px rgba(249,115,22,.13)}
+body.v18-theme .v16-home-copy h1{color:var(--v18-blue-deep)}
+body.v18-theme .v16-home-copy h1 span{background:linear-gradient(90deg,var(--v18-blue),var(--v18-cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+body.v18-theme .v16-search-card{border:1px solid #bfdbfe;box-shadow:0 22px 54px rgba(37,99,235,.15)}
+body.v18-theme .v16-search-card:focus-within{box-shadow:0 0 0 5px rgba(37,99,235,.1),0 22px 54px rgba(37,99,235,.15)}
+body.v18-theme .v16-search-field>span{color:var(--v18-blue)}
+body.v18-theme .v16-search-card>button{background:linear-gradient(135deg,var(--v18-orange),var(--v18-orange-dark));box-shadow:0 10px 24px rgba(249,115,22,.23)}
+body.v18-theme .v16-hero-chips a{background:#fff;border-color:#dbeafe;color:#334155}
+body.v18-theme .v16-hero-chips a:hover{background:var(--v18-blue);border-color:var(--v18-blue);color:#fff}
+body.v18-theme .v16-hero-benefits b{background:#dcfce7;color:#047857}
+body.v18-theme .v16-spotlight{border:1px solid rgba(255,255,255,.78);box-shadow:0 32px 80px rgba(30,64,175,.21)}
+body.v18-theme .v16-spotlight:before{background:linear-gradient(135deg,var(--v18-blue),var(--v18-cyan))}
+body.v18-theme .v16-spotlight-badge{background:var(--v18-orange);color:#fff}
+body.v18-theme .v16-spotlight-price strong{color:var(--v18-blue-dark)}
+
+/* Hızlı pazar bağlantıları */
+.v18-market-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:-26px;position:relative;z-index:8}
+.v18-market-shortcuts>a{min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:15px 16px;background:#fff;border:1px solid #dbe3ec;border-radius:17px;box-shadow:0 12px 32px rgba(15,23,42,.08);transition:.2s}
+.v18-market-shortcuts>a:hover{transform:translateY(-3px);border-color:#93c5fd;box-shadow:var(--v18-shadow-hover)}
+.v18-market-shortcuts>a>span{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;font-size:1.05rem;font-weight:950}
+.v18-market-shortcuts .blue{background:#dbeafe;color:#1d4ed8}.v18-market-shortcuts .orange{background:#ffedd5;color:#c2410c}.v18-market-shortcuts .green{background:#d1fae5;color:#047857}.v18-market-shortcuts .violet{background:#ede9fe;color:#6d28d9}
+.v18-market-shortcuts b,.v18-market-shortcuts small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.v18-market-shortcuts b{font-size:.88rem;color:#0f172a}.v18-market-shortcuts small{font-size:.7rem;color:#64748b;margin-top:2px}.v18-market-shortcuts i{font-style:normal;font-size:1.35rem;color:#94a3b8}
+
+/* Kategoriler */
+body.v18-theme .v16-category-zone{background:#fff}
+body.v18-theme .v16-category-card{border-color:#e2e8f0;background:#fff;box-shadow:0 10px 30px rgba(15,23,42,.06)}
+body.v18-theme .v16-category-card:hover{transform:translateY(-5px);box-shadow:var(--v18-shadow-hover);border-color:#bfdbfe}
+body.v18-theme .v16-category-card.product .v16-category-icon{background:#dbeafe;color:#1d4ed8}
+body.v18-theme .v16-category-card.vehicle .v16-category-icon{background:#ffedd5;color:#c2410c}
+body.v18-theme .v16-category-card.real_estate .v16-category-icon{background:#d1fae5;color:#047857}
+body.v18-theme .v16-category-card.service .v16-category-icon{background:#cffafe;color:#0e7490}
+body.v18-theme .v16-category-card.job .v16-category-icon{background:#ede9fe;color:#6d28d9}
+body.v18-theme .v16-category-card.need .v16-category-icon{background:#ffe4e6;color:#be123c}
+body.v18-theme .v16-home-stats>div{background:#f8fafc;border-color:#e2e8f0}
+body.v18-theme .v16-home-stats>div:nth-child(1) b{color:var(--v18-blue)}
+body.v18-theme .v16-home-stats>div:nth-child(2) b{color:var(--v18-orange)}
+body.v18-theme .v16-home-stats>div:nth-child(3) b{color:var(--v18-violet)}
+body.v18-theme .v16-home-stats>div:nth-child(4) b{color:var(--v18-green)}
+body.v18-theme .v16-home-stats>a{background:linear-gradient(135deg,var(--v18-blue),#0ea5e9);color:#fff;border:0}
+body.v18-theme .v16-home-stats>a i{background:rgba(255,255,255,.18);color:#fff}
+
+/* İlan akışları ve kartlar */
+body.v18-theme .v16-feed.alt{background:linear-gradient(180deg,#f8fafc,#eff6ff)}
+body.v18-theme .v16-section-heading>a{color:var(--v18-blue);font-weight:850}
+body.v18-theme .market-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 9px 26px rgba(15,23,42,.07);overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
+body.v18-theme .market-card:hover{transform:translateY(-5px);border-color:#bfdbfe;box-shadow:var(--v18-shadow-hover)}
+body.v18-theme .market-card.is-featured{border-color:#fdba74;box-shadow:0 12px 34px rgba(249,115,22,.13)}
+body.v18-theme .market-card-media{background:linear-gradient(145deg,#eaf2ff,#f8fafc)}
+body.v18-theme .market-card-media:after{content:"";position:absolute;inset:auto 0 0;height:24%;background:linear-gradient(transparent,rgba(15,23,42,.12));pointer-events:none}
+body.v18-theme .market-card-action{background:rgba(37,99,235,.93);color:#fff}
+body.v18-theme .market-card-price-drop{background:rgba(249,115,22,.95);color:#fff}
+body.v18-theme .market-card-featured{background:#fef3c7;color:#92400e}
+body.v18-theme .market-card-managed{background:#d1fae5;color:#047857}
+body.v18-theme .market-card-price{color:var(--v18-blue-deep)}
+body.v18-theme .market-price-line del{color:#94a3b8}
+body.v18-theme .market-card h3{color:#172033}
+body.v18-theme .market-card-specs span{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+body.v18-theme .market-card-seller>span{background:#dcfce7;color:#047857}
+body.v18-theme .market-card-seller em{color:#d97706}
+body.v18-theme .market-card-tool{background:rgba(255,255,255,.94);border-color:rgba(226,232,240,.95);color:#334155;box-shadow:0 5px 14px rgba(15,23,42,.13)}
+body.v18-theme .market-card-tool:hover{background:#fff;color:var(--v18-blue)}
+body.v18-theme .market-card-tool.active:not(.compare-tool){background:var(--v18-orange);border-color:var(--v18-orange);color:#fff}
+body.v18-theme .market-card-tool.compare-tool.active{background:var(--v18-blue);border-color:var(--v18-blue);color:#fff}
+body.v18-theme .v16-market-banner{background:linear-gradient(120deg,var(--v18-blue-deep),var(--v18-blue) 58%,var(--v18-cyan));box-shadow:0 24px 60px rgba(30,64,175,.23)}
+body.v18-theme .market-trust-strip{background:linear-gradient(135deg,#eff6ff,#f8fafc);border-color:#bfdbfe}
+body.v18-theme .market-trust-strip>div>span{background:#dbeafe;color:#1d4ed8}
+
+/* Listeleme ve filtreler */
+body.v18-theme .market-list-head{background:linear-gradient(135deg,#eff6ff,#f8fafc 60%,#fff7ed);border-bottom:1px solid #dbeafe}
+body.v18-theme .market-searchbar{border-color:#bfdbfe;box-shadow:0 15px 38px rgba(37,99,235,.11)}
+body.v18-theme .market-searchbar button{background:linear-gradient(135deg,var(--v18-orange),var(--v18-orange-dark));color:#fff}
+body.v18-theme .market-list-chips a{background:#fff;border-color:#dbe3ec;color:#475569}
+body.v18-theme .market-list-chips a:hover{border-color:#93c5fd;color:var(--v18-blue)}
+body.v18-theme .market-list-chips a.active{background:var(--v18-blue);border-color:var(--v18-blue);color:#fff;box-shadow:0 8px 20px rgba(37,99,235,.22)}
+body.v18-theme .market-filter{background:#fff;border-color:#dbe3ec;box-shadow:0 13px 34px rgba(15,23,42,.07)}
+body.v18-theme .market-filter-title{border-color:#e2e8f0}
+body.v18-theme .market-filter-title h2{color:var(--v18-blue-deep)}
+body.v18-theme .market-filter input,
+body.v18-theme .market-filter select,
+body.v18-theme .market-filter textarea{border-color:#cbd5e1;background:#fff}
+body.v18-theme .market-filter input:focus,
+body.v18-theme .market-filter select:focus,
+body.v18-theme .market-filter textarea:focus{border-color:#60a5fa;box-shadow:0 0 0 4px rgba(37,99,235,.09)}
+.v18-result-kicker{display:block;font-size:.7rem;margin-bottom:4px}
+.v18-active-count{color:var(--v18-orange);font-weight:850}
+body.v18-theme .result-actions select,
+body.v18-theme .result-actions button,
+body.v18-theme .result-actions a{border-color:#dbe3ec;background:#fff}
+body.v18-theme .result-actions :is(select,button,a):hover{border-color:#93c5fd;background:var(--v18-soft-blue)}
+body.v18-theme .v16-view-switch button.active{background:var(--v18-blue);color:#fff;border-color:var(--v18-blue)}
+body.v18-theme .active-filter-row span{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+body.v18-theme .market-pagination a{background:#fff;border-color:#bfdbfe;color:var(--v18-blue-dark)}
+body.v18-theme .market-pagination a:hover{background:var(--v18-blue);color:#fff}
+.v18-empty-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:18px}
+.v18-empty-actions .market-secondary-button{display:inline-flex;align-items:center;justify-content:center;padding:12px 17px;border-radius:12px;font-weight:800}
+
+/* İlan detay */
+body.v18-theme .owner-status-banner{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+body.v18-theme .market-breadcrumb a{color:var(--v18-blue)}
+body.v18-theme .v16-detail-kickers span{background:#dbeafe;color:#1e40af}
+body.v18-theme .v16-detail-kickers .featured{background:#ffedd5;color:#c2410c}
+body.v18-theme .v16-circle-action{background:#fff;border-color:#dbe3ec;color:#334155}
+body.v18-theme .v16-circle-action:hover{border-color:#93c5fd;color:var(--v18-blue);background:var(--v18-soft-blue)}
+body.v18-theme .v16-circle-action.active{background:var(--v18-orange);border-color:var(--v18-orange);color:#fff}
+body.v18-theme .v16-gallery-shell{border-color:#dbe3ec;box-shadow:0 16px 44px rgba(15,23,42,.09)}
+body.v18-theme .v16-thumbs button.active{border-color:var(--v18-orange);box-shadow:0 0 0 3px rgba(249,115,22,.16)}
+body.v18-theme .v16-photo-counter{background:rgba(15,23,42,.78);color:#fff}
+body.v18-theme .v16-detail-nav{background:#fff;border-color:#dbe3ec;box-shadow:0 8px 22px rgba(15,23,42,.06)}
+body.v18-theme .v16-detail-nav a:hover{background:var(--v18-soft-blue);color:var(--v18-blue)}
+body.v18-theme .v16-detail-panel,
+body.v18-theme .v16-summary-card{background:#fff;border-color:#dbe3ec;box-shadow:0 12px 34px rgba(15,23,42,.07)}
+body.v18-theme .v16-summary-card{border-top:4px solid var(--v18-orange)}
+body.v18-theme .v16-summary-price strong{color:var(--v18-blue-deep)}
+body.v18-theme .v16-summary-price>b{color:var(--v18-orange-dark);background:#fff7ed}
+body.v18-theme .v16-summary-note span{background:#f1f5f9;color:#475569}
+body.v18-theme .v16-seller-card{background:linear-gradient(135deg,#f8fafc,#eff6ff);border-color:#bfdbfe}
+body.v18-theme .v16-seller-avatar{background:linear-gradient(145deg,var(--v18-blue),var(--v18-cyan));color:#fff}
+body.v18-theme .market-action-box{border-color:#bfdbfe;background:#f8fbff}
+body.v18-theme .market-action-box summary{color:var(--v18-blue-deep)}
+body.v18-theme .pending-offer-card{background:#fff7ed;border-color:#fed7aa}
+body.v18-theme .v16-safety{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}
+body.v18-theme .detail-location-box{background:#f8fafc;border-color:#dbe3ec}
+body.v18-theme .detail-location-box>span{background:#dbeafe;color:#1d4ed8}
+
+/* İlan sihirbazı ve formlar */
+body.v18-theme .v16-wizard-page{background:linear-gradient(180deg,#eff6ff 0,#f8fafc 240px,#f8fafc 100%)}
+body.v18-theme .v16-wizard-intro h1{color:var(--v18-blue-deep)}
+body.v18-theme .v16-wizard-card{border-color:#dbe3ec;box-shadow:0 24px 60px rgba(15,23,42,.1)}
+body.v18-theme .v16-stepper{background:#f8fafc;border-color:#e2e8f0}
+body.v18-theme .v16-stepper button span{background:#e2e8f0;color:#64748b}
+body.v18-theme .v16-stepper button.active{color:var(--v18-blue)}
+body.v18-theme .v16-stepper button.active span{background:var(--v18-blue);color:#fff;box-shadow:0 7px 18px rgba(37,99,235,.24)}
+body.v18-theme .v16-stepper button.done span{background:var(--v18-green);color:#fff}
+body.v18-theme .v16-step-head>span{background:linear-gradient(145deg,var(--v18-blue),var(--v18-cyan));color:#fff;box-shadow:0 9px 22px rgba(37,99,235,.22)}
+body.v18-theme .v16-choice-help{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+body.v18-theme :is(.v16-wizard-main,.panel-form,.auth-form,.signup-form-card) input:not([type=checkbox]):not([type=radio]):not([type=file]),
+body.v18-theme :is(.v16-wizard-main,.panel-form,.auth-form,.signup-form-card) select,
+body.v18-theme :is(.v16-wizard-main,.panel-form,.auth-form,.signup-form-card) textarea{
+  background:#fff;border:1px solid #cbd5e1;color:#0f172a;border-radius:12px;transition:.18s
+}
+body.v18-theme :is(.v16-wizard-main,.panel-form,.auth-form,.signup-form-card) input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,
+body.v18-theme :is(.v16-wizard-main,.panel-form,.auth-form,.signup-form-card) select:focus,
+body.v18-theme :is(.v16-wizard-main,.panel-form,.auth-form,.signup-form-card) textarea:focus{
+  border-color:#60a5fa;box-shadow:0 0 0 4px rgba(37,99,235,.1);outline:0
+}
+body.v18-theme .v16-wizard-preview{border-color:#dbe3ec;background:#fff;box-shadow:0 12px 36px rgba(15,23,42,.08)}
+body.v18-theme .v16-preview-label{background:linear-gradient(90deg,#eff6ff,#fff7ed)}
+body.v18-theme .v16-preview-label span{color:var(--v18-orange)}
+body.v18-theme .v16-preview-media{background:linear-gradient(145deg,#dbeafe,#f8fafc 62%,#ffedd5)}
+body.v18-theme .v16-preview-body strong{color:var(--v18-blue-deep)}
+body.v18-theme .v16-preview-score-track i{background:linear-gradient(90deg,var(--v18-orange),var(--v18-blue),var(--v18-cyan))}
+.v18-draft-note{max-width:1120px;margin:0 auto 16px;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:11px;padding:12px 15px;border:1px solid #bfdbfe;border-radius:15px;background:linear-gradient(90deg,#eff6ff,#fff);box-shadow:0 8px 22px rgba(37,99,235,.07)}
+.v18-draft-note>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#dbeafe;color:#1d4ed8;font-size:1.15rem}.v18-draft-note b,.v18-draft-note small{display:block}.v18-draft-note b{font-size:.86rem}.v18-draft-note small{color:#64748b;font-size:.72rem;margin-top:2px}.v18-draft-note button{border:1px solid #bfdbfe;background:#fff;color:#1d4ed8;border-radius:10px;padding:8px 10px;font-size:.72rem;font-weight:800}.v18-draft-note button:hover{background:#dbeafe}.v18-draft-note.saved{border-color:#a7f3d0;background:linear-gradient(90deg,#ecfdf5,#fff)}.v18-draft-note.saved>span{background:#d1fae5;color:#047857}
+.v18-char-counter{display:block;text-align:right;margin-top:4px;font-size:.68rem;color:#94a3b8}.v18-char-counter.near-limit{color:var(--v18-orange-dark);font-weight:800}
+
+/* Hesabım */
+body.v18-theme .v16-account-hero{background:linear-gradient(135deg,var(--v18-blue-deep),var(--v18-blue) 60%,var(--v18-cyan))}
+body.v18-theme .v16-account-hero-card{background:rgba(255,255,255,.96);border-color:rgba(255,255,255,.65);box-shadow:0 24px 60px rgba(15,23,42,.2)}
+body.v18-theme .v16-account-avatar{background:linear-gradient(145deg,var(--v18-orange),var(--v18-orange-dark));color:#fff}
+body.v18-theme .v16-account-badges span{background:#eff6ff;color:#1e40af;border-color:#bfdbfe}
+body.v18-theme .v16-trust-gauge{background:conic-gradient(var(--v18-orange) var(--score),#e2e8f0 0)}
+body.v18-theme .v16-account-sidebar{background:#fff;border-color:#dbe3ec;box-shadow:0 12px 34px rgba(15,23,42,.07)}
+body.v18-theme .v16-account-sidebar a.active{background:linear-gradient(90deg,var(--v18-blue),var(--v18-blue-dark));color:#fff}
+body.v18-theme .v16-account-sidebar a:not(.active):hover{background:var(--v18-soft-blue);color:var(--v18-blue)}
+body.v18-theme .v16-dashboard-stat,
+body.v18-theme .v16-dashboard-panel,
+body.v18-theme .v16-dashboard-action{background:#fff;border-color:#dbe3ec;box-shadow:0 10px 30px rgba(15,23,42,.06)}
+body.v18-theme .v16-dashboard-stat:nth-child(1){border-top:4px solid var(--v18-blue)}
+body.v18-theme .v16-dashboard-stat:nth-child(2){border-top:4px solid var(--v18-orange)}
+body.v18-theme .v16-dashboard-stat:nth-child(3){border-top:4px solid var(--v18-violet)}
+body.v18-theme .v16-dashboard-stat:nth-child(4){border-top:4px solid var(--v18-green)}
+body.v18-theme .v16-dashboard-action:hover{border-color:#93c5fd;box-shadow:0 16px 38px rgba(37,99,235,.12);transform:translateY(-2px)}
+body.v18-theme .v16-dashboard-action>span{background:#eff6ff;color:#1d4ed8}
+body.v18-theme .v16-my-listing{border-color:#e2e8f0}
+body.v18-theme .v16-my-listing:hover{background:#f8fbff;border-color:#bfdbfe}
+.v18-profile-completion{display:grid;grid-template-columns:auto minmax(220px,.8fr) minmax(320px,1.2fr);align-items:center;gap:22px;padding:20px;border:1px solid #bfdbfe;border-radius:20px;background:linear-gradient(135deg,#eff6ff,#fff 55%,#fff7ed);box-shadow:0 16px 42px rgba(37,99,235,.1)}
+.v18-profile-completion.complete{border-color:#a7f3d0;background:linear-gradient(135deg,#ecfdf5,#fff)}
+.v18-profile-score{width:102px;height:102px;border-radius:50%;display:grid;place-items:center;align-content:center;position:relative;background:conic-gradient(var(--v18-orange) var(--profile-score),#dbeafe 0);color:#0f172a}
+.v18-profile-score:after{content:"";position:absolute;inset:9px;background:#fff;border-radius:50%}.v18-profile-score strong,.v18-profile-score span{position:relative;z-index:1}.v18-profile-score strong{font-size:1.65rem;line-height:1}.v18-profile-score span{font-size:.62rem;color:#64748b;margin-top:5px}.v18-profile-copy h2{margin:6px 0 4px;font-size:1.35rem;letter-spacing:-.5px}.v18-profile-copy p{margin:0;color:#64748b;font-size:.82rem}.v18-profile-track{height:7px;margin-top:13px;background:#dbeafe;border-radius:999px;overflow:hidden}.v18-profile-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--v18-orange),var(--v18-blue),var(--v18-cyan))}.v18-profile-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.v18-profile-steps a{display:flex;align-items:center;gap:7px;padding:8px 9px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;color:#475569;font-size:.72rem;font-weight:750}.v18-profile-steps a:hover{border-color:#93c5fd;color:#1d4ed8}.v18-profile-steps a.done{background:#ecfdf5;border-color:#a7f3d0;color:#047857}.v18-profile-steps span{font-weight:950}
+
+/* Giriş, üyelik ve genel sayfalar */
+body.v18-theme .auth-visual,
+body.v18-theme .signup-head{background:linear-gradient(145deg,var(--v18-blue-deep),var(--v18-blue) 55%,var(--v18-cyan))}
+body.v18-theme .auth-form-wrap,
+body.v18-theme .signup-form-card{border-color:#dbe3ec;box-shadow:0 22px 54px rgba(15,23,42,.11)}
+body.v18-theme .signup-benefit>span{background:#dbeafe;color:#1d4ed8}
+body.v18-theme .signup-quote{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+body.v18-theme .form-foot a{color:var(--v18-blue);font-weight:850}
+body.v18-theme .form-alert{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+body.v18-theme .field-error{color:#b91c1c}
+body.v18-theme .market-empty{background:#fff;border:1px dashed #bfdbfe;border-radius:20px}
+body.v18-theme .market-empty>span{background:#eff6ff;color:#1d4ed8}
+
+/* Bildirimler */
+body.v18-theme .message-stack{position:fixed;top:92px;right:20px;z-index:1200;width:min(390px,calc(100% - 32px));display:grid;gap:9px}
+body.v18-theme .message{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:13px 14px;border:1px solid #bfdbfe;border-left:5px solid var(--v18-blue);border-radius:14px;background:#fff;color:#1e293b;box-shadow:0 16px 42px rgba(15,23,42,.16)}
+body.v18-theme .message.success{border-left-color:var(--v18-green);background:#f0fdf4}.message.info{border-left-color:var(--v18-blue);background:#eff6ff}.message.warning{border-left-color:var(--v18-orange);background:#fff7ed}.message.error{border-left-color:var(--v18-red);background:#fef2f2}
+body.v18-theme .message button{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(148,163,184,.14);color:#475569;font-size:1.1rem}
+body.v18-theme .message.is-hiding{opacity:0;transform:translateX(30px);transition:.25s}
+
+/* Yardımcı UX */
+.v18-scroll-top{position:fixed;right:22px;bottom:88px;z-index:90;width:44px;height:44px;border:0;border-radius:14px;background:linear-gradient(145deg,var(--v18-blue),var(--v18-cyan));color:#fff;box-shadow:0 12px 28px rgba(37,99,235,.28);font-size:1.15rem;font-weight:950;opacity:0;visibility:hidden;transform:translateY(10px);transition:.2s}
+.v18-scroll-top.is-visible{opacity:1;visibility:visible;transform:none}.v18-scroll-top:hover{transform:translateY(-2px)}
+body.v18-theme button.is-loading,body.v18-theme .button.is-loading{position:relative;color:transparent!important;pointer-events:none;opacity:.82}
+body.v18-theme button.is-loading:after,body.v18-theme .button.is-loading:after{content:"";position:absolute;width:18px;height:18px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:v18-spin .7s linear infinite}
+@keyframes v18-spin{to{transform:rotate(360deg)}}
+
+/* Alt alan */
+body.v18-theme .market-footer{background:linear-gradient(135deg,#0f172a,var(--v18-blue-deep));color:#cbd5e1}
+body.v18-theme .market-footer a:hover{color:#fff}
+body.v18-theme .market-mobile-nav{border-color:#dbe3ec;box-shadow:0 -12px 35px rgba(15,23,42,.12)}
+body.v18-theme .market-mobile-nav a{color:#64748b}
+body.v18-theme .market-mobile-nav a.is-current{color:var(--v18-blue)}
+body.v18-theme .market-mobile-nav .mobile-post{background:linear-gradient(145deg,var(--v18-orange),var(--v18-orange-dark));color:#fff;box-shadow:0 10px 25px rgba(249,115,22,.27)}
+body.v18-theme .compare-floating{background:linear-gradient(135deg,var(--v18-blue),var(--v18-cyan));color:#fff;box-shadow:0 16px 36px rgba(37,99,235,.26)}
+
+/* Mobil ve tablet */
+@media(max-width:1100px){
+  .v18-market-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+  .v18-profile-completion{grid-template-columns:auto 1fr}.v18-profile-steps{grid-column:1/-1;grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:800px){
+  body.v18-theme .market-header{position:sticky;top:0}
+  body.v18-theme .market-header-row{min-height:64px}
+  body.v18-theme .market-brand>span{width:40px;height:40px}
+  body.v18-theme .mobile-menu{background:#fff}
+  body.v18-theme .mobile-menu a{border-color:#e2e8f0}
+  body.v18-theme .mobile-menu a:hover{background:#eff6ff;color:#1d4ed8}
+  .v18-profile-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.v18-theme .message-stack{top:76px;right:12px}
+}
+@media(max-width:620px){
+  body.v18-theme .shell{width:min(100% - 24px,var(--shell))}
+  .v18-market-shortcuts{display:flex;overflow-x:auto;gap:9px;margin-top:10px;padding-bottom:5px;scroll-snap-type:x mandatory}.v18-market-shortcuts>a{min-width:250px;scroll-snap-align:start}
+  body.v18-theme .v16-home-copy h1{font-size:2.2rem}
+  body.v18-theme .market-card{border-radius:15px}
+  body.v18-theme .market-card:hover{transform:none}
+  .v18-draft-note{grid-template-columns:auto 1fr;gap:9px}.v18-draft-note button{grid-row:2}.v18-draft-note button[data-v18-restore-draft]{grid-column:1/2}.v18-draft-note button[data-v18-clear-draft]{grid-column:2/3;justify-self:start}
+  .v18-profile-completion{grid-template-columns:1fr;padding:16px}.v18-profile-score{width:86px;height:86px}.v18-profile-steps{grid-template-columns:1fr}.v18-profile-score,.v18-profile-copy{text-align:center;margin-inline:auto}.v18-profile-copy{width:100%}
+  .v18-empty-actions{display:grid}.v18-empty-actions>*{width:100%}
+  .v18-scroll-top{right:14px;bottom:82px;width:40px;height:40px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+body.v18-theme .light-label,
+body.v18-theme .auth-visual .section-label,
+body.v18-theme .signup-head .section-label{color:#bfdbfe}

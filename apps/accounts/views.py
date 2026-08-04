@@ -90,6 +90,55 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["unread_message_count"] = sum(item.unread_count for item in context["conversations"])
         context["recent_notifications"] = Notification.objects.filter(user=user)[:8]
         context["unread_notification_count"] = Notification.objects.filter(user=user, is_read=False).count()
+        profile_steps = [
+            {
+                "label": "Ad ve soyadını ekle",
+                "complete": bool(user.first_name.strip() and user.last_name.strip()),
+                "url": reverse("accounts:profile_edit"),
+            },
+            {
+                "label": "Profil fotoğrafı yükle",
+                "complete": bool(user.avatar),
+                "url": reverse("accounts:profile_edit"),
+            },
+            {
+                "label": "E-posta adresini ekle",
+                "complete": bool(user.email.strip()),
+                "url": reverse("accounts:profile_edit"),
+            },
+            {
+                "label": "Telefon numaranı ekle",
+                "complete": bool(user.phone.strip()),
+                "url": reverse("accounts:profile_edit"),
+            },
+            {
+                "label": "Şehir ve ilçeni tamamla",
+                "complete": bool(user.city.strip() and user.district.strip()),
+                "url": reverse("accounts:profile_edit"),
+            },
+            {
+                "label": "Kısa profil açıklaması yaz",
+                "complete": bool(user.bio.strip()),
+                "url": reverse("accounts:profile_edit"),
+            },
+            {
+                "label": "Telefonunu doğrula",
+                "complete": user.is_phone_verified,
+                "url": reverse("accounts:verification"),
+            },
+            {
+                "label": "E-postanı doğrula",
+                "complete": user.is_email_verified,
+                "url": reverse("accounts:verification"),
+            },
+        ]
+        completed_profile_steps = sum(1 for step in profile_steps if step["complete"])
+        context["profile_steps"] = profile_steps
+        context["profile_completion"] = round(completed_profile_steps / len(profile_steps) * 100)
+        context["profile_next_step"] = next(
+            (step for step in profile_steps if not step["complete"]),
+            None,
+        )
         return context
 
 

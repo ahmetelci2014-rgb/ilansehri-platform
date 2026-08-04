@@ -83,3 +83,15 @@ Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler 
 ## v1.7 yayına hazırlık
 
 Bu sürüm sitemap, robots, sosyal paylaşım meta verileri, ilan kalite puanı, fotoğraf optimizasyonu, anti-spam koruması ve yönetim büyüme raporlarını ekler. Canlı ortamda `PUBLIC_BASE_URL=https://alanadiniz.com` tanımlanması önerilir.
+
+
+## v1.8 canlı tasarım ve eksik tamamlama
+
+- Ana marka rengi canlı mavi, ana aksiyon rengi turuncu olarak yenilendi.
+- Başlık, arama, kategori, ilan kartı, form, hesap ve yönetim ekranları ortak tasarım diline alındı.
+- Yeni ilan formuna tarayıcı tabanlı otomatik taslak koruması eklendi.
+- Hesabım ekranına profil tamamlama puanı ve adım listesi eklendi.
+- Sonuç bulunamayan aramalara yönlendirici seçenekler eklendi.
+- Bildirim kapatma, form gönderme geri bildirimi, aktif menü ve sayfa başına dönme yardımcıları eklendi.
+
+Bu sürüm veritabanı alanı eklemez; migration gerektirmez.

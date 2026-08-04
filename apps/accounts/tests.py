@@ -81,3 +81,24 @@ class AccountFlowTests(TestCase):
         self.assertContains(profile, "1")
         self.client.post(url)
         self.assertFalse(UserFollow.objects.filter(follower=follower, seller=seller).exists())
+
+    def test_dashboard_reports_profile_completion(self):
+        user = User.objects.create_user(
+            username="profile-score",
+            password="StrongPass_2026",
+            first_name="Ahmet",
+            last_name="Kullanıcı",
+            email="ahmet@example.com",
+            phone="05550000000",
+            city="Şanlıurfa",
+            district="Karaköprü",
+            bio="Güvenilir yerel kullanıcı",
+            is_phone_verified=True,
+        )
+        self.client.force_login(user)
+        response = self.client.get(reverse("accounts:dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(response.context["profile_completion"], 50)
+        self.assertEqual(len(response.context["profile_steps"]), 8)
+        self.assertContains(response, "Profil doluluğu")
+

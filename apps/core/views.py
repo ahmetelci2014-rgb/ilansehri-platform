@@ -251,8 +251,8 @@ def manifest(request):
             "start_url": "/?source=pwa",
             "scope": "/",
             "display": "standalone",
-            "background_color": "#f7faf9",
-            "theme_color": "#0f766e",
+            "background_color": "#f8fafc",
+            "theme_color": "#2563eb",
             "lang": "tr",
             "icons": [
                 {"src": "/static/img/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable"},
@@ -270,8 +270,8 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v17";
-const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
+const CACHE = "ilansehri-v18";
+const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
 const PRIVATE_PREFIXES = ["/hesap/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));

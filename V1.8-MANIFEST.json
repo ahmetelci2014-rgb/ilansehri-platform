@@ -1,0 +1,48 @@
+{
+  "version": "v1.8",
+  "name": "Canlı Renk ve Eksik Tamamlama",
+  "changed_file_count": 16,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/accounts/tests.py",
+    "apps/accounts/views.py",
+    "apps/core/views.py",
+    "static/css/app.css",
+    "static/css/v18-vibrant.css",
+    "static/img/icon-192.svg",
+    "static/img/icon-512.svg",
+    "static/js/v18-ux.js",
+    "templates/accounts/dashboard.html",
+    "templates/base.html",
+    "templates/core/home.html",
+    "templates/listings/form.html",
+    "templates/listings/list.html"
+  ],
+  "features": [
+    "Canlı mavi-turuncu marka ve arayüz renk sistemi",
+    "Yenilenen PWA ikonları ve tema rengi",
+    "Ana sayfada hızlı marketplace keşif bağlantıları",
+    "Yeni ilan formunda tarayıcı tabanlı otomatik taslak koruması",
+    "Hesabım ekranında profil tamamlama puanı ve adımları",
+    "Daha açıklayıcı boş arama sonuçları",
+    "Kapatılabilir bildirimler",
+    "Çift form gönderimini önleyen yükleniyor durumu",
+    "Aktif menü işaretleme ve sayfa başına dönme düğmesi",
+    "Mobil, tablet ve masaüstü renk/hiza iyileştirmeleri",
+    "PWA önbellek v1.8 yenilemesi"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "python_ast": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "css_brace_balance": "passed",
+    "django_template_tag_balance": "passed",
+    "critical_review_url_order": "passed",
+    "service_worker_v18_assets": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload; local package index unavailable"
+  }
+}

@@ -17,6 +17,12 @@
   </aside>
 
   <main class="v16-dashboard-main">
+    <section class="v18-profile-completion{% if profile_completion == 100 %} complete{% endif %}">
+      <div class="v18-profile-score" style="--profile-score:{{ profile_completion }}%"><strong>{{ profile_completion }}</strong><span>Profil doluluğu</span></div>
+      <div class="v18-profile-copy"><span class="section-label">HESAP HAZIRLIK DURUMU</span><h2>{% if profile_completion == 100 %}Profilin tamamlandı{% else %}Profilini tamamla, daha fazla güven kazan{% endif %}</h2><p>{% if profile_next_step %}Sıradaki öneri: <b>{{ profile_next_step.label }}</b>{% else %}Tüm temel profil ve doğrulama adımlarını tamamladın.{% endif %}</p><div class="v18-profile-track"><i style="width:{{ profile_completion }}%"></i></div></div>
+      <div class="v18-profile-steps">{% for step in profile_steps %}<a class="{% if step.complete %}done{% endif %}" href="{{ step.url }}"><span>{% if step.complete %}✓{% else %}○{% endif %}</span>{{ step.label }}</a>{% endfor %}</div>
+    </section>
+
     <section class="v16-dashboard-stats">
       <article class="v16-dashboard-stat"><span>Toplam ilanım</span><strong>{{ user.listings.count }}</strong><small>Yayın, inceleme ve taslaklar</small></article><article class="v16-dashboard-stat"><span>Favorilerim</span><strong>{{ favorite_count }}</strong><small>Takip ettiğin fırsatlar</small></article><article class="v16-dashboard-stat"><span>Okunmamış mesaj</span><strong>{{ unread_message_count }}</strong><small>Yanıt bekleyen görüşmeler</small></article><article class="v16-dashboard-stat"><span>Satıcı puanı</span><strong>★ {{ user.average_rating }}</strong><small>{{ user.rating_count }} değerlendirme</small></article>
     </section>

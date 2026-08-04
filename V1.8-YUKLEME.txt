@@ -1,0 +1,32 @@
+İLAN ŞEHRİ v1.8 — CANLI RENK VE EKSİK TAMAMLAMA
+
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.8 canlı renk ve eksik tamamlama
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+9. Eski renkler görünürse:
+   F12 > Application > Service Workers > Unregister
+   ardından sayfayı yenileyin.
+
+ÖZELLİKLE KONTROL EDİLECEK EKRANLAR
+- Ana sayfa: /
+- İlan sonuçları: /ilanlar/
+- Yeni ilan verme: /ilanlar/yeni/
+- Hesabım: /hesap/hesabim/
+- Giriş ve üyelik ekranları
+- Herhangi bir ilan detay sayfası
+
+Notlar:
+- Yeni veritabanı alanı yoktur; migration gerekmez.
+- İlan formundaki otomatik taslak yalnız metin/seçim alanlarını tarayıcıda
+  saklar. Güvenlik nedeniyle fotoğraflar yeniden seçilmelidir.
+- Tam Django çalışma testleri GitHub Actions üzerinde kesinleşecektir.

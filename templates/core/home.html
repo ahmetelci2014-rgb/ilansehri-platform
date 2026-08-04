@@ -41,6 +41,13 @@
   </div>
 </section>
 
+<section class="v18-market-shortcuts shell" aria-label="Hızlı keşif bağlantıları">
+  <a href="{% url 'listings:list' %}?sort=newest"><span class="blue">⚡</span><div><b>Yeni ilanlar</b><small>Az önce eklenen fırsatlar</small></div><i>›</i></a>
+  <a href="{% url 'listings:list' %}?price_drop=1&sort=price_drop"><span class="orange">↓</span><div><b>Fiyatı düşenler</b><small>Yeni fiyatıyla avantajlı</small></div><i>›</i></a>
+  <a href="{% url 'listings:list' %}?verified=1"><span class="green">✓</span><div><b>Doğrulanmış satıcı</b><small>Güven seviyesi yüksek hesaplar</small></div><i>›</i></a>
+  <a href="{% url 'listings:list' %}?action=swap"><span class="violet">⇄</span><div><b>Takas ilanları</b><small>Para yerine değişim seçenekleri</small></div><i>›</i></a>
+</section>
+
 <section class="v16-category-zone">
   <div class="shell v16-section-shell">
     <div class="v16-section-heading"><div><h2>Ne arıyorsun?</h2><p>Kategorini seç, doğrudan ilanlara ulaş.</p></div><a href="{% url 'listings:list' %}">Tüm ilanlar →</a></div>
