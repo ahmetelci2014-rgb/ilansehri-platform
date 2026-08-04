@@ -10,6 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-development-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
 ALLOWED_HOSTS = [x.strip() for x in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if x.strip()]
+AUTO_PUBLISH_LISTINGS = os.getenv("AUTO_PUBLISH_LISTINGS", "False").lower() == "true"
 CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if x.strip()]
 
 INSTALLED_APPS = [
