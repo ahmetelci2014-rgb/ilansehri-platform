@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Yeni İlan | İlan Şehri{% endblock %}
+{% block content %}<section class="form-page"><span class="eyebrow">60 SANİYEDE BAŞLA</span><h1>Yeni ilan oluştur</h1><p>İlanını kendin yönetebilir veya tüm süreci İlan Şehri’ne bırakabilirsin.</p><form method="post" enctype="multipart/form-data" class="panel-form">{% csrf_token %}{{ form.as_p }}<button class="button full">İncelemeye Gönder</button></form></section>{% endblock %}
