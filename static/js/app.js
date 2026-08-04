@@ -44,4 +44,9 @@ document.addEventListener("DOMContentLoaded", () => {
       button.classList.add("active");
     });
   });
+  const chatMessages = document.querySelector("[data-chat-messages]");
+  if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
 });
