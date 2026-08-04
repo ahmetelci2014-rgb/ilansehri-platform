@@ -8,6 +8,10 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["latest_listings"] = Listing.objects.filter(status=Listing.Status.PUBLISHED).select_related("category", "owner")[:8]
-        context["listing_count"] = Listing.objects.filter(status=Listing.Status.PUBLISHED).count()
+        published = Listing.objects.filter(status=Listing.Status.PUBLISHED)
+        context["latest_listings"] = (
+            published.select_related("category", "owner")
+            .prefetch_related("images")[:8]
+        )
+        context["listing_count"] = published.count()
         return context
