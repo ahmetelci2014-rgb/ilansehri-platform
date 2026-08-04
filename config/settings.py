@@ -13,6 +13,13 @@ ALLOWED_HOSTS = [x.strip() for x in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1
 AUTO_PUBLISH_LISTINGS = os.getenv("AUTO_PUBLISH_LISTINGS", "False").lower() == "true"
 CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if x.strip()]
 
+IS_CODESPACES = os.getenv("CODESPACES", "false").lower() == "true"
+if IS_CODESPACES:
+    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, ".app.github.dev"]))
+    CSRF_TRUSTED_ORIGINS = list(
+        dict.fromkeys([*CSRF_TRUSTED_ORIGINS, "https://*.app.github.dev"])
+    )
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
