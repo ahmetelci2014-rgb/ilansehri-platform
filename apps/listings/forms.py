@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Listing, Offer
+from .models import Listing, Message, Offer
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -81,7 +81,9 @@ class ListingForm(forms.ModelForm):
             ),
             "city": forms.TextInput(attrs={"placeholder": "Örn. Şanlıurfa"}),
             "district": forms.TextInput(attrs={"placeholder": "Örn. Karaköprü"}),
-            "neighborhood": forms.TextInput(attrs={"placeholder": "Mahalle (isteğe bağlı)"}),
+            "neighborhood": forms.TextInput(
+                attrs={"placeholder": "Mahalle (isteğe bağlı)"}
+            ),
         }
 
     def clean_images(self):
@@ -104,12 +106,37 @@ class OfferForm(forms.ModelForm):
     class Meta:
         model = Offer
         fields = ("amount", "message")
-        labels = {"amount": "Teklif tutarı", "message": "Mesajın"}
+        labels = {"amount": "Teklif tutarı", "message": "Teklif notun"}
         widgets = {
             "message": forms.Textarea(
-                attrs={"rows": 4, "placeholder": "Teklif koşullarını ve teslim planını yaz..."}
+                attrs={
+                    "rows": 4,
+                    "placeholder": "Teklif koşullarını ve teslim planını yaz...",
+                }
             ),
             "amount": forms.NumberInput(
                 attrs={"min": "0", "step": "0.01", "placeholder": "TL"}
             ),
         }
+
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = ("body",)
+        labels = {"body": "Mesajın"}
+        widgets = {
+            "body": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "İlan hakkında merak ettiğini yaz...",
+                    "maxlength": "1600",
+                }
+            )
+        }
+
+    def clean_body(self):
+        body = self.cleaned_data["body"].strip()
+        if len(body) < 2:
+            raise forms.ValidationError("Mesaj en az 2 karakter olmalıdır.")
+        return body
