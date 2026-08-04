@@ -14,7 +14,7 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         published = Listing.objects.filter(status=Listing.Status.PUBLISHED).filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
-        context["latest_listings"] = published.select_related("category", "owner").prefetch_related("images")[:8]
+        context["latest_listings"] = published.select_related("category", "owner").prefetch_related("images")[:20]
         context["listing_count"] = published.count()
         context["member_count"] = User.objects.filter(is_active=True).count()
         context["partner_count"] = PartnerProfile.objects.filter(status=PartnerProfile.Status.ACTIVE).count()
@@ -27,7 +27,7 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.0"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.1"})
 
 
 def manifest(request):
@@ -57,7 +57,7 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v1";
+const CACHE = "ilansehri-v11";
 const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/js/app.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
 const PRIVATE_PREFIXES = ["/hesap/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));

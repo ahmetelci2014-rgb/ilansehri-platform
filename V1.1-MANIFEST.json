@@ -1,0 +1,23 @@
+{
+  "version": "v1.1",
+  "name": "Marketplace dönüşümü",
+  "files": [
+    "VERSION",
+    "CHANGELOG.md",
+    "apps/core/views.py",
+    "apps/listings/urls.py",
+    "templates/base.html",
+    "templates/core/home.html",
+    "templates/listings/_card.html",
+    "templates/listings/list.html",
+    "templates/listings/detail.html",
+    "static/css/app.css"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "template_block_balance": "passed",
+    "css_brace_balance": "passed",
+    "review_url_order": "passed",
+    "django_runtime_tests": "GitHub Actions after upload"
+  }
+}

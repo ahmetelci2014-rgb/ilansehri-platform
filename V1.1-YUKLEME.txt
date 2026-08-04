@@ -1,0 +1,12 @@
+İLAN ŞEHRİ v1.1 MARKETPLACE YÜKLEME
+
+1. ZIP dosyasını ayıklayın.
+2. İçindeki tüm dosya ve klasörleri GitHub Desktop'taki ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. Summary: İlan Şehri v1.1 marketplace tasarımı
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra yeni Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın ve Ctrl+F5 yapın.

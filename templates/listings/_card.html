@@ -1,1 +1,19 @@
-<a class="listing-card premium-card" href="{{ listing.get_absolute_url }}"><div class="card-media">{% with cover=listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}" loading="lazy">{% else %}<div class="listing-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}<span class="card-action-badge">{{ listing.get_action_display }}</span>{% if listing.management_mode == 'full' %}<span class="managed-pin">✓ Yönetilen İlan</span>{% endif %}</div><div class="listing-body"><div class="card-location">📍 {{ listing.city }} · {{ listing.district }}</div><h3>{{ listing.title }}</h3><div class="seller-mini"><span>{% if listing.owner.is_phone_verified %}✓{% endif %} {{ listing.owner.display_name }}</span><span>★ {{ listing.owner.average_rating }}</span></div><div class="card-footer"><strong>{% if listing.price_on_request %}Teklif Alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><span>{{ listing.created_at|timesince }} önce</span></div></div></a>
+<article class="market-card">
+  <a class="market-card-link" href="{{ listing.get_absolute_url }}" aria-label="{{ listing.title }}">
+    <div class="market-card-media">
+      {% with cover=listing.cover_image %}
+        {% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}" loading="lazy">
+        {% else %}<div class="market-card-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}
+      {% endwith %}
+      <span class="market-card-action">{{ listing.get_action_display }}</span>
+      {% if listing.management_mode == 'full' %}<span class="market-card-managed">✓ Güvenceli</span>{% endif %}
+    </div>
+    <div class="market-card-body">
+      <strong class="market-card-price">{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat yok{% endif %}</strong>
+      <h3>{{ listing.title }}</h3>
+      {% if listing.brand or listing.model_year or listing.room_count %}<p class="market-card-spec">{% if listing.brand %}{{ listing.brand }}{% endif %}{% if listing.model_year %} · {{ listing.model_year }}{% endif %}{% if listing.room_count %} · {{ listing.room_count }}{% endif %}</p>{% endif %}
+      <div class="market-card-meta"><span>{{ listing.city }}{% if listing.district %}, {{ listing.district }}{% endif %}</span><time>{{ listing.created_at|timesince }} önce</time></div>
+    </div>
+  </a>
+  {% if user.is_authenticated %}<form class="market-card-fav" method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button aria-label="Favoriye ekle">♡</button></form>{% else %}<a class="market-card-fav" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="Giriş yap ve favoriye ekle">♡</a>{% endif %}
+</article>

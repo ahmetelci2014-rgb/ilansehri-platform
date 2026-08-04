@@ -1,5 +1,17 @@
 # Değişiklik Günlüğü
 
+## v1.1 — Marketplace dönüşümü
+- Ana sayfa ilan odaklı gerçek pazar yeri düzenine geçirildi.
+- Yoğun fotoğraflı ilan kartları ve mobil iki sütunlu akış eklendi.
+- Arama, konum ve kategoriler ilk ekrana taşındı.
+- İlan listeleme ekranı profesyonel filtreli katalog olarak yenilendi.
+- İlan detayı büyük galeri, satıcı kartı, favori, mesaj ve teklif odaklı yenilendi.
+- Kurumsal tanıtım blokları ana sayfadan kaldırıldı.
+- Üst menü ve mobil alt navigasyon marketplace kullanımına göre sadeleştirildi.
+- v1.0.2 yorum URL sırası düzeltmesi korundu.
+
+# Değişiklik Günlüğü
+
 ## 1.0.0 — Tamamlanmış MVP
 
 - Profil, avatar, doğrulama seviyesi, güven puanı ve herkese açık kullanıcı profili eklendi.

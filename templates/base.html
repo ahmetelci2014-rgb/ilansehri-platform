@@ -1,52 +1,25 @@
 {% load static %}
-<!doctype html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f766e">
-  <meta name="description" content="Şehrindeki ürünleri, araçları, emlakları, hizmetleri, işleri ve ihtiyaçları güvenle keşfet.">
-  <title>{% block title %}İlan Şehri — Şehrin Yeni Pazarı{% endblock %}</title>
-  <link rel="manifest" href="{% url 'core:manifest' %}">
-  <link rel="icon" href="{% static 'img/icon-192.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  <script defer src="{% static 'js/app.js' %}"></script>
-</head>
-<body>
-<a class="skip-link" href="#main-content">İçeriğe geç</a>
-<div class="top-strip"><div class="shell top-strip-inner"><span>📍 Şehrindeki fırsatlar tek yerde</span><span class="top-trust">Doğrudan işlemlerde komisyon yok · Güvenli işlem takibi · Şeffaf tam yönetim</span></div></div>
-<header class="site-header" data-header>
-  <div class="shell header-inner">
-    <a class="brand" href="{% url 'core:home' %}" aria-label="İlan Şehri ana sayfa"><span class="brand-mark">İŞ</span><span class="brand-copy"><strong>İlan Şehri</strong><small>Şehrin yeni pazarı</small></span></a>
-    <nav class="desktop-nav" aria-label="Ana menü">
-      <a href="{% url 'listings:list' %}">Tüm İlanlar</a><a href="{% url 'listings:list' %}?kind=real_estate">Emlak</a><a href="{% url 'listings:list' %}?kind=vehicle">Araç</a><a href="{% url 'listings:list' %}?kind=service">Hizmetler</a><a href="{% url 'partners:task_list' %}">İş & Kazanç</a>
-    </nav>
-    <div class="header-actions">
-      <a class="location-pill" href="{% url 'listings:list' %}"><span>📍</span><span>{% if user.is_authenticated and user.city %}{{ user.city }}{% else %}Şehrini seç{% endif %}</span></a>
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0f766e"><meta name="description" content="Yakınındaki ikinci el ürünleri, araçları, emlakları ve hizmetleri keşfet."><title>{% block title %}İlan Şehri{% endblock %}</title><link rel="manifest" href="{% url 'core:manifest' %}"><link rel="icon" href="{% static 'img/icon-192.svg' %}" type="image/svg+xml"><link rel="stylesheet" href="{% static 'css/app.css' %}"><script defer src="{% static 'js/app.js' %}"></script></head>
+<body class="marketplace-body"><a class="skip-link" href="#main-content">İçeriğe geç</a>
+<header class="market-header" data-header>
+  <div class="shell market-header-row">
+    <a class="market-brand" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a>
+    <form class="header-search" action="{% url 'listings:list' %}"><span>⌕</span><input name="q" placeholder="İlanlarda ara"><button>Ara</button></form>
+    <nav class="market-header-actions">
+      <a class="market-location" href="{% url 'listings:list' %}">⌖ {% if user.is_authenticated and user.city %}{{ user.city }}{% else %}Konum{% endif %}</a>
       {% if user.is_authenticated %}
-        <a class="icon-link notification-link" href="{% url 'listings:notifications' %}" aria-label="Bildirimler">🔔{% if unread_notification_count %}<b>{{ unread_notification_count }}</b>{% endif %}</a>
-        <a class="icon-link notification-link" href="{% url 'listings:conversation_list' %}" aria-label="Mesajlar">💬{% if unread_message_count %}<b>{{ unread_message_count }}</b>{% endif %}</a>
-        <a class="login-link" href="{% url 'accounts:dashboard' %}">Hesabım</a>
-        <a class="button button-header" href="{% url 'listings:create' %}"><span>+</span> Ücretsiz İlan Ver</a>
-      {% else %}
-        <a class="login-link" href="{% url 'login' %}">Giriş Yap</a><a class="button button-header" href="{% url 'accounts:signup' %}"><span>+</span> İlan Ver</a>
-      {% endif %}
-      <button class="menu-toggle" type="button" aria-label="Menüyü aç" aria-expanded="false" data-menu-toggle><span></span><span></span><span></span></button>
-    </div>
+        <a class="market-icon-link" href="{% url 'listings:favorites' %}" title="Favoriler">♡</a>
+        <a class="market-icon-link has-count" href="{% url 'listings:conversation_list' %}" title="Mesajlar">💬{% if unread_message_count %}<i>{{ unread_message_count }}</i>{% endif %}</a>
+        <a class="market-account" href="{% url 'accounts:dashboard' %}">Hesabım</a>
+      {% else %}<a class="market-account" href="{% url 'login' %}">Giriş yap</a>{% endif %}
+      <a class="market-post-button" href="{% url 'listings:create' %}">＋ İlan ver</a>
+      <button class="menu-toggle" type="button" aria-label="Menü" data-menu-toggle><span></span><span></span><span></span></button>
+    </nav>
   </div>
-  <div class="mobile-menu" data-mobile-menu><div class="mobile-menu-inner">
-    <a href="{% url 'listings:list' %}">Tüm İlanlar</a><a href="{% url 'listings:list' %}?kind=product">Ürün & Eşya</a><a href="{% url 'listings:list' %}?kind=real_estate">Emlak</a><a href="{% url 'listings:list' %}?kind=vehicle">Araç</a><a href="{% url 'listings:list' %}?kind=service">Hizmetler</a><a href="{% url 'partners:task_list' %}">İş & Kazanç</a><a href="{% url 'core:trust' %}">Güven Merkezi</a>
-    {% if user.is_authenticated %}<a href="{% url 'accounts:dashboard' %}">Hesabım</a><a href="{% url 'accounts:profile_edit' %}">Profilim</a><a href="{% url 'accounts:verification' %}">Doğrulama</a><a href="{% url 'listings:favorites' %}">Favorilerim</a><a href="{% url 'listings:conversation_list' %}">Mesajlarım</a><a href="{% url 'managed_services:list' %}">Tam Yönetim</a><a href="{% url 'partners:dashboard' %}">Görev Ortağı Paneli</a>{% if user.is_staff %}<a href="{% url 'listings:moderation' %}">Moderasyon</a><a href="{% url 'managed_services:staff_board' %}">Operasyon</a><a href="{% url 'partners:staff_board' %}">Kazanç Ağı Yönetimi</a>{% endif %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="mobile-logout">Çıkış Yap</button></form>{% else %}<a href="{% url 'login' %}">Giriş Yap</a><a href="{% url 'accounts:signup' %}">Ücretsiz Üye Ol</a>{% endif %}
-  </div></div>
+  <div class="market-nav"><div class="shell"><a href="{% url 'listings:list' %}">Tüm ilanlar</a><a href="{% url 'listings:list' %}?kind=product">Ürün & Eşya</a><a href="{% url 'listings:list' %}?kind=vehicle">Araç</a><a href="{% url 'listings:list' %}?kind=real_estate">Emlak</a><a href="{% url 'listings:list' %}?kind=service">Hizmet</a><a href="{% url 'listings:list' %}?kind=job">İş</a><a href="{% url 'listings:list' %}?kind=need">Arıyorum</a></div></div>
+  <div class="mobile-menu" data-mobile-menu><div class="mobile-menu-inner"><a href="{% url 'listings:list' %}">Tüm ilanlar</a><a href="{% url 'listings:favorites' %}">Favoriler</a><a href="{% url 'listings:conversation_list' %}">Mesajlar</a>{% if user.is_authenticated %}<a href="{% url 'accounts:dashboard' %}">Hesabım</a><a href="{% url 'accounts:profile_edit' %}">Profilim</a>{% if user.is_staff %}<a href="{% url 'listings:moderation' %}">Yönetim merkezi</a>{% endif %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="mobile-logout">Çıkış yap</button></form>{% else %}<a href="{% url 'login' %}">Giriş yap</a><a href="{% url 'accounts:signup' %}">Üye ol</a>{% endif %}</div></div>
 </header>
 <main id="main-content">{% if messages %}<div class="message-stack" aria-live="polite">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% block content %}{% endblock %}</main>
-<footer class="site-footer"><div class="shell footer-grid">
-  <div class="footer-brand"><a class="brand brand-footer" href="{% url 'core:home' %}"><span class="brand-mark">İŞ</span><span class="brand-copy"><strong>İlan Şehri</strong><small>Şehrin yeni pazarı</small></span></a><p>Ürün, araç, emlak, hizmet, iş ve yerel ihtiyaçları güvenli ve kolay biçimde buluşturan yeni nesil platform.</p><div class="trust-mini"><span>✓ Şeffaf ücret</span><span>✓ Yerel destek</span><span>✓ Güven odaklı</span></div></div>
-  <div><h4>Keşfet</h4><a href="{% url 'listings:list' %}">Tüm ilanlar</a><a href="{% url 'listings:list' %}?kind=product">Ürün & Eşya</a><a href="{% url 'listings:list' %}?kind=service">Hizmetler</a><a href="{% url 'partners:task_list' %}">İş & Kazanç</a></div>
-  <div><h4>İlan Şehri</h4><a href="{% url 'core:about' %}">Hakkımızda</a><a href="{% url 'core:how_it_works' %}">Nasıl çalışır?</a><a href="{% url 'managed_services:list' %}">Tam Yönetim</a><a href="{% url 'partners:apply' %}">Görev ortağı ol</a></div>
-  <div><h4>Güven & Yasal</h4><a href="{% url 'core:trust' %}">Güven Merkezi</a><a href="{% url 'core:terms' %}">Kullanım Koşulları</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:kvkk' %}">KVKK</a><a href="{% url 'core:cookies' %}">Çerezler</a></div>
-</div><div class="shell footer-bottom"><span>© {% now "Y" %} İlan Şehri. Tüm hakları saklıdır.</span><span>Türkiye için yerel teknoloji · v1.0</span></div></footer>
-<nav class="mobile-bottom-nav" aria-label="Mobil hızlı menü"><a href="{% url 'core:home' %}"><span>⌂</span><small>Ana Sayfa</small></a><a href="{% url 'listings:list' %}"><span>⌕</span><small>Keşfet</small></a><a class="mobile-add" href="{% url 'listings:create' %}"><span>+</span><small>İlan Ver</small></a>{% if user.is_authenticated %}<a href="{% url 'listings:conversation_list' %}" class="mobile-notification"><span>💬</span><small>Mesaj</small>{% if unread_message_count %}<b>{{ unread_message_count }}</b>{% endif %}</a><a href="{% url 'accounts:dashboard' %}"><span>●</span><small>Hesabım</small></a>{% else %}<a href="{% url 'login' %}"><span>●</span><small>Giriş</small></a><a href="{% url 'core:trust' %}"><span>✓</span><small>Güven</small></a>{% endif %}</nav>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("{% url 'core:service_worker' %}").catch(()=>{}));}</script>
-{% block extra_js %}{% endblock %}
-</body></html>
+<footer class="market-footer"><div class="shell market-footer-row"><a class="market-brand footer-logo" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a><div><a href="{% url 'core:trust' %}">Güven</a><a href="{% url 'core:terms' %}">Koşullar</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:about' %}">Hakkımızda</a></div><small>© {% now "Y" %} İlan Şehri</small></div></footer>
+<nav class="market-mobile-nav"><a href="{% url 'core:home' %}"><span>⌂</span><small>Ana sayfa</small></a><a href="{% url 'listings:list' %}"><span>⌕</span><small>Keşfet</small></a><a class="mobile-post" href="{% url 'listings:create' %}"><span>＋</span><small>İlan ver</small></a>{% if user.is_authenticated %}<a href="{% url 'listings:conversation_list' %}"><span>💬</span><small>Mesaj</small></a><a href="{% url 'accounts:dashboard' %}"><span>●</span><small>Hesabım</small></a>{% else %}<a href="{% url 'login' %}"><span>♡</span><small>Favori</small></a><a href="{% url 'login' %}"><span>●</span><small>Giriş</small></a>{% endif %}</nav>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("{% url 'core:service_worker' %}").catch(()=>{}));}</script>{% block extra_js %}{% endblock %}</body></html>

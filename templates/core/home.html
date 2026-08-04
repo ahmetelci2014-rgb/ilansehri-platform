@@ -1,113 +1,60 @@
 {% extends 'base.html' %}
+{% block title %}İlan Şehri — Yakınındaki ilanları keşfet{% endblock %}
 {% block content %}
-<section class="home-hero">
-  <div class="shell hero-grid">
-    <div class="hero-copy">
-      <div class="hero-kicker"><span class="pulse-dot"></span> Şehrindeki her şey, tek uygulamada</div>
-      <h1>Aradığın şey<br><span>sandığından daha yakın.</span></h1>
-      <p>Al, sat, kirala, takas et; usta bul, iş bul veya ihtiyacını ilan et. Süreci kendin yönet ya da profesyonel ekibimize bırak.</p>
-      <form class="hero-search" action="{% url 'listings:list' %}">
-        <div class="search-field search-main">
-          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-          <input name="q" aria-label="Arama" placeholder="Ne arıyorsun? Ev, araç, usta, iş...">
-        </div>
-        <div class="search-field search-location">
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-          <input name="city" aria-label="Şehir" value="{% if user.is_authenticated %}{{ user.city }}{% endif %}" placeholder="Şehir">
-        </div>
-        <button type="submit">Ara</button>
-      </form>
-      <div class="popular-searches"><span>Popüler:</span><a href="{% url 'listings:list' %}?q=kiralık+ev">Kiralık ev</a><a href="{% url 'listings:list' %}?q=usta">Usta</a><a href="{% url 'listings:list' %}?kind=vehicle">Araç</a><a href="{% url 'listings:list' %}?kind=job">İş ilanı</a></div>
-      <div class="hero-buttons"><a class="button button-lg" href="{% url 'listings:create' %}">Ücretsiz İlan Ver <span>→</span></a><a class="text-action" href="{% url 'listings:list' %}"><span class="play-icon">▶</span> İlanları keşfet</a></div>
-      <div class="hero-trust-row">
-        <div><strong>{{ listing_count|default:0 }}+</strong><span>aktif ilan</span></div>
-        <div><strong>0₺</strong><span>doğrudan işlem komisyonu</span></div>
-        <div><strong>7/24</strong><span>ilan erişimi</span></div>
-      </div>
-    </div>
-
-    <div class="hero-showcase" aria-label="İlan Şehri özellikleri">
-      <div class="showcase-glow"></div>
-      <article class="showcase-main-card">
-        <div class="mock-photo mock-photo-home">
-          <span class="mock-badge">İlan Şehri Yönetiyor</span>
-          <div class="mock-house"><span></span><span></span><span></span></div>
-        </div>
-        <div class="mock-content"><small>Kiralık · Karaköprü</small><h3>Şehrin merkezinde modern yaşam</h3><div><strong>Teklif alıyor</strong><span class="verified-dot">✓</span></div></div>
-      </article>
-      <article class="floating-card floating-service"><span class="float-icon">🔧</span><div><small>Yakınında</small><strong>Doğrulanmış ustalar</strong></div><span class="float-arrow">→</span></article>
-      <article class="floating-card floating-offer"><div class="avatar-stack"><span>A</span><span>M</span><span>S</span></div><div><strong>Teklifler gelsin</strong><small>Karşılaştır, karar ver</small></div></article>
-      <article class="floating-rating"><strong>4.9</strong><span>★★★★★</span><small>Güven odaklı deneyim</small></article>
-    </div>
-  </div>
-</section>
-
-<section class="trust-bar">
-  <div class="shell trust-bar-grid">
-    <div><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V7Z"/><path d="m9 12 2 2 4-4"/></svg><span><strong>Güvenli topluluk</strong> Doğrulama ve kayıt sistemi</span></div>
-    <div><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12h18M12 3v18"/><circle cx="12" cy="12" r="9"/></svg><span><strong>Her şey tek yerde</strong> Ürün, hizmet, iş ve ihtiyaç</span></div>
-    <div><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></svg><span><strong>Şeffaf süreç</strong> Teklif ve durum takibi</span></div>
-  </div>
-</section>
-
-<section class="section category-section">
+<section class="market-home-head">
   <div class="shell">
-    <div class="section-heading"><div><span class="section-label">KATEGORİLER</span><h2>Şehrinde ne arıyorsun?</h2><p>Binlerce ihtiyacı tek bir yerel ağda buluşturuyoruz.</p></div><a class="see-all" href="{% url 'listings:list' %}">Tüm kategoriler <span>→</span></a></div>
-    <div class="category-cards">
-      <a class="category-card cat-product" href="{% url 'listings:list' %}?kind=product"><span class="category-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16v13H4Z"/><path d="M8 7a4 4 0 0 1 8 0M9 12h6"/></svg></span><strong>Ürün & Eşya</strong><small>Sıfır, ikinci el, kiralık</small><span class="category-arrow">→</span></a>
-      <a class="category-card cat-estate" href="{% url 'listings:list' %}?kind=real_estate"><span class="category-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v10H3Z"/><path d="M9 21v-6h6v6"/></svg></span><strong>Emlak</strong><small>Satılık, kiralık, arıyorum</small><span class="category-arrow">→</span></a>
-      <a class="category-card cat-vehicle" href="{% url 'listings:list' %}?kind=vehicle"><span class="category-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 16-1-4 2-5h12l2 5-1 4Z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M6 12h12"/></svg></span><strong>Araç</strong><small>Otomobil, motosiklet, ticari</small><span class="category-arrow">→</span></a>
-      <a class="category-card cat-service" href="{% url 'listings:list' %}?kind=service"><span class="category-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-2.4 2.4-3-3Z"/></svg></span><strong>Hizmet</strong><small>Usta, bakım, taşıma, eğitim</small><span class="category-arrow">→</span></a>
-      <a class="category-card cat-need" href="{% url 'listings:list' %}?kind=need"><span class="category-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 1-1 1.7v.5M12 17h.01"/></svg></span><strong>İhtiyacım Var</strong><small>Talebini yaz, teklifler gelsin</small><span class="category-arrow">→</span></a>
-      <a class="category-card cat-job" href="{% url 'listings:list' %}?kind=job"><span class="category-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2"/></svg></span><strong>İş & Kazanç</strong><small>İş bul, çalışan bul, görev al</small><span class="category-arrow">→</span></a>
+    <form class="market-searchbar" action="{% url 'listings:list' %}">
+      <div class="market-search-main"><span>⌕</span><input name="q" placeholder="Telefon, araba, ev, koltuk, usta ara..."></div>
+      <div class="market-search-city"><span>⌖</span><input name="city" value="{% if user.is_authenticated %}{{ user.city }}{% endif %}" placeholder="Şehir veya ilçe"></div>
+      <button type="submit">Ara</button>
+    </form>
+    <div class="market-quick-links">
+      <span>Popüler:</span>
+      <a href="{% url 'listings:list' %}?q=telefon">Telefon</a>
+      <a href="{% url 'listings:list' %}?kind=vehicle">Otomobil</a>
+      <a href="{% url 'listings:list' %}?kind=real_estate&action=rent">Kiralık ev</a>
+      <a href="{% url 'listings:list' %}?kind=service">Usta & hizmet</a>
     </div>
   </div>
 </section>
 
-{% if latest_listings %}
-<section class="section listings-section">
+<section class="market-category-strip">
   <div class="shell">
-    <div class="section-heading"><div><span class="section-label">YENİ EKLENENLER</span><h2>Şehrindeki son fırsatlar</h2><p>Yeni ilanları kaçırmadan keşfet.</p></div><a class="see-all" href="{% url 'listings:list' %}">Tüm ilanları gör <span>→</span></a></div>
-    <div class="listing-grid premium-grid">
-      {% for listing in latest_listings %}
-        <a class="listing-card premium-card" href="{{ listing.get_absolute_url }}">
-          <div class="card-media">
-            {% with cover=listing.images.first %}
-              {% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}
-            {% endwith %}
-            <span class="card-action-badge">{{ listing.get_action_display }}</span>
-            {% if listing.management_mode == 'full' %}<span class="managed-pin">✓ Yönetilen İlan</span>{% endif %}
-          </div>
-          <div class="listing-body">
-            <div class="card-location"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>{{ listing.city }} · {{ listing.district }}</div>
-            <h3>{{ listing.title }}</h3>
-            <div class="card-footer"><strong>{% if listing.price_on_request %}Teklif Alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><span>{{ listing.created_at|timesince }} önce</span></div>
-          </div>
-        </a>
-      {% endfor %}
+    <div class="market-section-head compact"><div><h2>Kategoriler</h2><p>Aradığını hızlıca bul</p></div><a href="{% url 'listings:list' %}">Tümünü gör →</a></div>
+    <div class="market-categories">
+      <a href="{% url 'listings:list' %}?kind=product"><span>📱</span><b>Elektronik</b></a>
+      <a href="{% url 'listings:list' %}?kind=vehicle"><span>🚗</span><b>Araç</b></a>
+      <a href="{% url 'listings:list' %}?kind=real_estate"><span>🏠</span><b>Emlak</b></a>
+      <a href="{% url 'listings:list' %}?q=ev+eşyası"><span>🛋️</span><b>Ev & Yaşam</b></a>
+      <a href="{% url 'listings:list' %}?q=giyim"><span>👗</span><b>Moda</b></a>
+      <a href="{% url 'listings:list' %}?kind=service"><span>🛠️</span><b>Hizmet</b></a>
+      <a href="{% url 'listings:list' %}?kind=job"><span>💼</span><b>İş</b></a>
+      <a href="{% url 'listings:list' %}?kind=need"><span>📣</span><b>Arıyorum</b></a>
     </div>
   </div>
 </section>
-{% endif %}
 
-<section class="section managed-section">
-  <div class="shell managed-banner">
-    <div class="managed-copy"><span class="managed-label">İLAN ŞEHRİ TAM YÖNETİM</span><h2>İlanla uğraşma.<br>Biz senin için yönetelim.</h2><p>Fotoğraf, fiyat araştırması, ilan hazırlama, mesajlar, teklifler ve randevular… Sürecin her adımını şeffaf ve uygun ücretle üstleniyoruz.</p><div class="managed-features"><span>✓ Profesyonel ilan hazırlama</span><span>✓ Ciddi alıcı filtreleme</span><span>✓ Mesaj ve teklif yönetimi</span><span>✓ Randevu koordinasyonu</span></div><a class="button button-light" href="{% url 'listings:create' %}">İlan Şehri yönetsin <span>→</span></a></div>
-    <div class="managed-visual"><div class="process-card process-one"><span>01</span><div><strong>İlanını hazırlarız</strong><small>Fotoğraf, metin ve fiyat analizi</small></div><b>✓</b></div><div class="process-line"></div><div class="process-card process-two"><span>02</span><div><strong>Teklifleri yönetiriz</strong><small>Ciddi alıcıları ayıklarız</small></div><b>✓</b></div><div class="process-line"></div><div class="process-card process-three"><span>03</span><div><strong>Sonuca ulaştırırız</strong><small>Randevu ve süreç takibi</small></div><b>✓</b></div></div>
+<section class="market-feed shell">
+  <div class="market-section-head"><div><h2>Yeni eklenen ilanlar</h2><p>Şehrindeki en yeni fırsatlar</p></div><a href="{% url 'listings:list' %}?sort=newest">Tüm ilanlar →</a></div>
+  <div class="market-card-grid">
+    {% for listing in latest_listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}
+      <div class="market-empty"><span>📦</span><h3>Henüz ilan yok</h3><p>İlk ilanı sen yayınla.</p><a class="button" href="{% url 'listings:create' %}">İlan ver</a></div>
+    {% endfor %}
   </div>
 </section>
 
-<section class="section how-section">
-  <div class="shell">
-    <div class="center-heading"><span class="section-label">3 KOLAY ADIM</span><h2>İlan vermek bu kadar kolay</h2><p>Dakikalar içinde şehrine ulaş.</p></div>
-    <div class="steps-grid"><article><span class="step-number">01</span><div class="step-icon">📸</div><h3>Fotoğrafını ekle</h3><p>Ürününü, hizmetini veya ihtiyacını fotoğraf ve kısa bilgilerle anlat.</p></article><article><span class="step-number">02</span><div class="step-icon">✨</div><h3>İlanını yayınla</h3><p>Kendin yönet veya profesyonel yönetim seçeneğini işaretle.</p></article><article><span class="step-number">03</span><div class="step-icon">🤝</div><h3>Teklifleri değerlendir</h3><p>Şehrindeki kişilerden gelen teklifleri karşılaştır ve anlaş.</p></article></div>
-  </div>
+<section class="market-sell-banner shell">
+  <div><span class="market-banner-icon">＋</span><div><h3>Satmak istediğin bir şey mi var?</h3><p>Fotoğrafını ekle, fiyatını yaz ve dakikalar içinde yayınla.</p></div></div>
+  <a href="{% url 'listings:create' %}">Ücretsiz ilan ver</a>
 </section>
 
-<section class="section earnings-section">
-  <div class="shell earnings-card">
-    <div><span class="section-label light-label">İLAN ŞEHRİ KAZANÇ AĞI</span><h2>Şehrindeki ilanlara destek ol,<br>ek gelir kazan.</h2><p>Fotoğraf çekimi, ilan hazırlama, fiyat araştırması, randevu desteği ve yerel görevleri tamamlayarak kazanç elde et.</p><a class="button button-warm" href="{% url 'accounts:signup' %}">Görev ortağı olarak katıl <span>→</span></a></div>
-    <div class="earnings-badges"><span>📷 İlan fotoğrafı</span><span>📝 İlan hazırlama</span><span>📊 Fiyat araştırması</span><span>📍 Yerel destek</span><span>💬 Mesaj yönetimi</span><span>🤝 Randevu desteği</span></div>
+<section class="market-feed shell market-feed-last">
+  <div class="market-section-head"><div><h2>Şehrinde keşfet</h2><p>Ürün, araç, emlak, hizmet ve daha fazlası</p></div><a href="{% url 'listings:list' %}">Keşfet →</a></div>
+  <div class="market-discovery-row">
+    <a href="{% url 'listings:list' %}?sort=popular"><span>🔥</span><div><b>Popüler ilanlar</b><small>En çok ilgi görenler</small></div></a>
+    <a href="{% url 'listings:list' %}?verified=1"><span>✓</span><div><b>Doğrulanmış satıcılar</b><small>Daha güvenli alışveriş</small></div></a>
+    <a href="{% url 'listings:list' %}?managed=1"><span>🛡️</span><div><b>Yönetilen ilanlar</b><small>İlan Şehri desteğiyle</small></div></a>
+    <a href="{% url 'listings:favorites' %}"><span>♡</span><div><b>Favorilerin</b><small>Kaydettiğin ilanlar</small></div></a>
   </div>
 </section>
 {% endblock %}
