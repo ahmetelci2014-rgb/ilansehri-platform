@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from apps.accounts.models import AccountClosureRequest, User, UserFollow
+from apps.ai_listing.models import AIAnalysis, AISettings
 from apps.listings.models import Favorite, Listing, ListingPriceHistory, ListingReport, Offer, Review, Transaction
 from apps.managed_services.models import ManagedRequest
 from apps.partners.models import PartnerProfile, Task
@@ -173,6 +174,18 @@ class StaffDashboardView(UserPassesTestMixin, TemplateView):
             .order_by("-total", "city")[:6]
         )
 
+        ai_config = AISettings.objects.filter(singleton_key=1).first()
+        ai_today = AIAnalysis.objects.filter(created_at__date=today)
+        context["ai_operations"] = {
+            "enabled": bool(ai_config and ai_config.is_enabled),
+            "provider": ai_config.get_provider_display() if ai_config else "Kurulmadı",
+            "today": ai_today.count(),
+            "failed_today": ai_today.filter(status=AIAnalysis.Status.FAILED).count(),
+            "blocked_today": ai_today.filter(status=AIAnalysis.Status.BLOCKED).count(),
+            "success_rate": ai_config.success_rate if ai_config else 0,
+            "average_duration_ms": ai_config.average_duration_ms if ai_config else 0,
+        }
+
         context.update(
             {
                 "stats": {
@@ -236,7 +249,7 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.11"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.12.1"})
 
 
 def robots_txt(request):
@@ -251,6 +264,7 @@ def robots_txt(request):
         "Disallow: /yardim/taleplerim/",
         "Disallow: /yardim/ekip/",
         "Disallow: /ilanlar/taslaklarim/",
+        "Disallow: /ilanlar/yapay-zeka/",
         "Disallow: /ilanlar/mesajlar/",
         "Disallow: /ilanlar/bildirimler/",
         "Disallow: /ilanlar/tekliflerim/",
@@ -289,9 +303,9 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v111";
-const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/css/v111-operations.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/js/v111-operations.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
-const PRIVATE_PREFIXES = ["/hesap/", "/yardim/talep/", "/yardim/taleplerim/", "/yardim/ekip/", "/ilanlar/taslaklarim/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
+const CACHE = "ilansehri-v1121";
+const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/css/v111-operations.css", "/static/css/v112-ai.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/js/v111-operations.js", "/static/js/v112-ai.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
+const PRIVATE_PREFIXES = ["/hesap/", "/yardim/talep/", "/yardim/taleplerim/", "/yardim/ekip/", "/ilanlar/taslaklarim/", "/ilanlar/yapay-zeka/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener("fetch", event => {

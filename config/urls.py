@@ -15,6 +15,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("hesap/", include("django.contrib.auth.urls")),
     path("hesap/", include("apps.accounts.urls")),
+    path("ilanlar/yapay-zeka/", include("apps.ai_listing.urls")),
     path("ilanlar/", include("apps.listings.urls")),
     path("tam-yonetim/", include("apps.managed_services.urls")),
     path("kazanc-agi/", include("apps.partners.urls")),

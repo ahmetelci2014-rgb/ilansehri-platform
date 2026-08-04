@@ -22,8 +22,8 @@ jobs:
         run: python -m compileall -q .
       - name: Migration üret ve uygula
         run: |
-          python manage.py makemigrations accounts listings managed_services partners support_center --noinput
-          python manage.py makemigrations accounts listings managed_services partners support_center --check --dry-run
+          python manage.py makemigrations accounts listings managed_services partners support_center ai_listing --noinput
+          python manage.py makemigrations accounts listings managed_services partners support_center ai_listing --check --dry-run
           python manage.py migrate --noinput
       - name: Kategorileri ve bakım komutunu doğrula
         run: |

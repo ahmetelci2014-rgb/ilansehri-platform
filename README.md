@@ -1,4 +1,4 @@
-# İlan Şehri v1.11 — Bildirim ve Moderasyon Operasyonu
+# İlan Şehri v1.12.1 — Yapay Zekâ İlan Çekirdeği
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -124,3 +124,7 @@ python manage.py send_notification_digests
 ```
 
 Ayrıntılar: `docs/NOTIFICATION_MODERATION.md`
+
+## v1.12.1 yapay zekâ ilan çekirdeği
+
+Yapay zekâ ilan asistanının güvenli servis, limit, görsel hazırlama, kontrollü JSON ve denetim kayıt altyapısı `apps.ai_listing` içinde ayrı tutulur. Özellik varsayılan olarak kapalıdır. Test sağlayıcısı gerçek görsel tanıma yapmaz; canlı sağlayıcı bağlantısı sonraki güvenli aşamada açılır. Ayrıntılar: `docs/AI_LISTING_CORE.md`.

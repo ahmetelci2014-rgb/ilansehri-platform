@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load ai_listing_tags %}
+{% ai_listing_config as ai_config %}
 {% block title %}{% if object %}İlanı Düzenle{% else %}Ücretsiz İlan Ver{% endif %} — İlan Şehri{% endblock %}
 {% block content %}
 <section class="v16-wizard-page">
@@ -14,6 +16,7 @@
   <div class="v16-wizard-card">
     <form method="post" enctype="multipart/form-data" class="v16-wizard-main" data-v16-wizard data-listing-form {% if not object and not server_draft %}data-v18-draft-key="listing-create-v18"{% endif %} data-location-url="{% url 'listings:location_suggestions' %}">
       {% csrf_token %}{{ form.non_field_errors }}
+      <input type="hidden" name="ai_analysis_id" value="{{ request.POST.ai_analysis_id|default:'' }}" data-ai-analysis-id>
       {% if server_draft %}<input type="hidden" name="draft_id" value="{{ server_draft.pk }}">{% endif %}
       <nav class="v16-stepper" aria-label="İlan oluşturma adımları">
         <button type="button" data-v16-step="1"><span>1</span>Tür</button><button type="button" data-v16-step="2"><span>2</span>Temel bilgiler</button><button type="button" data-v16-step="3"><span>3</span>Ayrıntılar</button><button type="button" data-v16-step="4"><span>4</span>Konum</button><button type="button" data-v16-step="5"><span>5</span>Fotoğraflar</button>
@@ -46,6 +49,13 @@
       <section class="v16-wizard-section" data-v16-section="5">
         <div class="v16-step-head"><span>05</span><div><h2>Fotoğrafları ekle ve yayınla</h2><p>Aydınlık, net ve farklı açılardan çekilmiş fotoğraflar daha fazla mesaj getirir.</p></div></div>
         <div class="v16-field-grid"><div class="field field-wide">{{ form.images.label_tag }}{{ form.images }}{% if form.images.help_text %}<small>{{ form.images.help_text }}</small>{% endif %}{% for error in form.images.errors %}<div class="field-error">{{ error }}</div>{% endfor %}<div class="image-preview-grid" data-image-preview></div></div></div>
+        {% if not object and ai_config.enabled %}<div class="ai-listing-assistant" data-ai-listing-assistant data-analyze-url="{% url 'ai_listing:analyze' %}" data-max-images="{{ ai_config.max_images }}" hidden>
+          <div class="ai-listing-head"><span>✦</span><div><h3>Yapay Zekâ ile İlan Hazırla</h3><p>Fotoğraflar güvenli biçimde küçültülür; başlık, açıklama ve ürün bilgileri öneri olarak hazırlanır.</p></div></div>
+          <button type="button" class="ai-listing-button" data-ai-analyze>✦ Yapay Zekâ ile İlan Hazırla</button>
+          <div class="ai-listing-progress" data-ai-progress hidden><i class="ai-listing-spinner"></i><span>Fotoğraflar inceleniyor, ilanınız hazırlanıyor…</span></div>
+          <div class="ai-listing-result" data-ai-result aria-live="polite"></div>
+          <small class="ai-listing-disclaimer">Yapay zekâ sonucu doğrudan yayınlanmaz. Emin olunmayan bilgiler forma yazılmaz ve son karar her zaman kullanıcıya aittir.</small>
+        </div>{% endif %}
         {% if object and object.images.exists %}<div class="v16-existing-images" data-sortable-images>{% for image in object.images.all %}<article data-image-id="{{ image.pk }}"><img src="{{ image.image.url }}" alt="{{ image.alt_text }}"><span>{% if image.is_cover %}Kapak fotoğrafı{% else %}{{ forloop.counter }}. fotoğraf{% endif %}</span><div><button type="submit" formaction="{% url 'listings:set_cover_image' object.slug image.pk %}" formmethod="post" formnovalidate>Kapak yap</button><button type="submit" formaction="{% url 'listings:delete_image' object.slug image.pk %}" formmethod="post" formnovalidate class="danger-link">Sil</button></div></article>{% endfor %}</div><input type="hidden" name="image_order" data-image-order><button type="submit" class="button secondary image-order-save" formaction="{% url 'listings:reorder_images' object.slug %}" formmethod="post" formnovalidate data-image-order-submit>Fotoğraf sırasını kaydet</button>{% endif %}
         <div class="v16-choice-help"><b>Yayın öncesi kontrol:</b> İlan bilgilerin güvenlik ekibi tarafından incelenir. Yanıltıcı, yasaklı veya başka kişilere ait içerikler yayınlanmaz.</div>
       </section>

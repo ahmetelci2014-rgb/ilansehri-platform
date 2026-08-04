@@ -1,0 +1,35 @@
+İLAN ŞEHRİ v1.12.1 — YAPAY ZEKÂ İLAN ÇEKİRDEĞİ
+
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.12.1 yapay zekâ çekirdeği
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+
+YÖNETİM
+- Teknik Admin > Yapay Zekâ İlan Asistanı > Yapay Zekâ Ayarları
+- Profesyonel Yönetim Merkezi: /yonetim/
+- Analiz kayıtları teknik admin altında görünür.
+
+GÜVENLİ TEST
+- Özellik varsayılan olarak kapalıdır.
+- Test sağlayıcısı gerçek görsel tanıma yapmaz ve yalnız personel hesabında görünür.
+- Gerçek API anahtarı bu pakete yazılmamıştır.
+- Harici servis için .env:
+  AI_LISTING_API_URL=
+  AI_LISTING_API_KEY=
+  AI_LISTING_MODEL=vision-model
+
+ÖNEMLİ
+- Bu sürüm AISettings, AIAnalysis ve AIFieldChange modellerini ekler.
+- scripts/start_codespace.sh migrationları otomatik üretip uygular.
+- Mevcut ilan verme akışı AI kapalıyken değişmeden çalışır.
+- Gerçek sağlayıcıya özel bağlantı V1.12.2 aşamasında yapılacaktır.

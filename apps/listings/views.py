@@ -738,6 +738,14 @@ class ListingCreateView(LoginRequiredMixin, CreateView):
         )
         response = super().form_valid(form)
         _save_images(self.object, form.cleaned_data.get("images", []))
+        analysis_id = self.request.POST.get("ai_analysis_id", "").strip()
+        if analysis_id:
+            try:
+                from apps.ai_listing.services.analysis import record_analysis_application
+                record_analysis_application(analysis_id=analysis_id, user=self.request.user, listing=self.object)
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception("AI analiz uygulama kaydı oluşturulamadı.")
         if self.object.management_mode == Listing.ManagementMode.FULL:
             ManagedRequest.objects.get_or_create(
                 listing=self.object,

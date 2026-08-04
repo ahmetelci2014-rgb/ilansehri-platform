@@ -12,16 +12,16 @@ else
   printf '\nAUTO_PUBLISH_LISTINGS=False\n' >> .env
 fi
 
-python manage.py makemigrations accounts listings managed_services partners support_center --noinput
+python manage.py makemigrations accounts listings managed_services partners support_center ai_listing --noinput
 python manage.py migrate --noinput
 python manage.py seed_categories
 python manage.py collectstatic --noinput
 python manage.py check
 
 if pgrep -f "python manage.py runserver 0.0.0.0:8000" >/dev/null 2>&1; then
-  echo "İlan Şehri v1.11 sunucusu zaten çalışıyor."
+  echo "İlan Şehri v1.12.1 sunucusu zaten çalışıyor."
   exit 0
 fi
 
 nohup python manage.py runserver 0.0.0.0:8000 > /tmp/ilansehri-django.log 2>&1 &
-echo "İlan Şehri v1.11 başlatıldı: port 8000"
+echo "İlan Şehri v1.12.1 başlatıldı: port 8000"

@@ -1,0 +1,8 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+{% block object-tools-items %}
+  {% if change %}
+    <li><a href="{% url 'admin:ai_listing_aisettings_connection_test' %}" class="historylink">API bağlantısını test et</a></li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
