@@ -39,3 +39,16 @@
 - Hesabım panelinde yeni ilan yönetim kontrolleri
 - Gelen teklifler, favoriler ve son konuşmaların panelde gösterimi
 - Yetki ve gizlilik testleri
+
+## v0.6 — Konum, kategori detayları ve güven merkezi
+
+- Türkiye genelinde şehir seçimi eklendi.
+- İlçe ve mahalle için otomatik öneri sistemi hazırlandı; katalog dışı konumlar serbestçe yazılabilir.
+- Araç ilanlarına marka, model, yıl, kilometre, yakıt ve vites alanları eklendi.
+- Emlak ilanlarına oda, metrekare, bina yaşı, kat ve ısıtma alanları eklendi.
+- Hizmet ve iş ilanlarına hizmet bölgesi, ücret tipi, çalışma şekli ve deneyim alanları eklendi.
+- İlan listesine fiyat, marka, model, yıl, kilometre, oda ve metrekare filtreleri eklendi.
+- Teklif, mesaj ve moderasyon sonuçlarını gösteren bildirim merkezi eklendi.
+- Kullanıcı şikâyet sistemi ve tekrar şikâyet koruması eklendi.
+- Yetkili kullanıcılar için ilan onay/red ve şikâyet yönetim paneli eklendi.
+- İncelemedeki ilanların sahibine görünmesi ve moderasyonun kullanıcı tarafından atlanamaması sağlandı.
