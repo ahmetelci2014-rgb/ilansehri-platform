@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Bildirimlerim | İlan Şehri{% endblock %}
+{% block content %}
+<section class="page-hero compact-page-hero"><div class="shell"><span class="section-label light-label">BİLDİRİM MERKEZİ</span><h1>Gelişmeleri tek yerde takip et</h1><p>Yeni mesaj, teklif ve ilan inceleme sonuçların burada görünür.</p></div></section>
+<section class="section"><div class="shell narrow-shell">
+  <div class="notification-page-head"><div><span class="section-label">BİLDİRİMLER</span><h2>{{ page_obj.paginator.count }} kayıt</h2></div>{% if unread_notification_count %}<form method="post" action="{% url 'listings:mark_all_notifications_read' %}">{% csrf_token %}<button class="button secondary" type="submit">Tümünü Okundu Yap</button></form>{% endif %}</div>
+  <div class="notification-list">
+    {% for notification in notifications %}
+      <article class="notification-row {% if not notification.is_read %}unread{% endif %}">
+        <span class="notification-type-icon">{% if notification.notification_type == 'message' %}✉️{% elif notification.notification_type == 'offer' %}💬{% elif notification.notification_type == 'listing_status' %}🛡️{% else %}🔔{% endif %}</span>
+        <div class="notification-copy"><strong>{{ notification.title }}</strong>{% if notification.body %}<p>{{ notification.body }}</p>{% endif %}<small>{{ notification.created_at|timesince }} önce</small></div>
+        {% if notification.is_read %}{% if notification.link %}<a class="notification-open" href="{{ notification.link }}">Aç →</a>{% endif %}{% else %}<form method="post" action="{% url 'listings:mark_notification_read' notification.pk %}">{% csrf_token %}<button class="notification-open" type="submit">Oku →</button></form>{% endif %}
+      </article>
+    {% empty %}<div class="empty-state"><div class="empty-icon">🔔</div><h3>Henüz bildirimin yok</h3><p>Mesaj, teklif ve ilan durumu gelişmeleri burada görünecek.</p></div>{% endfor %}
+  </div>
+  {% if is_paginated %}<nav class="pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Sonraki →</a>{% endif %}</nav>{% endif %}
+</div></section>
+{% endblock %}
