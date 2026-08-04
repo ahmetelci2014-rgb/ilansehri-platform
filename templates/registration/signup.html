@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Ücretsiz Üye Ol | İlan Şehri{% endblock %}
+{% block content %}
+<section class="form-page">
+  <span class="eyebrow">ŞEHRİNE KATIL</span>
+  <h1>Ücretsiz hesap oluştur</h1>
+  <p>İlan ver, teklif al, hizmet bul veya görev ortağı olarak ek gelir kazan.</p>
+  <form method="post" class="panel-form form-grid">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="field {% if field.name == 'password1' or field.name == 'password2' %}field-half{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<small>{{ field.help_text|safe }}</small>{% endif %}
+        {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    {% for error in form.non_field_errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    <button class="button full">Hesabımı Oluştur</button>
+  </form>
+  <p class="form-foot">Zaten hesabın var mı? <a href="{% url 'login' %}">Giriş yap</a></p>
+</section>
+{% endblock %}
