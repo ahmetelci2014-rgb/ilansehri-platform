@@ -475,6 +475,36 @@ class SavedSearch(models.Model):
         return f"{self.user} · {self.name}"
 
 
+class ListingDraft(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="listing_drafts",
+        on_delete=models.CASCADE,
+    )
+    title = models.CharField(max_length=180, blank=True)
+    data = models.JSONField(default=dict)
+    source_listing = models.ForeignKey(
+        Listing,
+        related_name="draft_revisions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at",)
+        indexes = [models.Index(fields=["user", "-updated_at"])]
+
+    @property
+    def display_title(self) -> str:
+        return self.title.strip() or "İsimsiz taslak"
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.display_title}"
+
+
 class Conversation(models.Model):
     listing = models.ForeignKey(Listing, related_name="conversations", on_delete=models.CASCADE)
     buyer = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="buying_conversations", on_delete=models.CASCADE)

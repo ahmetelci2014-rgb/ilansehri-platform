@@ -1,12 +1,17 @@
-# v1.8 — Canlı Tasarım ve Eksik Tamamlama
+# İlan Şehri v1.9 — Kullanıcı Akışları ve Hesap Güvenliği
 
-- Mavi–turuncu canlı marketplace renk sistemi
-- Ortak buton, form, kart, boş durum ve bildirim düzeni
-- Yeni ilan formunda yerel otomatik taslak koruması
-- Hesabım profil tamamlama puanı ve yönlendirmeleri
-- Hızlı keşif bağlantıları ve daha açıklayıcı sonuç ekranı
-- Mobil başlık, kart, filtre, detay ve form iyileştirmeleri
-- PWA önbellek v1.8 yenilemesi
+- İlan formuna hesaba bağlı sunucu taslağı kaydetme eklendi.
+- Taslaklar başka cihazdan açılabilir, düzenlemeye devam edilebilir ve silinebilir.
+- Yeni ilan ve mevcut ilan düzenleme taslakları birbirinden ayrıldı.
+- Hesabım paneline taslak sayacı, taslak listesi ve hızlı devam bağlantıları eklendi.
+- Şifremi unuttum, e-posta gönderildi, yeni şifre, şifre değiştir ve tamamlandı ekranları eklendi.
+- Giriş ekranına şifre yenileme bağlantısı eklendi.
+- Hesap ve Güvenlik merkezi eklendi.
+- Kullanıcı kendi profil, ilan, teklif, işlem, mesaj, favori ve arama verilerini JSON olarak indirebilir.
+- Şifre doğrulamalı hesap kapatma talebi ve talebi iptal etme akışı eklendi.
+- Yönetici tarafına hesap kapatma talepleri ve ilan taslakları yönetimi eklendi.
+- PWA önbelleği v1.9 olarak yenilendi; özel taslak sayfası çevrimdışı önbellekten çıkarıldı.
+- Taslak sahipliği, veri dışa aktarma, hesap kapatma ve şifre yenileme için otomatik testler eklendi.
 
 # İlan Şehri v1.7 — Yayına Hazırlık, SEO ve İlan Kalitesi
 

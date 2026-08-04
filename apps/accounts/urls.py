@@ -1,13 +1,17 @@
 from django.urls import path
 
 from .views import (
+    AccountSettingsView,
     DashboardView,
     FollowingListView,
     ProfileEditView,
     PublicProfileView,
     SignUpView,
     VerificationCenterView,
+    cancel_account_closure,
     confirm_verification,
+    export_account_data,
+    request_account_closure,
     start_verification,
     toggle_block,
     toggle_follow,
@@ -19,6 +23,10 @@ urlpatterns = [
     path("kayit/", SignUpView.as_view(), name="signup"),
     path("hesabim/", DashboardView.as_view(), name="dashboard"),
     path("profilim/", ProfileEditView.as_view(), name="profile_edit"),
+    path("ayarlar/", AccountSettingsView.as_view(), name="settings"),
+    path("ayarlar/verilerimi-indir/", export_account_data, name="export_data"),
+    path("ayarlar/hesap-kapatma/", request_account_closure, name="request_closure"),
+    path("ayarlar/hesap-kapatma/iptal/", cancel_account_closure, name="cancel_closure"),
     path("takip-ettiklerim/", FollowingListView.as_view(), name="following"),
     path("dogrulama/", VerificationCenterView.as_view(), name="verification"),
     path("dogrulama/baslat/", start_verification, name="verification_start"),

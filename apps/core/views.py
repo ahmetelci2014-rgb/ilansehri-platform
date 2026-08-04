@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import TemplateView
 
-from apps.accounts.models import User, UserFollow
+from apps.accounts.models import AccountClosureRequest, User, UserFollow
 from apps.listings.models import Favorite, Listing, ListingPriceHistory, ListingReport, Offer, Review, Transaction
 from apps.managed_services.models import ManagedRequest
 from apps.partners.models import PartnerProfile, Task
@@ -190,6 +190,9 @@ class StaffDashboardView(UserPassesTestMixin, TemplateView):
                     "open_tasks": Task.objects.exclude(
                         status__in=[Task.Status.COMPLETED, Task.Status.CANCELLED]
                     ).count(),
+                    "closure_requests": AccountClosureRequest.objects.filter(
+                        status=AccountClosureRequest.Status.PENDING
+                    ).count(),
                 },
                 "day_rows": day_rows,
                 "pending_listing_rows": Listing.objects.filter(status=Listing.Status.REVIEW)
@@ -212,6 +215,9 @@ class StaffDashboardView(UserPassesTestMixin, TemplateView):
                 )
                 .select_related("managed_request__listing", "assigned_partner__user")[:6],
                 "recent_users": User.objects.order_by("-date_joined")[:8],
+                "closure_rows": AccountClosureRequest.objects.filter(
+                    status=AccountClosureRequest.Status.PENDING
+                ).select_related("user")[:8],
             }
         )
         return context
@@ -222,7 +228,7 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.7"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.9"})
 
 
 def robots_txt(request):
@@ -233,6 +239,7 @@ def robots_txt(request):
         "Disallow: /admin/",
         "Disallow: /yonetim/",
         "Disallow: /hesap/",
+        "Disallow: /ilanlar/taslaklarim/",
         "Disallow: /ilanlar/mesajlar/",
         "Disallow: /ilanlar/bildirimler/",
         "Disallow: /ilanlar/tekliflerim/",
@@ -270,9 +277,9 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v18";
-const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
-const PRIVATE_PREFIXES = ["/hesap/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
+const CACHE = "ilansehri-v19";
+const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
+const PRIVATE_PREFIXES = ["/hesap/", "/ilanlar/taslaklarim/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener("fetch", event => {

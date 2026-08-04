@@ -1,4 +1,4 @@
-# İlan Şehri v1.3 — Pazarlık, Fiyat Takibi ve Satıcı Ağı
+# İlan Şehri v1.9 — Kullanıcı Akışları ve Hesap Güvenliği
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -85,13 +85,13 @@ Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler 
 Bu sürüm sitemap, robots, sosyal paylaşım meta verileri, ilan kalite puanı, fotoğraf optimizasyonu, anti-spam koruması ve yönetim büyüme raporlarını ekler. Canlı ortamda `PUBLIC_BASE_URL=https://alanadiniz.com` tanımlanması önerilir.
 
 
-## v1.8 canlı tasarım ve eksik tamamlama
+## v1.9 kullanıcı akışları ve hesap güvenliği
 
-- Ana marka rengi canlı mavi, ana aksiyon rengi turuncu olarak yenilendi.
-- Başlık, arama, kategori, ilan kartı, form, hesap ve yönetim ekranları ortak tasarım diline alındı.
-- Yeni ilan formuna tarayıcı tabanlı otomatik taslak koruması eklendi.
-- Hesabım ekranına profil tamamlama puanı ve adım listesi eklendi.
-- Sonuç bulunamayan aramalara yönlendirici seçenekler eklendi.
-- Bildirim kapatma, form gönderme geri bildirimi, aktif menü ve sayfa başına dönme yardımcıları eklendi.
-
-Bu sürüm veritabanı alanı eklemez; migration gerektirmez.
+- Hesaba bağlı, cihazlar arasında erişilebilen ilan taslakları
+- Yeni ilan ve ilan düzenleme taslağını kaydetme, sürdürme ve silme
+- Eksiksiz şifremi unuttum ve şifre değiştirme ekranları
+- Hesap ve Güvenlik merkezi
+- Hesap verilerini JSON olarak indirme
+- Şifre doğrulamalı hesap kapatma talebi ve talebi iptal etme
+- Hesabım ekranında taslak sayısı ve hızlı taslak erişimi
+- PWA özel sayfa önbellek güvenliği ve v1.9 önbellek sürümü

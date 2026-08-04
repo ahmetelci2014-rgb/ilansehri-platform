@@ -6,10 +6,13 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Count, Q
 from django.db.models.functions import Coalesce
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -29,8 +32,14 @@ from apps.listings.models import (
 from apps.listings.services import assess_listing_quality, create_notification
 
 from .delivery import send_phone_verification_code
-from .forms import ProfileForm, SignUpForm, VerificationConfirmForm, VerificationStartForm
-from .models import User, UserBlock, UserFollow, VerificationCode
+from .forms import (
+    AccountClosureForm,
+    ProfileForm,
+    SignUpForm,
+    VerificationConfirmForm,
+    VerificationStartForm,
+)
+from .models import AccountClosureRequest, User, UserBlock, UserFollow, VerificationCode
 
 
 class SignUpView(CreateView):
@@ -90,6 +99,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["unread_message_count"] = sum(item.unread_count for item in context["conversations"])
         context["recent_notifications"] = Notification.objects.filter(user=user)[:8]
         context["unread_notification_count"] = Notification.objects.filter(user=user, is_read=False).count()
+        context["listing_drafts"] = user.listing_drafts.select_related("source_listing")[:5]
+        context["draft_count"] = user.listing_drafts.count()
         profile_steps = [
             {
                 "label": "Ad ve soyadını ekle",
@@ -140,6 +151,135 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             None,
         )
         return context
+
+
+class AccountSettingsView(LoginRequiredMixin, TemplateView):
+    template_name = "accounts/settings.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        request_item = AccountClosureRequest.objects.filter(user=self.request.user).first()
+        context["closure_request"] = request_item
+        context["closure_form"] = AccountClosureForm(user=self.request.user)
+        return context
+
+
+@login_required
+def export_account_data(request):
+    user = request.user
+    conversations = []
+    for conversation in (
+        Conversation.objects.filter(Q(buyer=user) | Q(seller=user))
+        .select_related("listing", "buyer", "seller")
+        .prefetch_related("messages__sender")
+    ):
+        conversations.append(
+            {
+                "listing": conversation.listing.title,
+                "buyer": conversation.buyer.username,
+                "seller": conversation.seller.username,
+                "created_at": conversation.created_at,
+                "messages": [
+                    {
+                        "sender": item.sender.username,
+                        "body": item.body,
+                        "created_at": item.created_at,
+                    }
+                    for item in conversation.messages.all()
+                ],
+            }
+        )
+
+    data = {
+        "generated_at": timezone.now(),
+        "profile": {
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "phone": user.phone,
+            "user_type": user.user_type,
+            "city": user.city,
+            "district": user.district,
+            "neighborhood": user.neighborhood,
+            "bio": user.bio,
+            "is_phone_verified": user.is_phone_verified,
+            "is_email_verified": user.is_email_verified,
+            "date_joined": user.date_joined,
+            "last_login": user.last_login,
+        },
+        "listings": list(
+            user.listings.values(
+                "id", "title", "slug", "status", "kind", "action", "price", "city",
+                "district", "created_at", "updated_at"
+            )
+        ),
+        "drafts": list(user.listing_drafts.values("id", "title", "data", "created_at", "updated_at")),
+        "sent_offers": list(
+            user.offers.values("id", "listing__title", "amount", "message", "status", "created_at")
+        ),
+        "received_offers": list(
+            Offer.objects.filter(listing__owner=user).values(
+                "id", "listing__title", "sender__username", "amount", "message", "status", "created_at"
+            )
+        ),
+        "transactions": list(
+            Transaction.objects.filter(Q(buyer=user) | Q(seller=user)).values(
+                "public_id", "listing__title", "buyer__username", "seller__username",
+                "amount", "status", "created_at", "completed_at"
+            )
+        ),
+        "reviews_written": list(
+            user.written_reviews.values("transaction__listing__title", "reviewed_user__username", "rating", "comment", "created_at")
+        ),
+        "favorites": list(
+            Favorite.objects.filter(user=user).values("listing__title", "listing__slug", "created_at")
+        ),
+        "saved_searches": list(
+            SavedSearch.objects.filter(user=user).values("name", "query_params", "alert_enabled", "created_at")
+        ),
+        "conversations": conversations,
+    }
+    response = JsonResponse(
+        data,
+        encoder=DjangoJSONEncoder,
+        json_dumps_params={"ensure_ascii": False, "indent": 2},
+    )
+    response["Content-Disposition"] = 'attachment; filename="ilan-sehri-hesap-verilerim.json"'
+    response["Cache-Control"] = "no-store, private"
+    return response
+
+
+@require_POST
+def request_account_closure(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    form = AccountClosureForm(request.POST, user=request.user)
+    if not form.is_valid():
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(request, error)
+        return redirect("accounts:settings")
+    closure, _ = AccountClosureRequest.objects.get_or_create(user=request.user)
+    closure.reason = form.cleaned_data["reason"]
+    closure.status = AccountClosureRequest.Status.PENDING
+    closure.resolved_at = None
+    closure.resolved_by = None
+    closure.save()
+    messages.success(request, "Hesap kapatma talebin alındı. İnceleme tamamlanana kadar hesabın açık kalır.")
+    return redirect("accounts:settings")
+
+
+@require_POST
+def cancel_account_closure(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    closure = get_object_or_404(AccountClosureRequest, user=request.user)
+    if closure.status == AccountClosureRequest.Status.PENDING:
+        closure.status = AccountClosureRequest.Status.CANCELLED
+        closure.save(update_fields=["status", "updated_at"])
+        messages.success(request, "Hesap kapatma talebin iptal edildi.")
+    return redirect("accounts:settings")
 
 
 class ProfileEditView(LoginRequiredMixin, UpdateView):

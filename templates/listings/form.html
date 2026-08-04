@@ -3,14 +3,18 @@
 {% block content %}
 <section class="v16-wizard-page">
   <header class="v16-wizard-intro"><span class="section-label">{% if object %}İLAN YÖNETİMİ{% else %}ÜCRETSİZ İLAN VER{% endif %}</span><h1>{% if object %}İlanını profesyonelce güncelle{% else %}İlanını adım adım hazırla{% endif %}</h1><p>Her adımı tamamla, ilan kartını canlı önizle ve güvenlik incelemesine gönder.</p></header>
-  {% if not object %}<div class="v18-draft-note" data-v18-draft-box>
+  {% if not object and not server_draft %}<div class="v18-draft-note" data-v18-draft-box>
     <span>☁</span><div><b>İlan bilgilerin tarayıcıda korunur</b><small data-v18-draft-status>Yazdıkların otomatik kaydedilir; sayfayı yanlışlıkla kapatsan da geri getirebilirsin.</small></div>
     <button type="button" data-v18-restore-draft hidden>Taslağı geri getir</button><button type="button" data-v18-clear-draft>Taslağı sil</button>
   </div>{% endif %}
+  <div class="v19-server-draft-note{% if server_draft %} has-draft{% endif %}">
+    <span>☁</span><div><b>{% if server_draft %}Hesabındaki taslak açıldı{% else %}Hesabına taslak kaydedebilirsin{% endif %}</b><small>{% if server_draft %}{{ server_draft.display_title }} · {{ server_draft.updated_at|timesince }} önce güncellendi. Fotoğraflar güvenlik nedeniyle taslakta tutulmaz.{% else %}“Hesabıma taslak kaydet” seçeneğiyle bu ilana başka cihazdan da devam edebilirsin.{% endif %}</small></div><a href="{% url 'listings:drafts' %}">Taslaklarım</a>
+  </div>
 
   <div class="v16-wizard-card">
-    <form method="post" enctype="multipart/form-data" class="v16-wizard-main" data-v16-wizard data-listing-form {% if not object %}data-v18-draft-key="listing-create-v18"{% endif %} data-location-url="{% url 'listings:location_suggestions' %}">
+    <form method="post" enctype="multipart/form-data" class="v16-wizard-main" data-v16-wizard data-listing-form {% if not object and not server_draft %}data-v18-draft-key="listing-create-v18"{% endif %} data-location-url="{% url 'listings:location_suggestions' %}">
       {% csrf_token %}{{ form.non_field_errors }}
+      {% if server_draft %}<input type="hidden" name="draft_id" value="{{ server_draft.pk }}">{% endif %}
       <nav class="v16-stepper" aria-label="İlan oluşturma adımları">
         <button type="button" data-v16-step="1"><span>1</span>Tür</button><button type="button" data-v16-step="2"><span>2</span>Temel bilgiler</button><button type="button" data-v16-step="3"><span>3</span>Ayrıntılar</button><button type="button" data-v16-step="4"><span>4</span>Konum</button><button type="button" data-v16-step="5"><span>5</span>Fotoğraflar</button>
       </nav>
@@ -46,7 +50,7 @@
         <div class="v16-choice-help"><b>Yayın öncesi kontrol:</b> İlan bilgilerin güvenlik ekibi tarafından incelenir. Yanıltıcı, yasaklı veya başka kişilere ait içerikler yayınlanmaz.</div>
       </section>
 
-      <footer class="v16-wizard-footer"><button type="button" class="v16-wizard-back" data-v16-back>← Geri</button><small data-v16-step-text>1. adım / 5</small><button type="button" class="v16-wizard-next" data-v16-next>Devam et →</button><button type="submit" class="v16-wizard-submit" data-v16-submit>{% if object %}Değişiklikleri kaydet{% else %}İlanı incelemeye gönder{% endif %}</button></footer>
+      <footer class="v16-wizard-footer"><button type="button" class="v16-wizard-back" data-v16-back>← Geri</button><button type="submit" class="v19-save-draft" name="submit_action" value="save_draft" formnovalidate>☁ Hesabıma taslak kaydet</button><small data-v16-step-text>1. adım / 5</small><button type="button" class="v16-wizard-next" data-v16-next>Devam et →</button><button type="submit" class="v16-wizard-submit" data-v16-submit>{% if object %}Değişiklikleri kaydet{% else %}İlanı incelemeye gönder{% endif %}</button></footer>
     </form>
 
     <aside class="v16-wizard-preview">

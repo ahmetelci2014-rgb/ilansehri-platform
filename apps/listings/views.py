@@ -42,6 +42,7 @@ from .models import (
     Conversation,
     Favorite,
     Listing,
+    ListingDraft,
     ListingImage,
     ListingPriceHistory,
     ListingReport,
@@ -103,6 +104,54 @@ def _save_images(listing, images):
             sort_order=index,
             is_cover=not has_cover and index == current_count,
         )
+
+
+_DRAFT_BOOLEAN_FIELDS = {"price_on_request", "is_negotiable"}
+_DRAFT_FIELD_LIMITS = {
+    "title": 180,
+    "description": 5000,
+    "district": 80,
+    "neighborhood": 120,
+    "brand": 100,
+    "model_name": 100,
+    "condition": 50,
+    "service_area": 160,
+    "experience_level": 80,
+}
+
+
+def _listing_draft_payload(post_data):
+    payload = {}
+    for field_name in ListingForm.Meta.fields:
+        if field_name in _DRAFT_BOOLEAN_FIELDS:
+            payload[field_name] = field_name in post_data
+            continue
+        value = post_data.get(field_name, "")
+        if value not in (None, ""):
+            payload[field_name] = str(value)[: _DRAFT_FIELD_LIMITS.get(field_name, 240)]
+    return payload
+
+
+def _save_listing_draft(request, *, source_listing=None):
+    draft_id = request.POST.get("draft_id")
+    draft = None
+    if draft_id:
+        draft = ListingDraft.objects.filter(pk=draft_id, user=request.user).first()
+    if draft is None:
+        oldest_ids = list(
+            ListingDraft.objects.filter(user=request.user)
+            .order_by("-updated_at")
+            .values_list("pk", flat=True)[19:]
+        )
+        if oldest_ids:
+            ListingDraft.objects.filter(pk__in=oldest_ids).delete()
+        draft = ListingDraft(user=request.user)
+    payload = _listing_draft_payload(request.POST)
+    draft.title = str(payload.get("title", "")).strip()[:180]
+    draft.data = payload
+    draft.source_listing = source_listing
+    draft.save()
+    return draft
 
 
 def _blocked_between(user_a, user_b) -> bool:
@@ -624,10 +673,59 @@ class OwnerListingMixin(LoginRequiredMixin, UserPassesTestMixin):
         return self.get_object().owner_id == self.request.user.pk
 
 
+class ListingDraftListView(LoginRequiredMixin, ListView):
+    model = ListingDraft
+    template_name = "listings/drafts.html"
+    context_object_name = "drafts"
+    paginate_by = 20
+
+    def get_queryset(self):
+        return ListingDraft.objects.filter(user=self.request.user).select_related("source_listing")
+
+
+@require_POST
+def delete_listing_draft(request, pk):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    draft = get_object_or_404(ListingDraft, pk=pk, user=request.user)
+    draft.delete()
+    messages.success(request, "Taslak silindi.")
+    return redirect("listings:drafts")
+
+
 class ListingCreateView(LoginRequiredMixin, CreateView):
     model = Listing
     form_class = ListingForm
     template_name = "listings/form.html"
+
+    def get_draft(self):
+        if not hasattr(self, "_draft"):
+            draft_id = self.request.GET.get("draft") or self.request.POST.get("draft_id")
+            self._draft = (
+                ListingDraft.objects.filter(pk=draft_id, user=self.request.user).first()
+                if draft_id
+                else None
+            )
+        return self._draft
+
+    def get_initial(self):
+        initial = super().get_initial()
+        draft = self.get_draft()
+        if draft:
+            initial.update(draft.data)
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["server_draft"] = self.get_draft()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("submit_action") == "save_draft":
+            draft = _save_listing_draft(request)
+            messages.success(request, f"{draft.display_title} taslak olarak hesabına kaydedildi.")
+            return redirect("listings:drafts")
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
@@ -648,6 +746,9 @@ class ListingCreateView(LoginRequiredMixin, CreateView):
         else:
             notify_followers_new_listing(self.object)
             messages.success(self.request, "İlanın yayınlandı.")
+        draft = self.get_draft()
+        if draft:
+            draft.delete()
         return response
 
 
@@ -655,6 +756,40 @@ class ListingUpdateView(OwnerListingMixin, UpdateView):
     model = Listing
     form_class = ListingForm
     template_name = "listings/form.html"
+
+    def get_draft(self):
+        if not hasattr(self, "_draft"):
+            draft_id = self.request.GET.get("draft") or self.request.POST.get("draft_id")
+            self._draft = (
+                ListingDraft.objects.filter(
+                    pk=draft_id,
+                    user=self.request.user,
+                    source_listing=self.get_object(),
+                ).first()
+                if draft_id
+                else None
+            )
+        return self._draft
+
+    def get_initial(self):
+        initial = super().get_initial()
+        draft = self.get_draft()
+        if draft:
+            initial.update(draft.data)
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["server_draft"] = self.get_draft()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if request.POST.get("submit_action") == "save_draft":
+            draft = _save_listing_draft(request, source_listing=self.object)
+            messages.success(request, f"{draft.display_title} düzenleme taslağı olarak kaydedildi.")
+            return redirect("listings:drafts")
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         previous_price = Listing.objects.only("price").get(pk=self.object.pk).price
@@ -672,6 +807,9 @@ class ListingUpdateView(OwnerListingMixin, UpdateView):
         if self.object.management_mode == Listing.ManagementMode.FULL:
             ManagedRequest.objects.get_or_create(listing=self.object, defaults={"customer": self.request.user})
         messages.success(self.request, "İlan değişiklikleri kaydedildi.")
+        draft = self.get_draft()
+        if draft:
+            draft.delete()
         return response
 
 

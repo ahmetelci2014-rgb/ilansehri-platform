@@ -11,6 +11,7 @@ from .models import (
     Conversation,
     Favorite,
     Listing,
+    ListingDraft,
     ListingImage,
     ListingPriceHistory,
     Message,
@@ -87,6 +88,70 @@ class ListingFlowTests(TestCase):
         self.assertRedirects(response, listing.get_absolute_url())
         self.assertEqual(listing.brand, "Toyota")
         self.assertEqual(listing.model_year, 2022)
+
+    def test_user_can_save_resume_and_delete_server_listing_draft(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("listings:create"),
+            {
+                "submit_action": "save_draft",
+                "kind": Listing.Kind.PRODUCT,
+                "action": Listing.Action.SELL,
+                "category": self.product_category.pk,
+                "title": "Yarım kalan telefon ilanı",
+                "description": "Bu açıklama henüz tamamlanmadı.",
+                "city": "Şanlıurfa",
+                "district": "Karaköprü",
+                "is_negotiable": "on",
+            },
+        )
+        draft = ListingDraft.objects.get(user=self.owner)
+        self.assertRedirects(response, reverse("listings:drafts"))
+        self.assertEqual(draft.title, "Yarım kalan telefon ilanı")
+        self.assertTrue(draft.data["is_negotiable"])
+        resume = self.client.get(f"{reverse('listings:create')}?draft={draft.pk}")
+        self.assertContains(resume, "Yarım kalan telefon ilanı")
+        self.assertContains(resume, "Hesabındaki taslak açıldı")
+        delete = self.client.post(reverse("listings:delete_draft", kwargs={"pk": draft.pk}))
+        self.assertRedirects(delete, reverse("listings:drafts"))
+        self.assertFalse(ListingDraft.objects.filter(pk=draft.pk).exists())
+
+    def test_user_cannot_open_another_users_listing_draft(self):
+        draft = ListingDraft.objects.create(
+            user=self.owner,
+            title="Özel taslak",
+            data={"title": "Özel taslak"},
+        )
+        self.client.force_login(self.buyer)
+        response = self.client.get(f"{reverse('listings:create')}?draft={draft.pk}")
+        self.assertNotContains(response, "Özel taslak")
+
+    def test_publishing_a_resumed_draft_removes_the_draft(self):
+        draft = ListingDraft.objects.create(
+            user=self.owner,
+            title="Yayınlanacak taslak",
+            data={"title": "Yayınlanacak taslak"},
+        )
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("listings:create"),
+            {
+                "draft_id": draft.pk,
+                "kind": Listing.Kind.PRODUCT,
+                "action": Listing.Action.SELL,
+                "management_mode": Listing.ManagementMode.SELF,
+                "category": self.product_category.pk,
+                "title": "Yayınlanacak taslak",
+                "description": "Taslak tamamlandı ve yayınlanmaya hazırlandı.",
+                "price": "12000.00",
+                "condition": "Az kullanılmış",
+                "city": "Şanlıurfa",
+                "district": "Karaköprü",
+            },
+        )
+        listing = Listing.objects.get(title="Yayınlanacak taslak")
+        self.assertRedirects(response, listing.get_absolute_url())
+        self.assertFalse(ListingDraft.objects.filter(pk=draft.pk).exists())
 
     def test_offer_acceptance_creates_transaction_and_rejects_others(self):
         listing = self.create_listing()

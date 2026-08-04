@@ -1,0 +1,26 @@
+İLAN ŞEHRİ v1.9 — KULLANICI AKIŞLARI VE HESAP GÜVENLİĞİ
+
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.9 kullanıcı akışları
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+
+YENİ EKRANLAR
+- İlan taslakları: /ilanlar/taslaklarim/
+- Hesap ve güvenlik: /hesap/ayarlar/
+- Şifremi unuttum: /hesap/password_reset/
+
+ÖNEMLİ
+- Bu sürüm ListingDraft ve AccountClosureRequest modellerini ekler.
+- scripts/start_codespace.sh makemigrations ve migrate komutlarını otomatik çalıştırır.
+- Fotoğraflar taslakta saklanmaz; ilana devam ederken yeniden seçilmelidir.
+- Gerçek şifre yenileme e-postası için canlı SMTP ayarları gerekir.

@@ -1,7 +1,7 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import User, UserFollow, VerificationCode
+from .models import AccountClosureRequest, User, UserFollow, VerificationCode
 
 
 class AccountFlowTests(TestCase):
@@ -101,4 +101,50 @@ class AccountFlowTests(TestCase):
         self.assertGreater(response.context["profile_completion"], 50)
         self.assertEqual(len(response.context["profile_steps"]), 8)
         self.assertContains(response, "Profil doluluğu")
+
+    def test_account_data_export_requires_login_and_downloads_json(self):
+        login_url = f"{reverse('login')}?next={reverse('accounts:export_data')}"
+        response = self.client.get(reverse("accounts:export_data"))
+        self.assertRedirects(response, login_url)
+        user = User.objects.create_user(username="export-user", password="StrongPass_2026", email="export@example.com")
+        self.client.force_login(user)
+        response = self.client.get(reverse("accounts:export_data"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("attachment", response["Content-Disposition"])
+        self.assertContains(response, "export-user")
+
+    def test_user_can_request_and_cancel_account_closure(self):
+        user = User.objects.create_user(username="close-user", password="StrongPass_2026")
+        self.client.force_login(user)
+        response = self.client.post(
+            reverse("accounts:request_closure"),
+            {
+                "password": "StrongPass_2026",
+                "reason": "Artık kullanmıyorum.",
+                "confirmation": "on",
+            },
+        )
+        self.assertRedirects(response, reverse("accounts:settings"))
+        closure = AccountClosureRequest.objects.get(user=user)
+        self.assertEqual(closure.status, AccountClosureRequest.Status.PENDING)
+        self.client.post(reverse("accounts:cancel_closure"))
+        closure.refresh_from_db()
+        self.assertEqual(closure.status, AccountClosureRequest.Status.CANCELLED)
+
+    def test_wrong_password_does_not_create_closure_request(self):
+        user = User.objects.create_user(username="safe-user", password="StrongPass_2026")
+        self.client.force_login(user)
+        response = self.client.post(
+            reverse("accounts:request_closure"),
+            {"password": "yanlis-sifre", "confirmation": "on"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(AccountClosureRequest.objects.filter(user=user).exists())
+        self.assertContains(response, "Şifren doğru değil")
+
+    def test_password_reset_page_is_available(self):
+        response = self.client.get(reverse("password_reset"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Şifreni yeniden oluştur")
 

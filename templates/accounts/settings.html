@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Hesap ve Güvenlik Ayarları | İlan Şehri{% endblock %}
+{% block content %}
+<section class="v19-page-head"><div class="shell"><span class="section-label">HESAP VE GÜVENLİK</span><h1>Hesabını, şifreni ve verilerini yönet</h1><p>Güvenlik işlemlerini tek merkezden tamamla; hesap verilerinin bir kopyasını indirebilirsin.</p></div></section>
+<section class="shell v19-settings-grid">
+  <main class="v19-settings-main">
+    <article class="v19-settings-card"><div class="v19-settings-icon">🔐</div><div><h2>Şifre ve giriş güvenliği</h2><p>Şifreni düzenli aralıklarla güncelle ve başka sitelerde kullandığın şifreleri burada kullanma.</p><div class="v19-settings-actions"><a class="button" href="{% url 'password_change' %}">Şifremi değiştir</a><a class="button secondary" href="{% url 'accounts:verification' %}">Telefon ve e-posta doğrulama</a></div></div></article>
+    <article class="v19-settings-card"><div class="v19-settings-icon">📦</div><div><h2>Verilerimin kopyasını indir</h2><p>Profilin, ilanların, taslakların, tekliflerin, favorilerin, kayıtlı aramaların ve mesajlaşma geçmişin JSON dosyası olarak hazırlanır.</p><div class="v19-settings-actions"><a class="button" href="{% url 'accounts:export_data' %}">Hesap verilerimi indir</a></div><small>Bu dosya kişisel bilgiler içerebilir. Güvenli bir yerde sakla ve başkalarıyla paylaşma.</small></div></article>
+    <article class="v19-settings-card"><div class="v19-settings-icon">🛡️</div><div><h2>Doğrulama ve güven puanı</h2><p>Telefon ve e-posta doğrulaması, diğer kullanıcıların sana daha fazla güvenmesini sağlar.</p><div class="v19-security-status"><span class="{% if user.is_phone_verified %}done{% endif %}">{% if user.is_phone_verified %}✓{% else %}○{% endif %} Telefon</span><span class="{% if user.is_email_verified %}done{% endif %}">{% if user.is_email_verified %}✓{% else %}○{% endif %} E-posta</span><span>Güven puanı: <b>{{ user.trust_score }}/100</b></span></div></div></article>
+  </main>
+  <aside class="v19-closure-card">
+    <span class="section-label danger-label">HESAP KAPATMA</span><h2>Hesabını kapatma talebi</h2>
+    {% if closure_request and closure_request.status == 'pending' %}
+      <div class="v19-closure-status"><b>Talebin incelemede</b><p>{{ closure_request.requested_at|date:'d.m.Y H:i' }} tarihinde oluşturuldu. İnceleme süresince hesabın kullanılmaya devam eder.</p></div>
+      <form method="post" action="{% url 'accounts:cancel_closure' %}">{% csrf_token %}<button class="button secondary full" type="submit">Kapatma talebini iptal et</button></form>
+    {% else %}
+      <p>Bu işlem hesabını hemen silmez. Talebin yönetim ekibine iletilir; devam eden işlem, uyuşmazlık veya yasal saklama zorunluluğu varsa önce bunlar incelenir.</p>
+      <form method="post" action="{% url 'accounts:request_closure' %}" class="auth-form">{% csrf_token %}{% for field in closure_form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endfor %}<button class="v19-danger-button" type="submit">Hesap kapatma talebi oluştur</button></form>
+    {% endif %}
+  </aside>
+</section>
+{% endblock %}

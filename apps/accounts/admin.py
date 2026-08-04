@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, UserBlock, UserFollow, VerificationCode
+from .models import AccountClosureRequest, User, UserBlock, UserFollow, VerificationCode
 
 
 @admin.register(User)
@@ -42,3 +42,11 @@ class VerificationCodeAdmin(admin.ModelAdmin):
 admin.site.register(UserBlock)
 
 admin.site.register(UserFollow)
+
+
+@admin.register(AccountClosureRequest)
+class AccountClosureRequestAdmin(admin.ModelAdmin):
+    list_display = ("user", "status", "requested_at", "updated_at", "resolved_by")
+    list_filter = ("status", "requested_at")
+    search_fields = ("user__username", "user__email", "reason")
+    readonly_fields = ("requested_at", "updated_at")

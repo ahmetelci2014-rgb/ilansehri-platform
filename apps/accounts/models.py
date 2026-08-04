@@ -173,3 +173,34 @@ class UserFollow(models.Model):
 
     def __str__(self) -> str:
         return f"{self.follower} → {self.seller}"
+
+
+class AccountClosureRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "İncelemede"
+        CANCELLED = "cancelled", "Kullanıcı iptal etti"
+        COMPLETED = "completed", "Tamamlandı"
+
+    user = models.OneToOneField(
+        User,
+        related_name="closure_request",
+        on_delete=models.CASCADE,
+    )
+    reason = models.TextField(max_length=1000, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        User,
+        related_name="resolved_closure_requests",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ("-requested_at",)
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.get_status_display()}"

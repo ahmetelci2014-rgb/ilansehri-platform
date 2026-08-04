@@ -7,6 +7,7 @@ from .models import (
     Conversation,
     Favorite,
     Listing,
+    ListingDraft,
     ListingImage,
     ListingPriceHistory,
     ListingReport,
@@ -34,6 +35,13 @@ class OfferInline(admin.TabularInline):
     model = Offer
     extra = 0
     readonly_fields = ("created_at", "updated_at", "responded_at")
+
+
+@admin.register(ListingDraft)
+class ListingDraftAdmin(admin.ModelAdmin):
+    list_display = ("display_title", "user", "source_listing", "updated_at")
+    search_fields = ("title", "user__username", "source_listing__title")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.action(description="Seçili ilanları onayla ve yayınla")

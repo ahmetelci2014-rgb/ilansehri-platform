@@ -14,4 +14,4 @@ python manage.py seed_categories
 python manage.py collectstatic --noinput
 python manage.py check
 
-echo "İlan Şehri v1.0 Codespaces kurulumu tamamlandı."
+echo "İlan Şehri v1.9 Codespaces kurulumu tamamlandı."

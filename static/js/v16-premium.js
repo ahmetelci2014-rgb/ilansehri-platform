@@ -130,6 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
   wizard.querySelector("[name=images]")?.addEventListener("change", calculateScore);
 
   wizard.addEventListener("submit", (event) => {
+    if (event.submitter?.formNoValidate || event.submitter?.value === "save_draft") return;
     if (event.submitter && event.submitter !== submitButton && event.submitter.formAction !== wizard.action) return;
     const invalidIndex = sections.findIndex((section) => invalidFieldIn(section));
     if (invalidIndex >= 0) {

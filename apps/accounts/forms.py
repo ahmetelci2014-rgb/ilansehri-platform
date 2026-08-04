@@ -118,3 +118,29 @@ class VerificationConfirmForm(forms.Form):
         label="6 haneli doğrulama kodu",
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "one-time-code"}),
     )
+
+
+class AccountClosureForm(forms.Form):
+    password = forms.CharField(
+        label="Mevcut şifren",
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+    reason = forms.CharField(
+        required=False,
+        max_length=1000,
+        label="Hesabını kapatmak isteme nedenin",
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "İsteğe bağlı olarak kısa bir açıklama yazabilirsin."}),
+    )
+    confirmation = forms.BooleanField(
+        label="Hesap kapatma talebimin inceleneceğini ve bu süreçte hesabımın açık kalacağını anlıyorum.",
+    )
+
+    def __init__(self, *args, user: User, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        if not self.user.check_password(password):
+            raise forms.ValidationError("Şifren doğru değil.")
+        return password

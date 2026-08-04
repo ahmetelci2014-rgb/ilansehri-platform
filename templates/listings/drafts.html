@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}İlan Taslaklarım | İlan Şehri{% endblock %}
+{% block content %}
+<section class="v19-page-head"><div class="shell"><span class="section-label">TASLAKLARIM</span><h1>Yarım kalan ilanlarına devam et</h1><p>Hesabına kaydettiğin taslaklara bilgisayar, telefon veya tabletinden ulaşabilirsin.</p></div></section>
+<section class="shell v19-drafts-page">
+  <div class="v19-drafts-toolbar"><div><b>{{ page_obj.paginator.count }} taslak</b><span>Fotoğraflar güvenlik nedeniyle taslakta saklanmaz.</span></div><a class="button" href="{% url 'listings:create' %}">＋ Yeni ilan oluştur</a></div>
+  <div class="v19-draft-grid">
+    {% for draft in drafts %}
+      <article class="v19-draft-card">
+        <div class="v19-draft-icon">📝</div>
+        <div class="v19-draft-copy"><small>{% if draft.source_listing %}İlan düzenleme taslağı{% else %}Yeni ilan taslağı{% endif %}</small><h2>{{ draft.display_title }}</h2><p>{% if draft.data.city %}{{ draft.data.city }}{% if draft.data.district %} · {{ draft.data.district }}{% endif %}{% else %}Konum henüz eklenmedi{% endif %}</p><span>Son güncelleme: {{ draft.updated_at|timesince }} önce</span></div>
+        <div class="v19-draft-actions">
+          {% if draft.source_listing %}<a class="button" href="{% url 'listings:update' draft.source_listing.slug %}?draft={{ draft.pk }}">Düzenlemeye devam et</a>{% else %}<a class="button" href="{% url 'listings:create' %}?draft={{ draft.pk }}">İlana devam et</a>{% endif %}
+          <form method="post" action="{% url 'listings:delete_draft' draft.pk %}" onsubmit="return confirm('Bu taslağı silmek istediğine emin misin?');">{% csrf_token %}<button class="danger-link" type="submit">Taslağı sil</button></form>
+        </div>
+      </article>
+    {% empty %}
+      <div class="market-empty v19-drafts-empty"><span>📝</span><h3>Hesabına kaydedilmiş taslak yok</h3><p>İlan oluştururken “Hesabıma taslak kaydet” düğmesini kullanarak daha sonra devam edebilirsin.</p><a class="button" href="{% url 'listings:create' %}">İlan oluşturmaya başla</a></div>
+    {% endfor %}
+  </div>
+  {% if is_paginated %}<nav class="pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Sonraki →</a>{% endif %}</nav>{% endif %}
+</section>
+{% endblock %}
