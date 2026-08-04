@@ -1,50 +1,70 @@
 {% extends 'base.html' %}
 {% block title %}{{ listing.title }} | İlan Şehri{% endblock %}
 {% block content %}
-<section class="detail-top"><div class="shell"><div class="breadcrumbs"><a href="{% url 'core:home' %}">Ana Sayfa</a><span>›</span><a href="{% url 'listings:list' %}?kind={{ listing.kind }}">{{ listing.get_kind_display }}</a><span>›</span><span>{{ listing.title|truncatechars:38 }}</span></div></div></section>
-<section class="detail-section"><div class="shell detail-layout">
-  <div class="detail-main">
-    <div class="detail-gallery">
-      {% with cover=listing.images.first %}{% if cover %}<img class="detail-cover" data-main-image src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder detail-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}
-      {% if listing.management_mode == 'full' %}<span class="detail-managed">✓ İlan Şehri Yönetiyor</span>{% endif %}
-    </div>
-    {% if listing.images.count > 1 %}<div class="thumb-grid">{% for item in listing.images.all %}<button type="button" class="thumb-button {% if forloop.first %}active{% endif %}" data-gallery-thumb="{{ item.image.url }}"><img src="{{ item.image.url }}" alt="{{ item.alt_text|default:listing.title }}"></button>{% endfor %}</div>{% endif %}
+<section class="detail-topbar">
+  <div class="shell breadcrumbs"><a href="{% url 'core:home' %}">Ana Sayfa</a><span>›</span><a href="{% url 'listings:list' %}">İlanlar</a><span>›</span><span>{{ listing.title|truncatechars:45 }}</span></div>
+</section>
 
-    <article class="detail-content-card"><div class="detail-content-head"><h2>İlan açıklaması</h2><span>İlan No: {{ listing.id }}</span></div><div class="detail-description">{{ listing.description|linebreaks }}</div></article>
-    <article class="detail-content-card"><h2>İlan bilgileri</h2><div class="detail-meta-grid"><div><span>İlan türü</span><strong>{{ listing.get_kind_display }}</strong></div><div><span>İşlem</span><strong>{{ listing.get_action_display }}</strong></div><div><span>Kategori</span><strong>{{ listing.category.name }}</strong></div><div><span>Durum</span><strong>{{ listing.condition|default:"Belirtilmedi" }}</strong></div><div><span>Konum</span><strong>{{ listing.city }} / {{ listing.district }}</strong></div><div><span>Yayın tarihi</span><strong>{{ listing.created_at|date:"d F Y" }}</strong></div></div></article>
-    <article class="safety-card"><div class="safety-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V7Z"/><path d="m9 12 2 2 4-4"/></svg></div><div><h3>Güvenli işlem önerileri</h3><p>Ürünü görmeden ödeme yapma, kişisel şifrelerini paylaşma ve görüşmeleri İlan Şehri mesajları üzerinden sürdür.</p></div></article>
+{% if listing.status != 'published' %}
+<section class="shell owner-status-banner status-{{ listing.status }}">
+  <div><strong>{{ listing.get_status_display }}</strong><span>Bu sayfayı yalnızca sen ve yetkili ekip görebilir.</span>{% if listing.review_note %}<p>{{ listing.review_note }}</p>{% endif %}</div>
+  {% if listing.owner == user %}<a class="button secondary" href="{% url 'listings:update' listing.slug %}">İlanı Düzenle</a>{% endif %}
+</section>
+{% endif %}
+
+<section class="section detail-v06-section">
+  <div class="shell detail-v06-layout">
+    <div class="detail-v06-main">
+      <div class="detail-gallery-card">
+        {% with cover=listing.images.first %}
+          {% if cover %}
+            <img class="detail-main-image" src="{{ cover.image.url }}" alt="{{ listing.title }}" data-main-image>
+            {% if listing.images.count > 1 %}<div class="detail-thumbs">{% for image in listing.images.all %}<button type="button" class="{% if forloop.first %}active{% endif %}" data-gallery-thumb="{{ image.image.url }}"><img src="{{ image.image.url }}" alt="{{ image.alt_text|default:listing.title }}"></button>{% endfor %}</div>{% endif %}
+          {% else %}
+            <div class="listing-placeholder detail-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <article class="detail-content-card">
+        <div class="detail-title-row"><div><div class="detail-badges"><span class="badge">{{ listing.get_kind_display }}</span><span class="badge badge-soft">{{ listing.get_action_display }}</span>{% if listing.management_mode == 'full' %}<span class="badge managed-badge">✓ İlan Şehri Yönetiyor</span>{% endif %}</div><h1>{{ listing.title }}</h1><p class="detail-location">📍 {{ listing.city }} · {{ listing.district }}{% if listing.neighborhood %} · {{ listing.neighborhood }}{% endif %}</p></div><div class="detail-view-count">👁 {{ listing.view_count }} görüntülenme</div></div>
+
+        {% if listing.detail_items %}
+        <div class="structured-details"><h2>İlan özellikleri</h2><div class="structured-detail-grid">{% for label, value in listing.detail_items %}<div><span>{{ label }}</span><strong>{{ value }}</strong></div>{% endfor %}</div></div>
+        {% endif %}
+
+        <div class="description-card-v06"><h2>Açıklama</h2><div>{{ listing.description|linebreaks }}</div></div>
+
+        <div class="safety-card"><span>🛡️</span><div><strong>Güvenli işlem hatırlatması</strong><p>Ürünü görmeden ödeme yapma, kişisel şifrelerini paylaşma ve platform dışı şüpheli bağlantılara tıklama.</p></div></div>
+
+        {% if can_report %}
+        <details class="report-box">
+          <summary>Bu ilanla ilgili sorun bildir</summary>
+          <form method="post" action="{% url 'listings:report' listing.slug %}">{% csrf_token %}<div class="field"><label for="{{ report_form.reason.id_for_label }}">{{ report_form.reason.label }}</label>{{ report_form.reason }}</div><div class="field"><label for="{{ report_form.details.id_for_label }}">{{ report_form.details.label }}</label>{{ report_form.details }}</div><button class="button secondary" type="submit">Güvenlik Ekibine Gönder</button></form>
+        </details>
+        {% endif %}
+      </article>
+    </div>
+
+    <aside class="detail-v06-sidebar">
+      <div class="detail-action-card">
+        <div class="detail-price">{% if listing.price_on_request %}<small>Fiyat</small><strong>Teklif Alıyor</strong>{% elif listing.price %}<small>Fiyat</small><strong>{{ listing.price|floatformat:0 }} TL</strong>{% else %}<small>Fiyat belirtilmedi</small>{% endif %}</div>
+        {% if user.is_authenticated and listing.owner != user and listing.status == 'published' %}
+          <form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}" class="favorite-detail-form">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="favorite-detail-button {% if is_favorite %}active{% endif %}">{% if is_favorite %}♥ Favorilerimde{% else %}♡ Favoriye Ekle{% endif %}</button></form>
+        {% endif %}
+
+        <div class="seller-card"><div class="seller-avatar">{{ listing.owner.username|first|upper }}</div><div><small>İlan sahibi</small><strong>{{ listing.owner }}</strong><span>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Başlangıç profili{% endif %}</span></div></div>
+
+        {% if can_offer %}
+        <div class="offer-panel"><h3>Teklif gönder</h3><form method="post">{% csrf_token %}<div class="field"><label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>{{ form.amount }}{% for error in form.amount.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div><div class="field"><label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>{{ form.message }}{% for error in form.message.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div><button class="button full" type="submit">Teklifimi Gönder</button></form></div>
+        <div class="message-panel"><h3>İlan sahibine sor</h3><form method="post" action="{% url 'listings:start_conversation' listing.slug %}">{% csrf_token %}<div class="field">{{ message_form.body }}</div><button class="button secondary full" type="submit">Özel Mesaj Gönder</button></form></div>
+        {% elif not user.is_authenticated and listing.status == 'published' %}
+          <a class="button full" href="{% url 'login' %}?next={{ request.path|urlencode }}">Teklif ve Mesaj İçin Giriş Yap</a>
+        {% elif listing.owner == user %}
+          <div class="owner-tools"><a class="button full" href="{% url 'listings:update' listing.slug %}">İlanı Düzenle</a><a class="button secondary full" href="{% url 'accounts:dashboard' %}">Hesabım Paneli</a></div>
+        {% endif %}
+      </div>
+    </aside>
   </div>
-
-  <aside class="detail-sidebar">
-    <div class="detail-card premium-detail-card">
-      <div class="detail-badges"><span class="badge">{{ listing.get_action_display }}</span>{% if listing.management_mode == 'full' %}<span class="badge managed-badge">Yönetilen İlan</span>{% endif %}</div>
-      <h1>{{ listing.title }}</h1>
-      <p class="detail-location"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>{{ listing.city }} / {{ listing.district }}{% if listing.neighborhood %} / {{ listing.neighborhood }}{% endif %}</p>
-      <div class="price">{% if listing.price_on_request %}Teklif Alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} <small>TL</small>{% else %}Fiyat belirtilmedi{% endif %}</div>
-      <div class="listing-summary"><span><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ listing.created_at|timesince }} önce</span><span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>{{ listing.view_count }} görüntülenme</span></div>
-
-      {% if user.is_authenticated and user != listing.owner %}
-        <form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}" class="favorite-form">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="favorite-button {% if is_favorite %}is-favorite{% endif %}" type="submit"><span>{% if is_favorite %}♥{% else %}♡{% endif %}</span>{% if is_favorite %}Favorilerden Çıkar{% else %}Favoriye Ekle{% endif %}</button></form>
-      {% endif %}
-
-      <div class="owner-card"><div class="owner-avatar">{{ listing.owner.first_name|first|default:listing.owner.username|first|upper }}</div><div><small>İlan sahibi</small><strong>{{ listing.owner.get_full_name|default:listing.owner.username }}</strong><span>{% if listing.owner.is_phone_verified %}✓ Telefonu doğrulandı{% else %}İlan Şehri üyesi{% endif %}</span></div></div>
-
-      {% if user == listing.owner %}
-        <div class="owner-detail-actions">
-          <a class="button full" href="{% url 'listings:update' listing.slug %}">İlanı Düzenle</a>
-          <a class="button secondary full" href="{% url 'accounts:dashboard' %}">Yönetim Paneline Git</a>
-        </div>
-      {% elif can_offer %}
-        <div class="contact-card message-contact-card">
-          <div class="offer-title"><span>✉️</span><div><h3>Özel mesaj gönder</h3><p>Telefon numaran görünmeden güvenli şekilde konuş.</p></div></div>
-          <form method="post" action="{% url 'listings:start_conversation' listing.slug %}">{% csrf_token %}<div class="field"><label for="{{ message_form.body.id_for_label }}">{{ message_form.body.label }}</label>{{ message_form.body }}</div><button class="button full" type="submit">Mesaj Gönder <span>→</span></button></form>
-        </div>
-        <details class="offer-details"><summary>Fiyat teklifi gönder</summary><form method="post" class="offer-form">{% csrf_token %}{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endfor %}<button class="button secondary full" type="submit">Teklifi Gönder</button></form></details>
-      {% else %}
-        <a class="button full" href="{% url 'login' %}?next={{ request.path }}">Mesaj göndermek için giriş yap</a>
-      {% endif %}
-      <div class="privacy-note"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Mesaj ve teklif kayıtlarını yalnız ilgili kullanıcılar görebilir.</div>
-    </div>
-  </aside>
-</div></section>
+</section>
 {% endblock %}
