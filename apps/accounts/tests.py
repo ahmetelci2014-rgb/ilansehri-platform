@@ -1,7 +1,7 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import AccountClosureRequest, User, UserFollow, VerificationCode
+from .models import AccountClosureRequest, NotificationPreference, User, UserFollow, VerificationCode
 
 
 class AccountFlowTests(TestCase):
@@ -142,6 +142,33 @@ class AccountFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(AccountClosureRequest.objects.filter(user=user).exists())
         self.assertContains(response, "Şifren doğru değil")
+
+    def test_notification_preferences_are_created_and_can_be_updated(self):
+        user = User.objects.create_user(
+            username="notify-user", password="StrongPass_2026", email="notify@example.com"
+        )
+        preference = NotificationPreference.objects.get(user=user)
+        self.assertTrue(preference.in_app_messages)
+        self.client.force_login(user)
+        response = self.client.post(
+            reverse("accounts:notification_preferences"),
+            {
+                "in_app_offers": "on",
+                "in_app_price_drops": "on",
+                "in_app_follows": "on",
+                "in_app_reviews": "on",
+                "email_offers": "on",
+                "email_system": "on",
+                "digest_frequency": NotificationPreference.DigestFrequency.WEEKLY,
+            },
+        )
+        self.assertRedirects(response, reverse("accounts:notification_preferences"))
+        preference.refresh_from_db()
+        self.assertFalse(preference.in_app_messages)
+        self.assertTrue(preference.email_offers)
+        self.assertEqual(
+            preference.digest_frequency, NotificationPreference.DigestFrequency.WEEKLY
+        )
 
     def test_password_reset_page_is_available(self):
         response = self.client.get(reverse("password_reset"))

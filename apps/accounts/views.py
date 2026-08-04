@@ -35,12 +35,13 @@ from apps.support_center.models import SupportTicket
 from .delivery import send_phone_verification_code
 from .forms import (
     AccountClosureForm,
+    NotificationPreferenceForm,
     ProfileForm,
     SignUpForm,
     VerificationConfirmForm,
     VerificationStartForm,
 )
-from .models import AccountClosureRequest, User, UserBlock, UserFollow, VerificationCode
+from .models import AccountClosureRequest, NotificationPreference, User, UserBlock, UserFollow, VerificationCode
 
 
 class SignUpView(CreateView):
@@ -169,9 +170,25 @@ class AccountSettingsView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class NotificationPreferenceView(LoginRequiredMixin, UpdateView):
+    model = NotificationPreference
+    form_class = NotificationPreferenceForm
+    template_name = "accounts/notification_preferences.html"
+    success_url = reverse_lazy("accounts:notification_preferences")
+
+    def get_object(self, queryset=None):
+        preference, _ = NotificationPreference.objects.get_or_create(user=self.request.user)
+        return preference
+
+    def form_valid(self, form):
+        messages.success(self.request, "Bildirim tercihlerin kaydedildi.")
+        return super().form_valid(form)
+
+
 @login_required
 def export_account_data(request):
     user = request.user
+    notification_preferences, _ = NotificationPreference.objects.get_or_create(user=user)
     conversations = []
     for conversation in (
         Conversation.objects.filter(Q(buyer=user) | Q(seller=user))
@@ -197,6 +214,22 @@ def export_account_data(request):
 
     data = {
         "generated_at": timezone.now(),
+        "notification_preferences": {
+            "in_app_messages": notification_preferences.in_app_messages,
+            "in_app_offers": notification_preferences.in_app_offers,
+            "in_app_price_drops": notification_preferences.in_app_price_drops,
+            "in_app_follows": notification_preferences.in_app_follows,
+            "in_app_reviews": notification_preferences.in_app_reviews,
+            "email_messages": notification_preferences.email_messages,
+            "email_offers": notification_preferences.email_offers,
+            "email_transactions": notification_preferences.email_transactions,
+            "email_listing_updates": notification_preferences.email_listing_updates,
+            "email_price_drops": notification_preferences.email_price_drops,
+            "email_follows": notification_preferences.email_follows,
+            "email_reviews": notification_preferences.email_reviews,
+            "email_system": notification_preferences.email_system,
+            "digest_frequency": notification_preferences.digest_frequency,
+        },
         "profile": {
             "username": user.username,
             "first_name": user.first_name,

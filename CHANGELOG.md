@@ -1,3 +1,16 @@
+# v1.11 — Bildirim ve Moderasyon Operasyonu
+
+- Bildirim tercihleri modeli ve kullanıcı ayar ekranı eklendi.
+- İsteğe bağlı uygulama içi bildirimler tür bazında kapatılabilir hale getirildi.
+- İşlem, güvenlik, destek ve moderasyon bildirimleri kritik bildirim olarak korunur.
+- Mesaj, teklif, işlem, ilan, fiyat, takip, değerlendirme ve sistem e-postaları ayrı ayrı seçilebilir.
+- Günlük ve haftalık bildirim özeti komutu eklendi.
+- Moderasyon kuyruğuna arama, tür, şehir, kalite ve sıralama filtreleri eklendi.
+- En fazla 100 ilan için toplu onay ve toplu düzeltme isteği eklendi.
+- Düzeltme notu zorunlu hale getirildi ve moderasyon işlemleri personel günlüğüne kaydedildi.
+- Bildirim tercihleri hesap veri dışa aktarımına dahil edildi.
+- PWA önbelleği v1.11 olarak yenilendi.
+
 # Değişiklik Günlüğü
 
 ## v1.10 — Destek ve Operasyon Merkezi

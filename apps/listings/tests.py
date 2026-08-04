@@ -4,7 +4,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.accounts.models import User
+from apps.accounts.models import NotificationPreference, User
+from apps.support_center.models import StaffActionLog
 
 from .models import (
     Category,
@@ -22,7 +23,7 @@ from .models import (
     SavedSearch,
     Transaction,
 )
-from .services import assess_listing_quality, record_price_change
+from .services import assess_listing_quality, create_notification, record_price_change
 
 
 TINY_GIF = (
@@ -477,6 +478,56 @@ class ListingFlowTests(TestCase):
         response = self.client.get(reverse("listings:notifications"), {"type": "message", "status": "unread"})
         self.assertContains(response, "Yeni mesaj")
         self.assertNotContains(response, "Yeni teklif")
+
+    def test_optional_notification_can_be_muted_but_critical_notification_remains(self):
+        preference = NotificationPreference.objects.get(user=self.buyer)
+        preference.in_app_messages = False
+        preference.save(update_fields=["in_app_messages", "updated_at"])
+        create_notification(
+            user=self.buyer,
+            notification_type=Notification.Type.MESSAGE,
+            title="Sessize alınan mesaj",
+        )
+        create_notification(
+            user=self.buyer,
+            notification_type=Notification.Type.SYSTEM,
+            title="Önemli sistem bildirimi",
+        )
+        self.assertFalse(Notification.objects.filter(user=self.buyer, title="Sessize alınan mesaj").exists())
+        self.assertTrue(Notification.objects.filter(user=self.buyer, title="Önemli sistem bildirimi").exists())
+
+    def test_staff_can_bulk_approve_review_listings_and_actions_are_logged(self):
+        first = self.create_listing(title="Toplu onay bir", status=Listing.Status.REVIEW)
+        second = self.create_listing(title="Toplu onay iki", status=Listing.Status.REVIEW)
+        self.client.force_login(self.staff)
+        response = self.client.post(
+            reverse("listings:bulk_moderate_listings"),
+            {
+                "listing_ids": [str(first.pk), str(second.pk)],
+                "bulk_action": "approve",
+                "bulk_note": "",
+            },
+        )
+        self.assertRedirects(response, reverse("listings:moderation"))
+        first.refresh_from_db(); second.refresh_from_db()
+        self.assertEqual(first.status, Listing.Status.PUBLISHED)
+        self.assertEqual(second.status, Listing.Status.PUBLISHED)
+        self.assertEqual(
+            StaffActionLog.objects.filter(
+                action=StaffActionLog.Action.LISTING_MODERATION, actor=self.staff
+            ).count(),
+            2,
+        )
+
+    def test_bulk_reject_requires_common_note(self):
+        listing = self.create_listing(title="Not bekleyen ilan", status=Listing.Status.REVIEW)
+        self.client.force_login(self.staff)
+        self.client.post(
+            reverse("listings:bulk_moderate_listings"),
+            {"listing_ids": [str(listing.pk)], "bulk_action": "reject", "bulk_note": ""},
+        )
+        listing.refresh_from_db()
+        self.assertEqual(listing.status, Listing.Status.REVIEW)
 
 
 class ListingQualityTests(TestCase):

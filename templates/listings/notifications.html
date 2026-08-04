@@ -5,7 +5,7 @@
 <section class="section"><div class="shell notification-shell">
   <div class="notification-toolbar">
     <nav class="notification-status-tabs"><a href="?{% if active_type %}type={{ active_type }}&{% endif %}" class="{% if not active_status %}active{% endif %}">Tümü</a><a href="?status=unread{% if active_type %}&type={{ active_type }}{% endif %}" class="{% if active_status == 'unread' %}active{% endif %}">Okunmamış</a><a href="?status=read{% if active_type %}&type={{ active_type }}{% endif %}" class="{% if active_status == 'read' %}active{% endif %}">Okunanlar</a></nav>
-    {% if unread_notification_count %}<form method="post" action="{% url 'listings:mark_all_notifications_read' %}">{% csrf_token %}<button class="button secondary" type="submit">Tümünü okundu yap</button></form>{% endif %}
+    <a class="button secondary v111-notification-settings" href="{% url 'accounts:notification_preferences' %}">Bildirim tercihleri</a>{% if unread_notification_count %}<form method="post" action="{% url 'listings:mark_all_notifications_read' %}">{% csrf_token %}<button class="button secondary" type="submit">Tümünü okundu yap</button></form>{% endif %}
   </div>
   <div class="notification-type-tabs"><a href="?{% if active_status %}status={{ active_status }}{% endif %}" class="{% if not active_type %}active{% endif %}">Tüm türler</a>{% for value,label in notification_type_choices %}<a href="?type={{ value }}{% if active_status %}&status={{ active_status }}{% endif %}" class="{% if active_type == value %}active{% endif %}">{{ label }}</a>{% endfor %}</div>
   <div class="notification-list professional-notifications">

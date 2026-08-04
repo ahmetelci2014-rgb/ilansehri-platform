@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from apps.listings.locations import CITY_CHOICES
 
-from .models import User, VerificationCode
+from .models import NotificationPreference, User, VerificationCode
 
 
 class SignUpForm(UserCreationForm):
@@ -144,3 +144,43 @@ class AccountClosureForm(forms.Form):
         if not self.user.check_password(password):
             raise forms.ValidationError("Şifren doğru değil.")
         return password
+
+class NotificationPreferenceForm(forms.ModelForm):
+    class Meta:
+        model = NotificationPreference
+        fields = (
+            "in_app_messages",
+            "in_app_offers",
+            "in_app_price_drops",
+            "in_app_follows",
+            "in_app_reviews",
+            "email_messages",
+            "email_offers",
+            "email_transactions",
+            "email_listing_updates",
+            "email_price_drops",
+            "email_follows",
+            "email_reviews",
+            "email_system",
+            "digest_frequency",
+        )
+        labels = {
+            "in_app_messages": "Yeni mesajlar",
+            "in_app_offers": "Teklif ve karşı teklifler",
+            "in_app_price_drops": "Favorilerde fiyat düşüşleri",
+            "in_app_follows": "Takip edilen satıcılardan yeni ilanlar",
+            "in_app_reviews": "Puan ve değerlendirmeler",
+            "email_messages": "Yeni mesaj geldiğinde",
+            "email_offers": "Teklif veya karşı teklif geldiğinde",
+            "email_transactions": "İşlem ve teslim durumu değiştiğinde",
+            "email_listing_updates": "İlan, doğrulama ve yönetim durumu değiştiğinde",
+            "email_price_drops": "Favorideki ilanın fiyatı düştüğünde",
+            "email_follows": "Takip edilen satıcı yeni ilan yayınladığında",
+            "email_reviews": "Yeni değerlendirme geldiğinde",
+            "email_system": "Destek ve önemli sistem duyurularında",
+            "digest_frequency": "Bildirim özeti",
+        }
+        widgets = {
+            "digest_frequency": forms.Select(attrs={"class": "v111-select"}),
+        }
+

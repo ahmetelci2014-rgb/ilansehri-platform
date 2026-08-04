@@ -1,23 +1,35 @@
 {% extends 'base.html' %}
 {% block title %}Moderasyon Paneli | İlan Şehri{% endblock %}
 {% block content %}
-<section class="moderation-hero"><div class="shell"><span class="section-label light-label">YÖNETİCİ PANELİ</span><h1>İlan güvenliği ve şikâyet yönetimi</h1><p>İlan incelemelerini, kullanıcı bildirimlerini ve işlem uyuşmazlıklarını tek ekrandan yönet.</p></div></section>
+<section class="moderation-hero"><div class="shell"><span class="section-label light-label">YÖNETİCİ PANELİ</span><h1>İlan güvenliği ve şikâyet yönetimi</h1><p>Filtrele, toplu işlem uygula ve tüm moderasyon hareketlerini kayıt altında tut.</p></div></section>
 <section class="section"><div class="shell">
   <div class="moderation-summary">
-    <article><span>⏳</span><div><strong>{{ pending_listings|length }}</strong><small>İnceleme bekleyen ilan</small></div></article>
+    <article><span>⏳</span><div><strong>{{ pending_total }}</strong><small>Toplam bekleyen ilan</small></div></article>
+    <article><span>🔎</span><div><strong>{{ pending_listings|length }}</strong><small>Filtrede gösterilen</small></div></article>
     <article><span>🚩</span><div><strong>{{ open_reports|length }}</strong><small>Açık şikâyet</small></div></article>
     <article><span>⚖️</span><div><strong>{{ disputes|length }}</strong><small>İşlem uyuşmazlığı</small></div></article>
   </div>
 
+  <form method="get" class="v111-moderation-filter">
+    <div class="field"><label for="moderation-q">Ara</label><input id="moderation-q" name="q" value="{{ moderation_q }}" placeholder="İlan, açıklama veya kullanıcı"></div>
+    <div class="field"><label for="moderation-kind">Tür</label><select id="moderation-kind" name="kind"><option value="">Tüm türler</option>{% for value,label in kind_choices %}<option value="{{ value }}" {% if moderation_kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="moderation-city">Şehir</label><select id="moderation-city" name="city"><option value="">Tüm şehirler</option>{% for value,label in city_choices %}<option value="{{ value }}" {% if moderation_city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="moderation-quality">Kalite</label><select id="moderation-quality" name="quality"><option value="">Tüm puanlar</option><option value="low" {% if moderation_quality == 'low' %}selected{% endif %}>60 puan altı</option><option value="strong" {% if moderation_quality == 'strong' %}selected{% endif %}>80 puan ve üstü</option></select></div>
+    <div class="field"><label for="moderation-order">Sıralama</label><select id="moderation-order" name="order"><option value="oldest" {% if moderation_order == 'oldest' %}selected{% endif %}>En eski önce</option><option value="newest" {% if moderation_order == 'newest' %}selected{% endif %}>En yeni önce</option></select></div>
+    <div class="v111-filter-actions"><button class="button" type="submit">Filtrele</button><a class="button secondary" href="{% url 'listings:moderation' %}">Temizle</a></div>
+  </form>
+
   <div class="dashboard-panel-head"><div><span class="section-label">İLAN İNCELEME</span><h2>Yayın onayı bekleyenler</h2></div></div>
+  {% if pending_listings %}<form id="bulk-moderation-form" method="post" action="{% url 'listings:bulk_moderate_listings' %}" class="v111-bulk-toolbar">{% csrf_token %}<label class="v111-select-all"><input type="checkbox" data-moderation-select-all> Bu sayfadakileri seç</label><select name="bulk_action" required><option value="">Toplu işlem seç</option><option value="approve">Onayla ve yayınla</option><option value="reject">Düzeltme iste</option></select><input name="bulk_note" placeholder="Düzeltme istenecekse ortak açıklama yaz"><button class="button" type="submit">Seçililere uygula</button></form>{% endif %}
   <div class="moderation-list">
     {% for listing in pending_listings %}
-      <article class="moderation-card">
+      <article class="moderation-card v111-moderation-card">
+        <label class="v111-card-select" title="Toplu işleme ekle"><input form="bulk-moderation-form" type="checkbox" name="listing_ids" value="{{ listing.pk }}" data-moderation-checkbox><span>Seç</span></label>
         <div class="moderation-card-media">{% with cover=listing.images.first %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}</div>
         <div class="moderation-card-copy"><div><span class="badge">{{ listing.get_kind_display }}</span><span class="badge badge-soft">{{ listing.get_action_display }}</span></div><h3><a href="{{ listing.get_absolute_url }}">{{ listing.title }}</a></h3><p>{{ listing.description|truncatechars:180 }}</p><div class="v17-moderation-quality tone-{{ listing.quality_profile.tone }}"><b>{{ listing.quality_profile.score }}/100 · {{ listing.quality_profile.level }}</b><span>{{ listing.quality_profile.passed_count }}/{{ listing.quality_profile.total_count }} ölçüt tamam</span></div>{% if listing.quality_profile.risk_flags %}<div class="v17-risk-flags">{% for flag in listing.quality_profile.risk_flags %}<span>⚠ {{ flag }}</span>{% endfor %}</div>{% endif %}<small>{{ listing.owner.display_name }} · {{ listing.city }}/{{ listing.district }} · {{ listing.created_at|timesince }} önce</small></div>
         <div class="moderation-actions"><form method="post" action="{% url 'listings:moderate_listing' listing.pk 'approve' %}">{% csrf_token %}<button class="button full" type="submit">Onayla ve Yayınla</button></form><form method="post" action="{% url 'listings:moderate_listing' listing.pk 'reject' %}">{% csrf_token %}<textarea name="review_note" rows="3" required placeholder="Düzeltme notunu yaz"></textarea><button class="button danger-button full" type="submit">Düzeltme İste</button></form></div>
       </article>
-    {% empty %}<div class="empty-state"><div class="empty-icon">✅</div><h3>Bekleyen ilan yok</h3><p>İnceleme kuyruğu temiz.</p></div>{% endfor %}
+    {% empty %}<div class="empty-state"><div class="empty-icon">✅</div><h3>Bu filtrede bekleyen ilan yok</h3><p>Filtreleri temizleyebilir veya moderasyon kuyruğuna daha sonra dönebilirsin.</p><a class="button secondary" href="{% url 'listings:moderation' %}">Filtreleri temizle</a></div>{% endfor %}
   </div>
 </div></section>
 

@@ -29,6 +29,7 @@ jobs:
         run: |
           python manage.py seed_categories
           python manage.py marketplace_maintenance
+          python manage.py send_notification_digests
       - name: Sistem kontrolü
         run: python manage.py check
       - name: Canlı ortam güvenlik kontrolü

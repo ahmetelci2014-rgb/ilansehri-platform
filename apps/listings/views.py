@@ -25,6 +25,8 @@ from django.views.generic.edit import FormMixin
 
 from apps.accounts.models import UserBlock, UserFollow
 from apps.managed_services.models import ManagedRequest
+from apps.support_center.models import StaffActionLog
+from apps.support_center.services import log_staff_action
 
 from .forms import (
     CounterOfferForm,
@@ -1522,14 +1524,51 @@ class ModerationDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        pending_listings = list(
-            Listing.objects.filter(status=Listing.Status.REVIEW).select_related(
-                "owner", "category"
-            ).prefetch_related("images", "price_history")[:100]
-        )
+        base_qs = Listing.objects.filter(status=Listing.Status.REVIEW).select_related(
+            "owner", "category"
+        ).prefetch_related("images", "price_history")
+        context["pending_total"] = base_qs.count()
+        q = self.request.GET.get("q", "").strip()
+        kind = self.request.GET.get("kind", "").strip()
+        city = self.request.GET.get("city", "").strip()
+        quality = self.request.GET.get("quality", "").strip()
+        order = self.request.GET.get("order", "oldest").strip()
+        if q:
+            base_qs = base_qs.filter(
+                Q(title__icontains=q)
+                | Q(description__icontains=q)
+                | Q(owner__username__icontains=q)
+                | Q(owner__first_name__icontains=q)
+                | Q(owner__last_name__icontains=q)
+            )
+        valid_kinds = {value for value, _ in Listing.Kind.choices}
+        if kind in valid_kinds:
+            base_qs = base_qs.filter(kind=kind)
+        if city:
+            base_qs = base_qs.filter(city__iexact=city)
+        if order == "newest":
+            base_qs = base_qs.order_by("-created_at")
+        else:
+            base_qs = base_qs.order_by("created_at")
+        pending_listings = list(base_qs[:200])
         for listing in pending_listings:
             listing.quality_profile = assess_listing_quality(listing)
-        context["pending_listings"] = pending_listings
+        if quality == "low":
+            pending_listings = [item for item in pending_listings if item.quality_profile["score"] < 60]
+        elif quality == "strong":
+            pending_listings = [item for item in pending_listings if item.quality_profile["score"] >= 80]
+        context.update(
+            {
+                "pending_listings": pending_listings,
+                "moderation_q": q,
+                "moderation_kind": kind,
+                "moderation_city": city,
+                "moderation_quality": quality,
+                "moderation_order": order,
+                "kind_choices": Listing.Kind.choices,
+                "city_choices": CITY_CHOICES,
+            }
+        )
         context["open_reports"] = ListingReport.objects.filter(
             status__in=[ListingReport.Status.OPEN, ListingReport.Status.REVIEWING]
         ).select_related("listing", "reporter")[:100]
@@ -1539,11 +1578,8 @@ class ModerationDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
         return context
 
 
-@user_passes_test(lambda user: user.is_authenticated and user.is_staff)
-@require_POST
-def moderate_listing(request, pk, action):
-    listing = get_object_or_404(Listing, pk=pk)
-    note = request.POST.get("review_note", "").strip()[:2000]
+def _apply_listing_moderation(*, listing, actor, action, note=""):
+    note = (note or "").strip()[:2000]
     if action == "approve":
         listing.status = Listing.Status.PUBLISHED
         listing.published_at = timezone.now()
@@ -1555,10 +1591,9 @@ def moderate_listing(request, pk, action):
         title = "İlanın için düzenleme gerekiyor"
         body = note or "İlanın güvenlik incelemesinde onaylanmadı. Ayrıntıları kontrol et."
     else:
-        messages.error(request, "Geçersiz moderasyon işlemi.")
-        return redirect("listings:moderation")
+        raise ValueError("Geçersiz moderasyon işlemi")
     listing.review_note = note
-    listing.moderated_by = request.user
+    listing.moderated_by = actor
     listing.moderated_at = timezone.now()
     listing.save()
     if action == "approve":
@@ -1570,14 +1605,75 @@ def moderate_listing(request, pk, action):
             notify_price_drop_favorites(latest_price_change)
     create_notification(
         user=listing.owner,
-        actor=request.user,
+        actor=actor,
         listing=listing,
         notification_type=Notification.Type.LISTING_STATUS,
         title=title,
         body=body,
         link=listing.get_absolute_url(),
     )
+    log_staff_action(
+        actor=actor,
+        action=StaffActionLog.Action.LISTING_MODERATION,
+        target=listing,
+        summary=f"{listing.title} · {'onaylandı' if action == 'approve' else 'düzeltme istendi'}",
+        metadata={"action": action, "review_note": note},
+    )
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff)
+@require_POST
+def moderate_listing(request, pk, action):
+    listing = get_object_or_404(Listing, pk=pk)
+    note = request.POST.get("review_note", "").strip()[:2000]
+    if action == "reject" and not note:
+        messages.error(request, "Düzeltme istenirken kullanıcıya açıklayıcı bir not yazmalısın.")
+        return redirect("listings:moderation")
+    try:
+        _apply_listing_moderation(listing=listing, actor=request.user, action=action, note=note)
+    except ValueError:
+        messages.error(request, "Geçersiz moderasyon işlemi.")
+        return redirect("listings:moderation")
     messages.success(request, f"{listing.title} için işlem tamamlandı.")
+    return redirect("listings:moderation")
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff)
+@require_POST
+def bulk_moderate_listings(request):
+    raw_ids = request.POST.getlist("listing_ids")
+    action = request.POST.get("bulk_action", "").strip()
+    note = request.POST.get("bulk_note", "").strip()[:2000]
+    try:
+        selected_ids = list(dict.fromkeys(int(value) for value in raw_ids))[:100]
+    except (TypeError, ValueError):
+        selected_ids = []
+    if not selected_ids:
+        messages.warning(request, "Toplu işlem için en az bir ilan seç.")
+        return redirect("listings:moderation")
+    if action not in {"approve", "reject"}:
+        messages.error(request, "Toplu işlem türünü seç.")
+        return redirect("listings:moderation")
+    if action == "reject" and not note:
+        messages.error(request, "Toplu düzeltme isteğinde ortak bir açıklama yazmalısın.")
+        return redirect("listings:moderation")
+    listings = list(
+        Listing.objects.filter(pk__in=selected_ids, status=Listing.Status.REVIEW)
+        .select_related("owner")
+        .prefetch_related("price_history")
+    )
+    if not listings:
+        messages.info(request, "Seçilen ilanlar artık inceleme kuyruğunda değil.")
+        return redirect("listings:moderation")
+    with db_transaction.atomic():
+        for listing in listings:
+            _apply_listing_moderation(
+                listing=listing, actor=request.user, action=action, note=note
+            )
+    messages.success(
+        request,
+        f"{len(listings)} ilan için toplu moderasyon işlemi tamamlandı.",
+    )
     return redirect("listings:moderation")
 
 

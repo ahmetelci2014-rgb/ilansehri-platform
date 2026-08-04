@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import AccountClosureRequest, User, UserBlock, UserFollow, VerificationCode
+from .models import AccountClosureRequest, NotificationPreference, User, UserBlock, UserFollow, VerificationCode
 
 
 @admin.register(User)
@@ -50,3 +50,11 @@ class AccountClosureRequestAdmin(admin.ModelAdmin):
     list_filter = ("status", "requested_at")
     search_fields = ("user__username", "user__email", "reason")
     readonly_fields = ("requested_at", "updated_at")
+
+
+@admin.register(NotificationPreference)
+class NotificationPreferenceAdmin(admin.ModelAdmin):
+    list_display = ("user", "digest_frequency", "updated_at")
+    list_filter = ("digest_frequency", "email_messages", "email_offers", "email_system")
+    search_fields = ("user__username", "user__email")
+    readonly_fields = ("created_at", "updated_at", "last_digest_at")

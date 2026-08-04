@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Bildirim Tercihleri | İlan Şehri{% endblock %}
+{% block content %}
+<section class="v111-pref-hero"><div class="shell"><span class="section-label">BİLDİRİM TERCİHLERİ</span><h1>Hangi gelişmelerden haberdar olacağını seç</h1><p>Önemli işlem, güvenlik ve destek bildirimleri uygulama içinde her zaman gösterilir.</p></div></section>
+<section class="shell v111-pref-layout">
+  <form method="post" class="v111-pref-form">{% csrf_token %}
+    <section class="v111-pref-card"><div class="v111-pref-head"><span>🔔</span><div><h2>Uygulama içi bildirimler</h2><p>Bildirim Merkezi ve üst menüde gösterilecek isteğe bağlı bildirimler.</p></div></div><div class="v111-toggle-list">
+      {% for field in form %}{% if field.name|slice:':7' == 'in_app_' %}<label class="v111-toggle-row"><div><b>{{ field.label }}</b><small>Bu tür gelişmeler Bildirim Merkezi’nde görünsün.</small></div>{{ field }}</label>{% endif %}{% endfor %}
+    </div><div class="v111-critical-note"><b>Her zaman açık:</b> İşlem, teslim, ilan moderasyonu, doğrulama, destek ve önemli sistem bildirimleri.</div></section>
+    <section class="v111-pref-card"><div class="v111-pref-head"><span>✉️</span><div><h2>Anlık e-posta bildirimleri</h2><p>Seçtiğin gelişmeler olduğunda hesabındaki e-posta adresine gönderilir.</p></div></div>{% if not user.email %}<div class="v111-warning">E-posta bildirimi açmak için önce <a href="{% url 'accounts:profile_edit' %}">profiline e-posta adresi ekle</a>.</div>{% elif not user.is_email_verified %}<div class="v111-warning">E-posta bildirimleri yalnız doğrulanmış adreslere gönderilir. <a href="{% url 'accounts:verification' %}">E-postanı doğrula</a>.</div>{% endif %}<div class="v111-toggle-list">
+      {% for field in form %}{% if field.name|slice:':6' == 'email_' %}<label class="v111-toggle-row"><div><b>{{ field.label }}</b><small>Anlık e-posta gönder.</small></div>{{ field }}</label>{% endif %}{% endfor %}
+    </div></section>
+    <section class="v111-pref-card"><div class="v111-pref-head"><span>🗓️</span><div><h2>Bildirim özeti</h2><p>Anlık e-posta seçmediğin gelişmeleri günlük veya haftalık tek özet halinde al.</p></div></div><div class="field"><label for="{{ form.digest_frequency.id_for_label }}">{{ form.digest_frequency.label }}</label>{{ form.digest_frequency }}{% for error in form.digest_frequency.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div><small class="v111-digest-note">Özetlerin gönderilmesi için canlı sunucuda zamanlanmış bakım komutu çalıştırılmalıdır.</small></section>
+    <div class="v111-pref-actions"><a class="button secondary" href="{% url 'accounts:settings' %}">Hesap ayarlarına dön</a><button class="button button-lg" type="submit">Tercihleri kaydet</button></div>
+  </form>
+  <aside class="v111-pref-side"><h3>Bildirimler nasıl çalışır?</h3><ul><li>Mesaj ve teklif bildirimlerini kapatırsan yalnız Bildirim Merkezi’ndeki yeni kayıtlar etkilenir.</li><li>İşlem ve güvenlik bildirimleri hesabını korumak için uygulama içinde kapatılamaz.</li><li>E-posta gönderimi gerçek SMTP ayarları bağlandığında çalışır.</li><li>Tercihler yalnız senin hesabına uygulanır.</li></ul><a href="{% url 'listings:notifications' %}">Bildirim Merkezini aç →</a></aside>
+</section>
+{% endblock %}

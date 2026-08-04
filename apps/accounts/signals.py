@@ -1,7 +1,7 @@
-from django.db.models.signals import post_delete, pre_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from .models import User
+from .models import NotificationPreference, User
 
 
 def _delete_avatar(avatar):
@@ -16,6 +16,12 @@ def delete_replaced_avatar(sender, instance, **kwargs):
     old = sender.objects.filter(pk=instance.pk).only("avatar").first()
     if old and old.avatar and old.avatar.name != instance.avatar.name:
         _delete_avatar(old.avatar)
+
+
+@receiver(post_save, sender=User)
+def ensure_notification_preferences(sender, instance, created, **kwargs):
+    if created:
+        NotificationPreference.objects.get_or_create(user=instance)
 
 
 @receiver(post_delete, sender=User)

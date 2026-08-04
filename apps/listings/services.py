@@ -8,6 +8,7 @@ import time
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.mail import send_mail
 from django.core.files.base import ContentFile
 from django.db import transaction as db_transaction
 from django.db.models import Avg, Count, F
@@ -155,6 +156,43 @@ def consume_rate_limit(request, action: str, *, limit=10, period=600) -> bool:
     return count <= limit
 
 
+def _notification_preferences(user):
+    from apps.accounts.models import NotificationPreference
+
+    preference, _ = NotificationPreference.objects.get_or_create(user=user)
+    return preference
+
+
+def _notification_absolute_link(link: str) -> str:
+    link = (link or "").strip()
+    if not link:
+        return settings.PUBLIC_BASE_URL or ""
+    if link.startswith(("http://", "https://")):
+        return link
+    if settings.PUBLIC_BASE_URL:
+        return f"{settings.PUBLIC_BASE_URL}{link if link.startswith('/') else '/' + link}"
+    return link
+
+
+def _send_notification_email(*, user, title, body, link):
+    if not user.email or not user.is_email_verified:
+        return 0
+    lines = [title]
+    if body:
+        lines.extend(["", body])
+    absolute_link = _notification_absolute_link(link)
+    if absolute_link:
+        lines.extend(["", f"Ayrıntılar: {absolute_link}"])
+    lines.extend(["", "Bu e-posta İlan Şehri bildirim tercihlerine göre gönderildi."])
+    return send_mail(
+        subject=f"İlan Şehri · {title}",
+        message="\n".join(lines),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
+
+
 def create_notification(
     *,
     user,
@@ -167,15 +205,28 @@ def create_notification(
 ):
     if actor and actor.pk == user.pk:
         actor = None
-    return Notification.objects.create(
-        user=user,
-        actor=actor,
-        listing=listing,
-        notification_type=notification_type,
-        title=title,
-        body=body[:320],
-        link=link[:320],
-    )
+    preference = _notification_preferences(user)
+    notification = None
+    if preference.allows_in_app(notification_type):
+        notification = Notification.objects.create(
+            user=user,
+            actor=actor,
+            listing=listing,
+            notification_type=notification_type,
+            title=title,
+            body=body[:320],
+            link=link[:320],
+        )
+    if preference.allows_email(notification_type) and user.email and user.is_email_verified:
+        db_transaction.on_commit(
+            lambda: _send_notification_email(
+                user=user,
+                title=title,
+                body=body[:320],
+                link=link[:320],
+            )
+        )
+    return notification
 
 
 def create_offer_event(*, offer, actor, event_type, amount=None, message=""):
@@ -203,7 +254,7 @@ def notify_followers_new_listing(listing: Listing) -> int:
             notification_type=Notification.Type.FOLLOW,
         ).exists():
             continue
-        create_notification(
+        notification = create_notification(
             user=recipient,
             actor=listing.owner,
             listing=listing,
@@ -212,7 +263,8 @@ def notify_followers_new_listing(listing: Listing) -> int:
             body=listing.title,
             link=listing.get_absolute_url(),
         )
-        created += 1
+        if notification is not None:
+            created += 1
     return created
 
 
@@ -239,7 +291,7 @@ def notify_price_drop_favorites(history: ListingPriceHistory) -> int:
 
     created = 0
     for recipient in User.objects.filter(pk__in=recipient_ids, is_active=True).iterator():
-        create_notification(
+        notification = create_notification(
             user=recipient,
             actor=locked_history.listing.owner,
             listing=locked_history.listing,
@@ -251,7 +303,8 @@ def notify_price_drop_favorites(history: ListingPriceHistory) -> int:
             ).replace(",", "."),
             link=locked_history.listing.get_absolute_url(),
         )
-        created += 1
+        if notification is not None:
+            created += 1
     locked_history.notifications_sent_at = timezone.now()
     locked_history.save(update_fields=["notifications_sent_at"])
     history.notifications_sent_at = locked_history.notifications_sent_at

@@ -1,4 +1,4 @@
-# İlan Şehri v1.9 — Kullanıcı Akışları ve Hesap Güvenliği
+# İlan Şehri v1.11 — Bildirim ve Moderasyon Operasyonu
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -107,3 +107,20 @@ Yeni Yardım Merkezi ve hesap içi destek sistemi şu yollarla kullanılabilir:
 - Personel destek kuyruğu: `/yardim/ekip/`
 
 Destek talepleri kullanıcı hesabına bağlıdır. Kullanıcı yalnız kendi taleplerini görebilir. Personel yanıtları uygulama içi bildirim üretir; ekip içi notlar kullanıcıya gösterilmez. Destek işlemleri `StaffActionLog` kayıtlarında izlenir.
+
+
+## v1.11 bildirim ve moderasyon operasyonu
+
+- Kullanıcıya özel uygulama içi bildirim tercihleri
+- Tür bazlı anlık e-posta bildirimleri
+- Günlük veya haftalık bildirim özeti komutu
+- Filtrelenebilir ve toplu işlem destekli moderasyon kuyruğu
+- Zorunlu düzeltme notu ve personel işlem günlüğü
+
+Bildirim özeti komutu:
+
+```bash
+python manage.py send_notification_digests
+```
+
+Ayrıntılar: `docs/NOTIFICATION_MODERATION.md`

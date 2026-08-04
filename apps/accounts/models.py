@@ -204,3 +204,79 @@ class AccountClosureRequest(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} · {self.get_status_display()}"
+
+
+class NotificationPreference(models.Model):
+    class DigestFrequency(models.TextChoices):
+        OFF = "off", "Özet e-posta gönderme"
+        DAILY = "daily", "Günlük özet"
+        WEEKLY = "weekly", "Haftalık özet"
+
+    user = models.OneToOneField(
+        User,
+        related_name="notification_preferences",
+        on_delete=models.CASCADE,
+    )
+    in_app_messages = models.BooleanField(default=True)
+    in_app_offers = models.BooleanField(default=True)
+    in_app_price_drops = models.BooleanField(default=True)
+    in_app_follows = models.BooleanField(default=True)
+    in_app_reviews = models.BooleanField(default=True)
+    email_messages = models.BooleanField(default=False)
+    email_offers = models.BooleanField(default=False)
+    email_transactions = models.BooleanField(default=False)
+    email_listing_updates = models.BooleanField(default=False)
+    email_price_drops = models.BooleanField(default=False)
+    email_follows = models.BooleanField(default=False)
+    email_reviews = models.BooleanField(default=False)
+    email_system = models.BooleanField(default=False)
+    digest_frequency = models.CharField(
+        max_length=12,
+        choices=DigestFrequency.choices,
+        default=DigestFrequency.OFF,
+    )
+    last_digest_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    OPTIONAL_IN_APP_FIELDS = {
+        "message": "in_app_messages",
+        "offer": "in_app_offers",
+        "price_drop": "in_app_price_drops",
+        "follow": "in_app_follows",
+        "review": "in_app_reviews",
+    }
+    EMAIL_FIELDS = {
+        "message": "email_messages",
+        "offer": "email_offers",
+        "transaction": "email_transactions",
+        "listing_status": "email_listing_updates",
+        "verification": "email_listing_updates",
+        "managed": "email_listing_updates",
+        "task": "email_listing_updates",
+        "price_drop": "email_price_drops",
+        "follow": "email_follows",
+        "review": "email_reviews",
+        "system": "email_system",
+    }
+    CRITICAL_IN_APP_TYPES = {
+        "transaction",
+        "listing_status",
+        "verification",
+        "managed",
+        "task",
+        "system",
+    }
+
+    def allows_in_app(self, notification_type: str) -> bool:
+        if notification_type in self.CRITICAL_IN_APP_TYPES:
+            return True
+        field_name = self.OPTIONAL_IN_APP_FIELDS.get(notification_type)
+        return bool(getattr(self, field_name, True)) if field_name else True
+
+    def allows_email(self, notification_type: str) -> bool:
+        field_name = self.EMAIL_FIELDS.get(notification_type)
+        return bool(getattr(self, field_name, False)) if field_name else False
+
+    def __str__(self) -> str:
+        return f"{self.user} · bildirim tercihleri"

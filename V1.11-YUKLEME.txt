@@ -1,0 +1,31 @@
+İLAN ŞEHRİ v1.11 — BİLDİRİM VE MODERASYON OPERASYONU
+
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.11 bildirim ve moderasyon
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+
+YENİ EKRAN
+- Bildirim tercihleri: /hesap/bildirim-tercihleri/
+
+GELİŞEN EKRAN
+- Moderasyon: /ilanlar/moderasyon/
+
+BİLDİRİM ÖZETİ
+python manage.py send_notification_digests
+
+ÖNEMLİ
+- NotificationPreference modeli eklenir.
+- scripts/start_codespace.sh migrationı otomatik üretip uygular.
+- E-posta bildirimleri yalnız doğrulanmış e-posta adreslerine gönderilir.
+- Gerçek gönderim için canlı SMTP ayarları gerekir.
+- Toplu moderasyonda en fazla 100 ilan işlenir.
