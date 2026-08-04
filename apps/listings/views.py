@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import json
+
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
@@ -53,11 +55,14 @@ from .models import (
 )
 from .services import (
     accept_offer,
+    assess_listing_quality,
+    consume_rate_limit,
     counter_offer,
     create_offer_event,
     create_notification,
     notify_followers_new_listing,
     notify_price_drop_favorites,
+    optimize_listing_image,
     record_price_change,
     finalize_transaction,
     refresh_user_rating,
@@ -90,9 +95,10 @@ def _save_images(listing, images):
     current_count = listing.images.count()
     has_cover = listing.images.filter(is_cover=True).exists()
     for index, image in enumerate(images, start=current_count):
+        optimized_image = optimize_listing_image(image)
         ListingImage.objects.create(
             listing=listing,
-            image=image,
+            image=optimized_image,
             alt_text=listing.title,
             sort_order=index,
             is_cover=not has_cover and index == current_count,
@@ -537,12 +543,39 @@ class ListingDetailView(FormMixin, DetailView):
             )
         else:
             context["favorite_ids"] = set()
+        context["quality_profile"] = assess_listing_quality(self.object)
+        context["canonical_url"] = self.request.build_absolute_uri(self.object.get_absolute_url())
+        cover = self.object.cover_image
+        context["share_image_url"] = self.request.build_absolute_uri(cover.image.url) if cover else ""
+        schema = {
+            "@context": "https://schema.org",
+            "@type": "Product" if self.object.kind in {Listing.Kind.PRODUCT, Listing.Kind.VEHICLE} else "Offer",
+            "name": self.object.title,
+            "description": self.object.description[:500],
+            "url": context["canonical_url"],
+            "image": [self.request.build_absolute_uri(item.image.url) for item in self.object.images.all()[:10]],
+            "offers": {
+                "@type": "Offer",
+                "priceCurrency": "TRY",
+                "price": str(self.object.price) if self.object.price is not None else "",
+                "availability": "https://schema.org/InStock",
+                "url": context["canonical_url"],
+            },
+            "seller": {
+                "@type": "Person",
+                "name": self.object.owner.display_name,
+            },
+        }
+        context["listing_schema_json"] = json.dumps(schema, ensure_ascii=False).replace("</", "<\\/")
         return context
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         if not request.user.is_authenticated:
             return redirect(f"{reverse('login')}?next={self.object.get_absolute_url()}")
+        if not consume_rate_limit(request, "offer", limit=8, period=600):
+            messages.error(request, "Kısa sürede çok fazla teklif işlemi yaptın. Birkaç dakika sonra tekrar dene.")
+            return redirect(self.object.get_absolute_url())
         if self.object.status != Listing.Status.PUBLISHED:
             messages.warning(request, "Yalnız yayındaki ilanlara teklif verilebilir.")
             return redirect(self.object.get_absolute_url())
@@ -1072,6 +1105,9 @@ def create_review(request, public_id):
 @require_POST
 def start_conversation(request, slug):
     listing = get_object_or_404(Listing, _active_listing_q(), slug=slug)
+    if not consume_rate_limit(request, "message", limit=12, period=600):
+        messages.error(request, "Kısa sürede çok fazla mesaj gönderdin. Birkaç dakika sonra tekrar dene.")
+        return redirect(listing.get_absolute_url())
     if listing.owner == request.user:
         messages.warning(request, "Kendi ilanına mesaj gönderemezsin.")
         return redirect(listing.get_absolute_url())
@@ -1319,6 +1355,9 @@ def toggle_saved_search_alert(request, pk):
 @require_POST
 def report_listing(request, slug):
     listing = get_object_or_404(Listing, _active_listing_q(), slug=slug)
+    if not consume_rate_limit(request, "report", limit=5, period=3600):
+        messages.error(request, "Şikâyet gönderme sınırına ulaştın. Daha sonra tekrar dene.")
+        return redirect(listing.get_absolute_url())
     if listing.owner == request.user:
         messages.warning(request, "Kendi ilanını şikâyet edemezsin.")
         return redirect(listing.get_absolute_url())
@@ -1345,9 +1384,14 @@ class ModerationDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["pending_listings"] = Listing.objects.filter(status=Listing.Status.REVIEW).select_related(
-            "owner", "category"
-        ).prefetch_related("images", "price_history")[:100]
+        pending_listings = list(
+            Listing.objects.filter(status=Listing.Status.REVIEW).select_related(
+                "owner", "category"
+            ).prefetch_related("images", "price_history")[:100]
+        )
+        for listing in pending_listings:
+            listing.quality_profile = assess_listing_quality(listing)
+        context["pending_listings"] = pending_listings
         context["open_reports"] = ListingReport.objects.filter(
             status__in=[ListingReport.Status.OPEN, ListingReport.Status.REVIEWING]
         ).select_related("listing", "reporter")[:100]

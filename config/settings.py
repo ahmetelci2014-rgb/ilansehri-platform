@@ -17,6 +17,7 @@ CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.getenv("CSRF_TRUSTED_ORIGINS", "")
 VERIFICATION_DEBUG_CODE = os.getenv("VERIFICATION_DEBUG_CODE", str(DEBUG)).lower() == "true"
 SMS_WEBHOOK_URL = os.getenv("SMS_WEBHOOK_URL", "").strip()
 SMS_WEBHOOK_TOKEN = os.getenv("SMS_WEBHOOK_TOKEN", "").strip()
+PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").strip().rstrip("/")
 
 IS_TESTING = "test" in sys.argv
 IS_CODESPACES = os.getenv("CODESPACES", "false").lower() == "true"
@@ -33,6 +34,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
     "apps.core",
     "apps.accounts",
     "apps.listings",

@@ -1,0 +1,32 @@
+İLAN ŞEHRİ v1.7 — YAYINA HAZIRLIK, SEO VE İLAN KALİTESİ
+
+1. ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.7 yayına hazırlık
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+
+GÖZLE KONTROL EDİLECEK EKRANLAR
+- İlan detayında kalite puanı ve paylaşım düğmeleri
+- Hesabım ekranında ilan kalite çubuğu
+- Moderasyon ekranında kalite/risk işaretleri
+- Yönetim Merkezi büyüme raporları
+- /robots.txt
+- /sitemap.xml
+- Bulunamayan bir adres için profesyonel 404 ekranı
+
+CANLI ORTAM NOTU
+.env dosyasına gerçek alan adını şu şekilde ekleyin:
+PUBLIC_BASE_URL=https://alanadiniz.com
+
+Not:
+- Yeni veritabanı alanı yoktur; migration gerekmez.
+- Teklif, mesaj, takip, fiyat geçmişi ve moderasyon işlevleri korunmuştur.

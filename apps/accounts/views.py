@@ -26,7 +26,7 @@ from apps.listings.models import (
     SavedSearch,
     Transaction,
 )
-from apps.listings.services import create_notification
+from apps.listings.services import assess_listing_quality, create_notification
 
 from .delivery import send_phone_verification_code
 from .forms import ProfileForm, SignUpForm, VerificationConfirmForm, VerificationStartForm
@@ -56,7 +56,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        context["my_listings"] = user.listings.select_related("category").prefetch_related("images", "price_history").order_by("-updated_at")[:20]
+        my_listings = list(
+            user.listings.select_related("category", "owner")
+            .prefetch_related("images", "price_history")
+            .order_by("-updated_at")[:20]
+        )
+        for listing in my_listings:
+            listing.quality_profile = assess_listing_quality(listing)
+        context["my_listings"] = my_listings
         context["received_offers"] = Offer.objects.filter(listing__owner=user).select_related("listing", "sender").order_by("-created_at")[:15]
         context["sent_offers"] = user.offers.select_related("listing", "listing__owner")[:15]
         context["managed_requests"] = user.managed_requests.select_related("listing").order_by("-updated_at")[:10]

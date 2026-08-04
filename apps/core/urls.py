@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import HomeView, StaffDashboardView, StaticPageView, health_check, manifest, service_worker
+from .views import HomeView, StaffDashboardView, StaticPageView, health_check, manifest, robots_txt, service_worker
 
 app_name = "core"
 urlpatterns = [
@@ -14,6 +14,7 @@ urlpatterns = [
     path("kvkk/", StaticPageView.as_view(template_name="core/kvkk.html"), name="kvkk"),
     path("cerezler/", StaticPageView.as_view(template_name="core/cookies.html"), name="cookies"),
     path("offline/", StaticPageView.as_view(template_name="core/offline.html"), name="offline"),
+    path("robots.txt", robots_txt, name="robots"),
     path("manifest.webmanifest", manifest, name="manifest"),
     path("service-worker.js", service_worker, name="service_worker"),
     path("health/", health_check, name="health"),

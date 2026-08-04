@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from io import BytesIO
+from pathlib import Path
+import re
+import time
 
+from django.conf import settings
+from django.core.cache import cache
+from django.core.files.base import ContentFile
 from django.db import transaction as db_transaction
 from django.db.models import Avg, Count, F
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from .models import (
     Favorite,
@@ -17,6 +25,134 @@ from .models import (
     Review,
     Transaction,
 )
+
+
+_PHONE_PATTERN = re.compile(r"(?:\+?90|0)?\s*5\d{2}[\s.-]*\d{3}[\s.-]*\d{2}[\s.-]*\d{2}")
+_REPEATED_PUNCTUATION = re.compile(r"([!?.,])\1{2,}")
+
+
+def assess_listing_quality(listing: Listing) -> dict:
+    """Return a deterministic quality and moderation summary without storing extra data."""
+    checks = []
+
+    def add(label, points, passed, suggestion=""):
+        checks.append(
+            {
+                "label": label,
+                "points": points if passed else 0,
+                "max_points": points,
+                "passed": bool(passed),
+                "suggestion": suggestion,
+            }
+        )
+
+    title = (listing.title or "").strip()
+    description = (listing.description or "").strip()
+    images = list(listing.images.all())
+    add("Açıklayıcı başlık", 12, len(title) >= 18, "Başlığı en az 18 karakter ve daha açıklayıcı yap.")
+    add("Ayrıntılı açıklama", 20, len(description) >= 120, "Kusur, teslim ve kullanım ayrıntılarını ekle.")
+    add("Yeterli fotoğraf", 20, len(images) >= 4, "En az 4 farklı açıdan fotoğraf ekle.")
+    add("Fiyat bilgisi", 10, bool(listing.price_on_request or listing.price), "Fiyat veya teklif seçeneği belirt.")
+    add("Konum ayrıntısı", 10, bool(listing.city and listing.district), "Şehir ve ilçe bilgisini tamamla.")
+    add("Teslim / durum bilgisi", 8, bool(listing.delivery_type or listing.condition), "Teslim ve ürün durumunu belirt.")
+
+    category_complete = False
+    if listing.kind == Listing.Kind.VEHICLE:
+        category_complete = bool(listing.brand and listing.model_name and listing.model_year and listing.mileage is not None)
+    elif listing.kind == Listing.Kind.REAL_ESTATE:
+        category_complete = bool(listing.room_count and listing.area_m2)
+    elif listing.kind == Listing.Kind.SERVICE:
+        category_complete = bool(listing.service_area and listing.fee_type)
+    elif listing.kind == Listing.Kind.JOB:
+        category_complete = bool(listing.job_type)
+    else:
+        category_complete = bool(listing.brand or listing.condition or listing.delivery_type)
+    add("Kategori ayrıntıları", 12, category_complete, "Kategoriye özel alanları doldur.")
+    add("Doğrulanmış satıcı", 8, bool(getattr(listing.owner, "is_phone_verified", False)), "Telefon doğrulamasını tamamla.")
+
+    score = min(100, sum(item["points"] for item in checks))
+    if score >= 85:
+        level, tone = "Çok güçlü", "excellent"
+    elif score >= 70:
+        level, tone = "Güçlü", "good"
+    elif score >= 50:
+        level, tone = "Geliştirilebilir", "medium"
+    else:
+        level, tone = "Zayıf", "weak"
+
+    risk_flags = []
+    if title and title == title.upper() and any(char.isalpha() for char in title):
+        risk_flags.append("Başlığın tamamı büyük harf")
+    if _REPEATED_PUNCTUATION.search(title + " " + description):
+        risk_flags.append("Aşırı noktalama işareti")
+    if _PHONE_PATTERN.search(description):
+        risk_flags.append("Açıklamada telefon numarası")
+    if len(description) < 40:
+        risk_flags.append("Çok kısa açıklama")
+    if not images:
+        risk_flags.append("Fotoğraf yok")
+
+    return {
+        "score": score,
+        "level": level,
+        "tone": tone,
+        "checks": checks,
+        "suggestions": [item["suggestion"] for item in checks if not item["passed"] and item["suggestion"]],
+        "risk_flags": risk_flags,
+        "passed_count": sum(1 for item in checks if item["passed"]),
+        "total_count": len(checks),
+    }
+
+
+def optimize_listing_image(uploaded_file, *, max_edge=1800, quality=84):
+    """Resize and normalize listing photos while safely falling back to the original upload."""
+    try:
+        uploaded_file.seek(0)
+        source = Image.open(uploaded_file)
+        if getattr(source, "is_animated", False):
+            uploaded_file.seek(0)
+            return uploaded_file
+        image = ImageOps.exif_transpose(source)
+        image.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
+        has_alpha = image.mode in {"RGBA", "LA"} or (image.mode == "P" and "transparency" in image.info)
+        buffer = BytesIO()
+        original_stem = Path(getattr(uploaded_file, "name", "ilan-fotografi")).stem[:80] or "ilan-fotografi"
+        if has_alpha:
+            image.save(buffer, format="PNG", optimize=True)
+            filename = f"{original_stem}.png"
+        else:
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+            image.save(buffer, format="JPEG", quality=quality, optimize=True, progressive=True)
+            filename = f"{original_stem}.jpg"
+        return ContentFile(buffer.getvalue(), name=filename)
+    except (OSError, ValueError, UnidentifiedImageError):
+        try:
+            uploaded_file.seek(0)
+        except (AttributeError, OSError):
+            pass
+        return uploaded_file
+
+
+def consume_rate_limit(request, action: str, *, limit=10, period=600) -> bool:
+    """Simple cache-backed anti-spam guard for write-heavy marketplace actions."""
+    if getattr(settings, "IS_TESTING", False):
+        return True
+    if request.user.is_authenticated:
+        identity = f"u{request.user.pk}"
+    else:
+        forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+        identity = forwarded or request.META.get("REMOTE_ADDR", "anonymous")
+    window = int(time.time() // period)
+    key = f"ilansehri:rate:{action}:{identity}:{window}"
+    if cache.add(key, 1, timeout=period + 10):
+        return True
+    try:
+        count = cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, timeout=period + 10)
+        count = 1
+    return count <= limit
 
 
 def create_notification(

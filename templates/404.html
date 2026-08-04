@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}Sayfa bulunamadı — İlan Şehri{% endblock %}
+{% block robots_meta %}noindex,nofollow{% endblock %}
+{% block content %}<section class="v17-error-page"><div class="shell"><span>404</span><h1>Aradığın sayfa burada değil</h1><p>İlan kaldırılmış, süresi dolmuş veya bağlantı değişmiş olabilir.</p><div><a class="button" href="{% url 'listings:list' %}">İlanları keşfet</a><a class="market-secondary-button" href="{% url 'core:home' %}">Ana sayfaya dön</a></div></div></section>{% endblock %}

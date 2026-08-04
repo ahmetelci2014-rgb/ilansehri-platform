@@ -1,4 +1,4 @@
-# İlan Şehri v1.6 — Profesyonel Yerel Marketplace
+# İlan Şehri v1.3 — Pazarlık, Fiyat Takibi ve Satıcı Ağı
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -80,11 +80,6 @@ Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler 
 - İlan tamamlama göstergesi ve canlı önizleme
 
 
-## v1.6 görünür dönüşüm
+## v1.7 yayına hazırlık
 
-- Yeniden tasarlanan ilan odaklı ana sayfa
-- Gerçek beş adımlı ilan verme sihirbazı
-- Mağaza düzeninde ilan detay ekranı
-- Profesyonel Hesabım kontrol merkezi
-- Kart / kompakt ilan sonucu görünümü
-- Yenilenen PWA önbelleği sayesinde eski CSS'in kalmaması
+Bu sürüm sitemap, robots, sosyal paylaşım meta verileri, ilan kalite puanı, fotoğraf optimizasyonu, anti-spam koruması ve yönetim büyüme raporlarını ekler. Canlı ortamda `PUBLIC_BASE_URL=https://alanadiniz.com` tanımlanması önerilir.

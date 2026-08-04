@@ -21,7 +21,7 @@ from .models import (
     SavedSearch,
     Transaction,
 )
-from .services import record_price_change
+from .services import assess_listing_quality, record_price_change
 
 
 TINY_GIF = (
@@ -412,3 +412,35 @@ class ListingFlowTests(TestCase):
         response = self.client.get(reverse("listings:notifications"), {"type": "message", "status": "unread"})
         self.assertContains(response, "Yeni mesaj")
         self.assertNotContains(response, "Yeni teklif")
+
+
+class ListingQualityTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="quality-owner", password="StrongPass_2026", is_phone_verified=True
+        )
+        self.category = Category.objects.create(name="Kalite Ürün", slug="kalite-urun")
+
+    def test_quality_profile_rewards_complete_listing(self):
+        listing = Listing.objects.create(
+            owner=self.owner, category=self.category, kind=Listing.Kind.PRODUCT, action=Listing.Action.SELL,
+            title="Kutulu ve garantili profesyonel telefon ilanı",
+            description="Ürün temiz kullanılmıştır. Kutusu, faturası ve teslim koşulları mevcuttur. Tüm kusurlar açıklamada belirtilmiştir ve elden teslim mümkündür.",
+            price=Decimal("25000"), condition="Az kullanılmış", brand="Örnek Marka",
+            delivery_type=Listing.DeliveryType.HANDOVER, city="Şanlıurfa", district="Karaköprü",
+            status=Listing.Status.PUBLISHED,
+        )
+        profile = assess_listing_quality(listing)
+        self.assertGreaterEqual(profile["score"], 70)
+        self.assertNotIn("Açıklamada telefon numarası", profile["risk_flags"])
+        self.assertNotIn("Çok kısa açıklama", profile["risk_flags"])
+
+    def test_quality_profile_flags_phone_number_and_short_text(self):
+        listing = Listing.objects.create(
+            owner=self.owner, category=self.category, kind=Listing.Kind.PRODUCT, action=Listing.Action.SELL,
+            title="ACİL!!!", description="Ara 0555 111 22 33", city="Şanlıurfa", district="Haliliye",
+            status=Listing.Status.REVIEW,
+        )
+        profile = assess_listing_quality(listing)
+        self.assertIn("Açıklamada telefon numarası", profile["risk_flags"])
+        self.assertIn("Çok kısa açıklama", profile["risk_flags"])

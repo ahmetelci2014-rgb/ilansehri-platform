@@ -3,13 +3,15 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.conf import settings
 from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.http import HttpResponse, JsonResponse
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import TemplateView
 
 from apps.accounts.models import User, UserFollow
-from apps.listings.models import Favorite, Listing, ListingPriceHistory, ListingReport, Review, Transaction
+from apps.listings.models import Favorite, Listing, ListingPriceHistory, ListingReport, Offer, Review, Transaction
 from apps.managed_services.models import ManagedRequest
 from apps.partners.models import PartnerProfile, Task
 
@@ -144,6 +146,32 @@ class StaffDashboardView(UserPassesTestMixin, TemplateView):
         for row in day_rows:
             row["percent"] = max(8, round((row["activity"] / max_activity) * 100)) if row["activity"] else 4
 
+        active_listings = Listing.objects.filter(_active_listing_q())
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        total_transactions = Transaction.objects.count()
+        completed_transactions = Transaction.objects.filter(status=Transaction.Status.COMPLETED).count()
+        context["launch_metrics"] = {
+            "new_listings_7d": Listing.objects.filter(created_at__gte=seven_days_ago).count(),
+            "new_users_7d": User.objects.filter(date_joined__gte=seven_days_ago).count(),
+            "offers_7d": Offer.objects.filter(created_at__gte=seven_days_ago).count(),
+            "completed_7d": Transaction.objects.filter(
+                status=Transaction.Status.COMPLETED, completed_at__gte=seven_days_ago
+            ).count(),
+            "conversion_rate": round((completed_transactions / total_transactions) * 100) if total_transactions else 0,
+            "stale_listings": active_listings.filter(updated_at__lt=thirty_days_ago).count(),
+        }
+        context["top_categories"] = list(
+            active_listings.values("category__name")
+            .annotate(total=Count("id"))
+            .order_by("-total", "category__name")[:6]
+        )
+        context["top_cities"] = list(
+            active_listings.values("city")
+            .annotate(total=Count("id"))
+            .order_by("-total", "city")[:6]
+        )
+
         context.update(
             {
                 "stats": {
@@ -194,7 +222,24 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.5"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.7"})
+
+
+def robots_txt(request):
+    base_url = settings.PUBLIC_BASE_URL or f"{request.scheme}://{request.get_host()}"
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /yonetim/",
+        "Disallow: /hesap/",
+        "Disallow: /ilanlar/mesajlar/",
+        "Disallow: /ilanlar/bildirimler/",
+        "Disallow: /ilanlar/tekliflerim/",
+        "Disallow: /ilanlar/islem/",
+        f"Sitemap: {base_url}{reverse('django.contrib.sitemaps.views.sitemap')}",
+    ]
+    return HttpResponse("\n".join(lines) + "\n", content_type="text/plain; charset=utf-8")
 
 
 def manifest(request):
@@ -225,8 +270,8 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v16";
-const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
+const CACHE = "ilansehri-v17";
+const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
 const PRIVATE_PREFIXES = ["/hesap/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));
