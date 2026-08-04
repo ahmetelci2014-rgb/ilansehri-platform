@@ -1,3 +1,22 @@
 {% extends 'base.html' %}
-{% block title %}Yeni İlan | İlan Şehri{% endblock %}
-{% block content %}<section class="form-page"><span class="eyebrow">60 SANİYEDE BAŞLA</span><h1>Yeni ilan oluştur</h1><p>İlanını kendin yönetebilir veya tüm süreci İlan Şehri’ne bırakabilirsin.</p><form method="post" enctype="multipart/form-data" class="panel-form">{% csrf_token %}{{ form.as_p }}<button class="button full">İncelemeye Gönder</button></form></section>{% endblock %}
+{% block title %}{% if object %}İlanı Düzenle{% else %}Yeni İlan{% endif %} | İlan Şehri{% endblock %}
+{% block content %}
+<section class="form-page">
+  <span class="eyebrow">{% if object %}İLANINI GÜNCELLE{% else %}60 SANİYEDE BAŞLA{% endif %}</span>
+  <h1>{% if object %}İlanı düzenle{% else %}Yeni ilan oluştur{% endif %}</h1>
+  <p>İlanını kendin yönetebilir veya tüm süreci İlan Şehri’ne bırakabilirsin.</p>
+  <form method="post" enctype="multipart/form-data" class="panel-form form-grid">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="field {% if field.name == 'description' or field.name == 'images' %}field-wide{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    {% for error in form.non_field_errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+    <button class="button full">{% if object %}Değişiklikleri Kaydet{% else %}İlanı Oluştur{% endif %}</button>
+  </form>
+</section>
+{% endblock %}
