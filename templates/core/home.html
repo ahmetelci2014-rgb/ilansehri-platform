@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero">
+  <div>
+    <span class="eyebrow">YÜKSEK KOMİSYONLARA KARŞI YENİ NESİL YEREL PAZAR</span>
+    <h1>Ne arıyorsan,<br><em>yakınında.</em></h1>
+    <p>Al, sat, kirala, takas et; hizmet al veya hizmet ver. İlanını kendin yönet, komisyon ödeme. Uğraşmak istemiyorsan İlan Şehri senin için yönetsin.</p>
+    <form class="hero-search" action="{% url 'listings:list' %}">
+      <input name="q" placeholder="Ne arıyorsunuz? Örn. çocuk bakıcısı, kiralık ev...">
+      <button>Şehrimde Ara</button>
+    </form>
+    <div class="hero-actions">
+      <a class="button" href="{% url 'listings:create' %}">Ücretsiz İlan Ver</a>
+      <a class="button secondary" href="{% url 'listings:list' %}">Yakınımdakileri Gör</a>
+    </div>
+  </div>
+  <aside class="promise-card">
+    <h3>İlan Şehri Sözü</h3>
+    <ul>
+      <li>Doğrudan işlemlerde komisyon yok</li>
+      <li>Gizli ücret yok</li>
+      <li>İsteğe bağlı tam yönetim</li>
+      <li>Yerel görevlerle ek kazanç</li>
+    </ul>
+  </aside>
+</section>
+<section class="section">
+  <div class="section-title"><div><span class="eyebrow">TEK PLATFORM</span><h2>İhtiyacını seç, hemen başla</h2></div></div>
+  <div class="category-grid">
+    <a href="{% url 'listings:list' %}?kind=product"><b>Ürün & Eşya</b><span>Sıfır, ikinci el, kiralık ve takas</span></a>
+    <a href="{% url 'listings:list' %}?kind=real_estate"><b>Emlak</b><span>Satılık, kiralık ve arıyorum</span></a>
+    <a href="{% url 'listings:list' %}?kind=vehicle"><b>Araç</b><span>Al, sat, kirala veya takas et</span></a>
+    <a href="{% url 'listings:list' %}?kind=service"><b>Hizmet</b><span>Usta, bakım, eğitim ve daha fazlası</span></a>
+    <a href="{% url 'listings:list' %}?kind=need"><b>İhtiyacım Var</b><span>Talebini yaz, teklifler gelsin</span></a>
+    <a href="{% url 'listings:list' %}?kind=job"><b>İş & Kazanç</b><span>İş bul, çalışan bul, görev al</span></a>
+  </div>
+</section>
+<section class="section soft">
+  <div class="section-title"><div><span class="eyebrow">İKİ YOL, TEK HEDEF</span><h2>Nasıl ilerlemek istersin?</h2></div></div>
+  <div class="two-cards">
+    <article><span class="number">01</span><h3>Kendim yöneteceğim</h3><p>Fotoğraflarını yükle, ilanını hazırla, alıcılarla doğrudan görüş ve komisyon ödeme.</p></article>
+    <article class="accent"><span class="number">02</span><h3>İlan Şehri yönetsin</h3><p>İlan hazırlama, mesaj, teklif, randevu ve süreç yönetimini uygun ve şeffaf ücretle bize bırak.</p></article>
+  </div>
+</section>
+{% if latest_listings %}
+<section class="section">
+  <div class="section-title"><div><span class="eyebrow">YENİ EKLENENLER</span><h2>Şehrindeki son ilanlar</h2></div><a href="{% url 'listings:list' %}">Tümünü gör →</a></div>
+  <div class="listing-grid">
+    {% for listing in latest_listings %}
+      <a class="listing-card" href="{{ listing.get_absolute_url }}"><div class="listing-placeholder">{{ listing.get_kind_display }}</div><div class="listing-body"><span>{{ listing.city }} / {{ listing.district }}</span><h3>{{ listing.title }}</h3><strong>{% if listing.price_on_request %}Teklif Al{% elif listing.price %}{{ listing.price }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong></div></a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
