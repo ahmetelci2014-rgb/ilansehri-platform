@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView
 
-from apps.listings.models import Conversation, Favorite, Offer
+from apps.listings.models import Conversation, Favorite, Notification, Offer
 
 from .forms import SignUpForm
 
@@ -71,4 +71,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["unread_message_count"] = sum(
             item.unread_count for item in context["conversations"]
         )
+        context["recent_notifications"] = Notification.objects.filter(user=user)[:6]
+        context["unread_notification_count"] = Notification.objects.filter(
+            user=user, is_read=False
+        ).count()
         return context
