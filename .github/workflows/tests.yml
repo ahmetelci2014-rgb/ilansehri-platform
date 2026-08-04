@@ -18,11 +18,29 @@ jobs:
         run: pip install -r requirements.txt
       - name: Test ortamını hazırla
         run: cp .env.example .env
+      - name: Python sözdizimini kontrol et
+        run: python -m compileall -q .
       - name: Migration üret ve uygula
         run: |
-          python manage.py makemigrations accounts listings managed_services partners
-          python manage.py migrate
+          python manage.py makemigrations accounts listings managed_services partners --noinput
+          python manage.py makemigrations accounts listings managed_services partners --check --dry-run
+          python manage.py migrate --noinput
+      - name: Kategorileri ve bakım komutunu doğrula
+        run: |
+          python manage.py seed_categories
+          python manage.py marketplace_maintenance
       - name: Sistem kontrolü
         run: python manage.py check
+      - name: Canlı ortam güvenlik kontrolü
+        env:
+          DJANGO_DEBUG: "False"
+          DJANGO_SECRET_KEY: "ci-only-very-long-secret-key-not-used-in-production-2026-ilansehri"
+          DJANGO_ALLOWED_HOSTS: "example.com"
+          SECURE_SSL_REDIRECT: "True"
+          SECURE_HSTS_SECONDS: "31536000"
+          VERIFICATION_DEBUG_CODE: "False"
+        run: python manage.py check --deploy
+      - name: Statik dosyaları doğrula
+        run: python manage.py collectstatic --noinput
       - name: Otomatik testler
         run: python manage.py test
