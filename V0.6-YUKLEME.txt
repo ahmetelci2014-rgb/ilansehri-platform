@@ -1,0 +1,22 @@
+İLAN ŞEHRİ v0.6 — YÜKLEME
+
+1. Bu paketin içindeki tüm dosya ve klasörleri kopyalayın.
+2. GitHub Desktop > Repository > Show in Explorer ile proje klasörünü açın.
+3. Dosyaları proje ana klasörüne yapıştırın ve değişiklikleri onaylayın.
+4. Summary: İlan Şehri v0.6 konum kategori bildirim moderasyon
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+
+   git pull origin main
+   pkill -f "python manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+7. Port 8000 önizlemesini açın ve Ctrl+F5 yapın.
+
+v0.6 yenilikleri:
+- Türkiye şehir seçimi, ilçe ve mahalle önerileri
+- Araç, emlak, ürün, hizmet ve iş için özel alanlar
+- Ayrıntılı arama filtreleri
+- Bildirim merkezi
+- İlan şikâyet sistemi
+- Yönetici moderasyon ve ilan onay paneli
