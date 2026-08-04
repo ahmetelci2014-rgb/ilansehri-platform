@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}{{ listing.title }} | İlan Şehri{% endblock %}
+{% block content %}
+<section class="detail-wrap"><div class="detail-media">{% with cover=listing.images.first %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ cover.alt_text|default:listing.title }}">{% else %}<div class="listing-placeholder large">{{ listing.get_kind_display }}</div>{% endif %}{% endwith %}</div><article class="detail-card"><span class="badge">{{ listing.get_action_display }}</span><h1>{{ listing.title }}</h1><p class="location">{{ listing.city }} / {{ listing.district }}{% if listing.neighborhood %} / {{ listing.neighborhood }}{% endif %}</p><div class="price">{% if listing.price_on_request %}Teklif Alınıyor{% elif listing.price %}{{ listing.price }} TL{% else %}Fiyat belirtilmedi{% endif %}</div><p>{{ listing.description|linebreaks }}</p><hr><p><b>Yönetim:</b> {{ listing.get_management_mode_display }}</p><p><b>İlan sahibi:</b> {{ listing.owner }}</p><button class="button full">Teklif Ver / Mesaj Gönder</button></article></section>
+{% endblock %}
