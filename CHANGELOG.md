@@ -1,3 +1,14 @@
+# İlan Şehri v1.6 — Görünür Marketplace Dönüşümü
+
+- Ana sayfa tamamen yeniden tasarlanarak güçlü arama alanı, öne çıkan ilan vitrini, kategori dock'u ve daha belirgin fırsat akışları eklendi.
+- İlan kartları daha büyük fotoğraf, dengeli tipografi, belirgin fiyat ve modern hover davranışıyla yenilendi.
+- İlan sonuçlarına kart ve kompakt liste görünümü arasında geçiş eklendi; tercih tarayıcıda saklanır.
+- İlan verme ekranı gerçek beş adımlı sihirbaza dönüştürüldü; ileri/geri kontrolü, alan doğrulaması, canlı kart önizlemesi ve doluluk puanı eklendi.
+- İlan detay sayfası mağaza deneyimine yaklaştırıldı; dikey küçük fotoğraflar, sabit fiyat/satıcı paneli, bölüm sekmeleri ve daha güçlü mesaj/teklif alanı eklendi.
+- Hesabım ekranı sol menülü profesyonel kontrol merkezine dönüştürüldü; ilan, teklif, işlem ve arama yönetimi tek düzende toplandı.
+- PWA önbellek sürümü `ilansehri-v16` olarak yenilendi ve v1.6 CSS/JavaScript dosyaları önbelleğe eklendi; eski tasarımın tarayıcıda kalması engellendi.
+- Mobil, tablet ve masaüstü için yeni responsive kurallar eklendi.
+
 # İlan Şehri v1.5 — Keşif ve Kullanıcı Deneyimi
 
 - Kategori bazlı profesyonel vitrin sayfaları eklendi.

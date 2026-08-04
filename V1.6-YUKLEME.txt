@@ -1,0 +1,29 @@
+İLAN ŞEHRİ v1.6 — GÖRÜNÜR MARKETPLACE DÖNÜŞÜMÜ
+
+1. ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.6 görünür dönüşüm
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+9. Hâlâ eski tasarım görünürse:
+   Tarayıcı geliştirici araçları > Application > Service Workers >
+   Unregister yaptıktan sonra sayfayı yenileyin.
+
+GÖZLE KONTROL EDİLECEK EKRANLAR
+- Ana sayfa: /
+- İlan sonuçları: /ilanlar/
+- Yeni ilan verme: /ilanlar/yeni/
+- Herhangi bir ilan detay sayfası
+- Hesabım: /hesap/hesabim/
+
+Not:
+- Yeni veritabanı alanı yoktur; migration gerekmez.
+- Teklif, mesaj, takip, fiyat geçmişi ve moderasyon işlevleri korunmuştur.

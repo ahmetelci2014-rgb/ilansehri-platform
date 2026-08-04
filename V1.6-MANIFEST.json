@@ -1,0 +1,42 @@
+{
+  "version": "v1.6",
+  "name": "Görünür Marketplace Dönüşümü",
+  "changed_file_count": 12,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/views.py",
+    "static/css/v16-premium.css",
+    "static/js/v16-premium.js",
+    "templates/accounts/dashboard.html",
+    "templates/base.html",
+    "templates/core/home.html",
+    "templates/listings/detail.html",
+    "templates/listings/form.html",
+    "templates/listings/list.html"
+  ],
+  "visible_changes": [
+    "Tamamen yeniden tasarlanan ilan odaklı ana sayfa",
+    "Kart ve kompakt ilan sonucu görünümü",
+    "Gerçek beş adımlı ilan verme sihirbazı",
+    "Canlı ilan kartı ve doluluk puanı",
+    "Mağaza düzeninde ilan detay ekranı",
+    "Profesyonel Hesabım kontrol merkezi",
+    "Yenilenen PWA önbelleği",
+    "Mobil, tablet ve masaüstü responsive tasarım"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "python_ast": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "css_brace_balance": "passed",
+    "django_template_tag_balance": "passed",
+    "template_url_name_check": "passed",
+    "critical_review_url_order": "passed",
+    "service_worker_v16_assets": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload; local dependency index unavailable"
+  }
+}

@@ -1,40 +1,76 @@
 {% extends 'base.html' %}
-{% block title %}İlan Şehri — Yakınındaki ilanları keşfet{% endblock %}
+{% block title %}İlan Şehri — Şehrindeki ilanları keşfet{% endblock %}
 {% block content %}
-<section class="market-home-head v12-home-head">
-  <div class="shell">
-    <div class="home-search-copy"><h1>Yakınındaki fırsatları keşfet</h1><p>Ürün, araç, emlak, hizmet ve iş ilanları tek pazarda.</p></div>
-    <form class="market-searchbar home-search-v12" action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}">
-      <div class="market-search-main"><span>⌕</span><input name="q" placeholder="Telefon, araba, ev, koltuk, usta ara..." autocomplete="off" data-search-input><div class="search-suggestion-panel" data-search-results hidden></div></div>
-      <div class="market-search-city"><span>⌖</span><input name="city" value="{{ preferred_city }}" placeholder="Şehir"></div>
-      <input class="market-district-input" name="district" placeholder="İlçe">
-      <button type="submit">İlan ara</button>
-    </form>
-    <div class="market-quick-links"><span>Popüler:</span><a href="{% url 'listings:list' %}?q=telefon">Telefon</a><a href="{% url 'listings:list' %}?kind=vehicle">Otomobil</a><a href="{% url 'listings:list' %}?kind=real_estate&action=rent">Kiralık ev</a><a href="{% url 'listings:list' %}?kind=service">Usta & hizmet</a><a href="{% url 'listings:list' %}?verified=1">Doğrulanmış satıcı</a></div>
+{% firstof popular_listings.0 latest_listings.0 as spotlight %}
+<section class="v16-home-hero">
+  <div class="shell v16-home-hero-grid">
+    <div class="v16-home-copy">
+      <span class="v16-eyebrow"><i></i> Şehrindeki gerçek ilan pazarı</span>
+      <h1>Yakınındaki ilanları <span>hızlıca keşfet.</span></h1>
+      <p>İkinci el ürün, araç, emlak, hizmet ve iş ilanlarını tek yerde ara; satıcıyla doğrudan mesajlaş, teklif ver ve güvenli biçimde anlaş.</p>
+      <form class="v16-search-card" action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}">
+        <div class="v16-search-field"><span>⌕</span><input name="q" placeholder="Telefon, otomobil, ev, koltuk, usta ara..." autocomplete="off" data-search-input><div class="search-suggestion-panel" data-search-results hidden></div></div>
+        <div class="v16-search-field location"><span>⌖</span><input name="city" value="{{ preferred_city }}" placeholder="Şehir"></div>
+        <button type="submit">İlan ara</button>
+      </form>
+      <div class="v16-hero-chips"><span>Popüler aramalar</span><a href="{% url 'listings:list' %}?q=telefon">Telefon</a><a href="{% url 'listings:list' %}?kind=vehicle">Otomobil</a><a href="{% url 'listings:list' %}?kind=real_estate&action=rent">Kiralık ev</a><a href="{% url 'listings:list' %}?kind=service">Usta</a><a href="{% url 'listings:list' %}?price_drop=1">Fiyatı düşenler</a></div>
+      <div class="v16-hero-benefits"><span><b>✓</b> Ücretsiz ilan ver</span><span><b>✓</b> Doğrudan mesajlaş</span><span><b>✓</b> Teklif ve pazarlık</span></div>
+    </div>
+
+    <div class="v16-spotlight" aria-label="Öne çıkan ilan">
+      <a class="v16-floating-tile one" href="{% url 'listings:kind_landing' 'vehicle' %}"><span>🚘</span><div><b>Araç ilanları</b><small>Model ve fiyata göre filtrele</small></div></a>
+      <a class="v16-floating-tile two" href="{% url 'listings:kind_landing' 'real_estate' %}"><span>🏠</span><div><b>Emlak fırsatları</b><small>Satılık ve kiralık ilanlar</small></div></a>
+      <article class="v16-spotlight-main">
+        {% if spotlight %}
+          <a href="{{ spotlight.get_absolute_url }}">
+            <div class="v16-spotlight-media">
+              {% with cover=spotlight.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ spotlight.title }}">{% else %}<div class="v16-spotlight-placeholder">{% if spotlight.kind == 'vehicle' %}🚘{% elif spotlight.kind == 'real_estate' %}🏠{% elif spotlight.kind == 'service' %}🛠️{% else %}📦{% endif %}</div>{% endif %}{% endwith %}
+              <span>{{ spotlight.get_action_display }} · {{ spotlight.city }}</span>
+            </div>
+            <div class="v16-spotlight-body">
+              <small>{% if spotlight.district %}{{ spotlight.district }} · {% endif %}{{ spotlight.get_kind_display }}</small>
+              <h3>{{ spotlight.title|truncatechars:62 }}</h3>
+              <div class="v16-spotlight-price"><strong>{% if spotlight.price_on_request %}Teklif alıyor{% elif spotlight.price %}{{ spotlight.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><span>{{ spotlight.created_at|timesince }} önce</span></div>
+            </div>
+          </a>
+        {% else %}
+          <div class="v16-spotlight-empty"><div><span>📦</span><h3>İlk fırsat burada görünecek</h3><p>Şehrindeki ilk ilanı sen yayınla.</p><a class="button" href="{% url 'listings:create' %}">İlan ver</a></div></div>
+        {% endif %}
+      </article>
+    </div>
   </div>
 </section>
 
-<section class="market-category-strip v12-category-strip"><div class="shell"><div class="market-section-head compact"><div><h2>Kategoriler</h2><p>İhtiyacına doğrudan ulaş</p></div><a href="{% url 'listings:list' %}">Tümünü gör →</a></div><div class="market-categories v12-categories">{% for tile in category_tiles %}<a href="{% url 'listings:kind_landing' tile.kind %}"><span>{{ tile.icon }}</span><b>{{ tile.label }}</b><small>{{ tile.count }} ilan</small></a>{% endfor %}</div></div></section>
+<section class="v16-category-zone">
+  <div class="shell v16-section-shell">
+    <div class="v16-section-heading"><div><h2>Ne arıyorsun?</h2><p>Kategorini seç, doğrudan ilanlara ulaş.</p></div><a href="{% url 'listings:list' %}">Tüm ilanlar →</a></div>
+    <div class="v16-category-grid">
+      {% for tile in category_tiles %}<a class="v16-category-card {{ tile.kind }}" href="{% url 'listings:kind_landing' tile.kind %}"><span class="v16-category-icon">{{ tile.icon }}</span><b>{{ tile.label }}</b><small>{{ tile.count }} aktif ilan</small></a>{% endfor %}
+    </div>
+    <div class="v16-home-stats">
+      <div><b>{{ listing_count }}</b><span>aktif ilan</span></div><div><b>{{ member_count }}</b><span>kayıtlı üye</span></div><div><b>{{ partner_count }}</b><span>görev ortağı</span></div><div><b>{{ review_count }}</b><span>değerlendirme</span></div>
+      <a href="{% url 'listings:create' %}"><i>＋</i><div><b>Ücretsiz ilan ver</b><span>Fotoğrafını ekle, birkaç adımda yayınla</span></div></a>
+    </div>
+  </div>
+</section>
 
-<section class="market-overview shell"><div><b>{{ listing_count }}</b><span>aktif ilan</span></div><div><b>{{ member_count }}</b><span>üye</span></div><div><b>{{ partner_count }}</b><span>görev ortağı</span></div><div><b>{{ review_count }}</b><span>gerçek değerlendirme</span></div><a href="{% url 'listings:create' %}"><span>＋</span><b>Ücretsiz ilan ver</b><small>Dakikalar içinde yayınla</small></a></section>
+{% if recently_viewed %}<section class="v16-feed shell"><div class="v16-section-heading"><div><span class="v16-feed-label">KALDIĞIN YERDEN</span><h2>Son baktığın ilanlar</h2><p>İlgilendiğin ilanlara tekrar göz at.</p></div><a href="{% url 'listings:list' %}">Yeni ilanları keşfet →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in recently_viewed %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
 
-{% if recently_viewed %}<section class="market-feed shell compact-feed"><div class="market-section-head"><div><h2>Son baktıkların</h2><p>Kaldığın yerden devam et</p></div><a href="{% url 'listings:list' %}">Yeni ilanlara bak →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in recently_viewed %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+{% if price_drop_listings %}<section class="v16-feed alt"><div class="shell"><div class="v16-section-heading"><div><span class="v16-feed-label">FIRSAT ALARMI</span><h2>Fiyatı düşen ilanlar</h2><p>Yeni fiyatıyla daha avantajlı hale gelen ilanlar.</p></div><a href="{% url 'listings:list' %}?price_drop=1&sort=price_drop">Tüm fiyat düşüşleri →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in price_drop_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></div></section>{% endif %}
 
-{% if following_listings %}<section class="market-feed shell following-feed"><div class="market-section-head"><div><h2>Takip ettiğin satıcılardan</h2><p>Güvendiğin satıcıların en yeni ilanları</p></div><a href="{% url 'accounts:following' %}">Takip akışını aç →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in following_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+<section class="v16-feed shell"><div class="v16-section-heading"><div><span class="v16-feed-label">YENİ EKLENENLER</span><h2>{% if preferred_city %}{{ preferred_city }} çevresindeki ilanlar{% else %}En yeni ilanlar{% endif %}</h2><p>Şehrindeki en güncel fırsatları kaçırma.</p></div><a href="{% url 'listings:list' %}?city={{ preferred_city|urlencode }}&sort=newest">Tümünü gör →</a></div><div class="market-card-grid">{% for listing in latest_listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}<div class="market-empty"><span>📦</span><h3>Henüz ilan yok</h3><p>İlk ilanı sen yayınla.</p><a class="button" href="{% url 'listings:create' %}">İlan ver</a></div>{% endfor %}</div></section>
 
-{% if price_drop_listings %}<section class="market-feed shell price-drop-feed"><div class="market-section-head"><div><h2>Fiyatı düşen ilanlar</h2><p>Favori fırsatları yeni fiyatlarıyla yakala</p></div><a href="{% url 'listings:list' %}?price_drop=1&sort=price_drop">Tüm fiyat düşüşleri →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in price_drop_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+<div class="shell"><section class="v16-market-banner"><div><h3>Kullanmadığın eşyayı paraya çevir.</h3><p>Fotoğrafını yükle, fiyatını belirle ve şehrindeki alıcılara hemen ulaş.</p></div><a href="{% url 'listings:create' %}">Şimdi ilan ver</a></section></div>
 
-<section class="market-feed shell"><div class="market-section-head"><div><h2>{% if preferred_city %}{{ preferred_city }} çevresindeki yeni ilanlar{% else %}Yeni eklenen ilanlar{% endif %}</h2><p>En güncel fırsatlar</p></div><a href="{% url 'listings:list' %}?city={{ preferred_city|urlencode }}&sort=newest">Tüm ilanlar →</a></div><div class="market-card-grid">{% for listing in latest_listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}<div class="market-empty"><span>📦</span><h3>Henüz ilan yok</h3><p>İlk ilanı sen yayınla.</p><a class="button" href="{% url 'listings:create' %}">İlan ver</a></div>{% endfor %}</div></section>
+{% if following_listings %}<section class="v16-feed alt"><div class="shell"><div class="v16-section-heading"><div><span class="v16-feed-label">TAKİP AKIŞI</span><h2>Takip ettiğin satıcılardan</h2><p>Güvendiğin satıcıların yeni ilanları.</p></div><a href="{% url 'accounts:following' %}">Takip ettiklerim →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in following_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></div></section>{% endif %}
 
-<section class="market-sell-banner shell v12-sell-banner"><div><span class="market-banner-icon">＋</span><div><h3>Evde kullanmadığın bir şey mi var?</h3><p>Fotoğraflarını yükle, fiyatını belirle ve yakındaki alıcılara ulaş.</p></div></div><a href="{% url 'listings:create' %}">Hemen ilan ver</a></section>
+{% if popular_listings %}<section class="v16-feed shell"><div class="v16-section-heading"><div><span class="v16-feed-label">ÇOK İLGİ GÖRENLER</span><h2>Popüler ilanlar</h2><p>En çok görüntülenen ve favorilenen ilanlar.</p></div><a href="{% url 'listings:list' %}?sort=popular">Tüm popüler ilanlar →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in popular_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
 
-{% if popular_listings %}<section class="market-feed shell alt-feed"><div class="market-section-head"><div><h2>Popüler ilanlar</h2><p>En çok görüntülenen ve favorilenenler</p></div><a href="{% url 'listings:list' %}?sort=popular">Tümünü gör →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in popular_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+{% if vehicle_listings %}<section class="v16-feed alt"><div class="shell"><div class="v16-section-heading"><div><span class="v16-feed-label">ARAÇ PAZARI</span><h2>Otomobil ve araç ilanları</h2><p>Model, kilometre ve yakıt türüne göre seçenekler.</p></div><a href="{% url 'listings:kind_landing' 'vehicle' %}">Araç pazarını aç →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in vehicle_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></div></section>{% endif %}
 
-{% if vehicle_listings %}<section class="market-feed shell"><div class="market-section-head"><div><h2>Araç ilanları</h2><p>Otomobil, motosiklet ve ticari araçlar</p></div><a href="{% url 'listings:list' %}?kind=vehicle">Tüm araçlar →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in vehicle_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+{% if estate_listings %}<section class="v16-feed shell"><div class="v16-section-heading"><div><span class="v16-feed-label">EMLAK</span><h2>Satılık ve kiralık emlak</h2><p>Yakınındaki ev, işyeri ve arsa ilanları.</p></div><a href="{% url 'listings:kind_landing' 'real_estate' %}">Emlak vitrinini aç →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in estate_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
 
-{% if estate_listings %}<section class="market-feed shell alt-feed"><div class="market-section-head"><div><h2>Emlak ilanları</h2><p>Satılık ve kiralık seçenekler</p></div><a href="{% url 'listings:list' %}?kind=real_estate">Tüm emlak ilanları →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in estate_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+{% if service_listings %}<section class="v16-feed alt"><div class="shell"><div class="v16-section-heading"><div><span class="v16-feed-label">YAKININDAKİ HİZMETLER</span><h2>Usta ve hizmet ilanları</h2><p>Tamir, bakım, taşıma ve yerel hizmetler.</p></div><a href="{% url 'listings:kind_landing' 'service' %}">Hizmetleri keşfet →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in service_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></div></section>{% endif %}
 
-{% if service_listings %}<section class="market-feed shell"><div class="market-section-head"><div><h2>Yakınındaki hizmetler</h2><p>Usta, bakım, taşıma ve daha fazlası</p></div><a href="{% url 'listings:list' %}?kind=service">Tüm hizmetler →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in service_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
-
-<section class="market-trust-strip shell"><div><span>🛡️</span><b>Güvenli işlem ipuçları</b><p>Ürünü görmeden ödeme yapma; doğrulama kodunu kimseyle paylaşma.</p></div><a href="{% url 'core:trust' %}">Güven Merkezini aç →</a></section>
+<section class="market-trust-strip shell"><div><span>🛡️</span><b>Güvenli alışveriş</b><p>Ürünü görmeden ödeme yapma; doğrulama kodunu ve şifreni kimseyle paylaşma.</p></div><a href="{% url 'core:trust' %}">Güven Merkezini aç →</a></section>
 {% endblock %}
