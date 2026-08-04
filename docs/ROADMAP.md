@@ -67,3 +67,9 @@
 - Android/iOS uygulaması
 - Redis, Celery, CDN ve nesne depolama
 - Gelişmiş yakınlık araması ve PostGIS
+
+### Tamamlandı — v0.5
+- İlan yaşam döngüsü: duraklat, yayınla, sonuçlandır, sil
+- Favoriler
+- Kayıtlı özel mesajlaşma
+- Mesaj ve favori merkezleri
