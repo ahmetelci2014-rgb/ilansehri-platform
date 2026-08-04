@@ -2,7 +2,7 @@
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını tek yerel platformda birleştiren, kullanıcının ilanını kendisinin yönetebildiği veya İlan Şehri Tam Yönetim hizmetine bırakabildiği yeni nesil pazar yeri projesidir.
 
-## Sürüm 0.3 — Tarayıcı önizleme ve otomatik test
+## Sürüm 0.4 — Profesyonel arayüz ve pazar yeri deneyimi
 
 - Ücretsiz kullanıcı kaydı ve otomatik giriş
 - Kullanıcı hesabım paneli
@@ -17,6 +17,12 @@
 - Port 8000 otomatik açılış ve önizleme
 - Üyelik, ilan, tam yönetim, teklif ve yetki testleri
 - GitHub Actions üzerinde migration ve tam test çalıştırma
+
+- Profesyonel ana sayfa, marka başlığı ve mobil alt menü
+- Premium ilan kartları ve gelişmiş kategori deneyimi
+- Adım adım ilan oluşturma ve fotoğraf önizleme
+- Gelişmiş ilan detay, teklif ve güvenli işlem ekranı
+- Yenilenmiş kullanıcı paneli, giriş ve üyelik ekranları
 
 ## Bu ilk sürümde bulunan çekirdek
 
