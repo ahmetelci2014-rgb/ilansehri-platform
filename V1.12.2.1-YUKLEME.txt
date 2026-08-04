@@ -1,0 +1,51 @@
+İLAN ŞEHRİ v1.12.2.1 — GEMINI GÖRSEL ANALİZİ
+
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.12.2.1 Gemini görsel analizi
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+GEMINI API ANAHTARI
+Codespaces içindeki .env dosyasına şu satırları ekleyin:
+
+GEMINI_API_KEY=BURAYA_GOOGLE_AI_STUDIO_ANAHTARI
+GEMINI_API_BASE=https://generativelanguage.googleapis.com/v1beta
+GEMINI_API_REVISION=2026-05-20
+GEMINI_MODEL=gemini-3.6-flash
+
+Gerçek anahtarı GitHub'a, .env.example dosyasına, mesajlara veya
+ekran görüntüsüne koymayın.
+
+GEMINI'Yİ ETKİNLEŞTİRME
+Anahtarı ekledikten ve sunucuyu yeniden başlattıktan sonra:
+
+python manage.py activate_gemini_ai --enable
+
+Ardından teknik yönetimde bağlantı testi:
+- /admin/ai_listing/aisettings/
+- Sağlayıcı: Google Gemini görsel analizi
+- Model: gemini-3.6-flash
+- API bağlantısını test et
+
+KULLANICI TESTİ
+- /ilanlar/yeni/
+- 1-8 ürün fotoğrafı seçin.
+- Yapay Zekâ ile İlan Hazırla düğmesine basın.
+- Başlık, açıklama, kategori ve diğer güvenli önerilerin forma
+  aktarılıp aktarılmadığını kontrol edin.
+- Fiyat alanı kullanıcı tarafından doldurulmalıdır.
+
+ÖNEMLİ
+- OpenAI sağlayıcısı yedek olarak korunur; zorunlu değildir.
+- Yeni provider seçeneği nedeniyle migration oluşabilir.
+- scripts/start_codespace.sh migrationları otomatik üretip uygular.
+- Ücretsiz Gemini katmanında gönderilen içerikler Google ürünlerini
+  geliştirmek için kullanılabilir. Canlı kullanımda gizlilik şartları
+  ayrıca değerlendirilmelidir.

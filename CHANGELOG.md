@@ -1,3 +1,31 @@
+# İlan Şehri v1.12.2.1 — Gemini Görsel Analizi
+
+- Birincil yapay zekâ sağlayıcısı Google Gemini olarak değiştirildi.
+- `gemini-3.6-flash` kararlı varsayılan görsel analiz modeli yapıldı.
+- Gemini Interactions API için satır içi base64 görsel girişi ve JSON Schema çıktısı eklendi.
+- `GEMINI_API_KEY`, `GEMINI_API_BASE`, `GEMINI_API_REVISION` ve `GEMINI_MODEL` ortam değişkenleri eklendi.
+- Gemini API bağlantı testi ve güvenli hata mesajları eklendi.
+- Güvenlik/politika nedeniyle engellenen Gemini yanıtları ilan formuna uygulanmaz.
+- Toplam satır içi istek boyutu için 18 MB koruması eklendi.
+- `activate_gemini_ai` yönetim komutu eklendi.
+- OpenAI sağlayıcısı yedek seçenek olarak korunur.
+- PWA önbelleği `ilansehri-v11221` olarak yenilendi.
+
+# İlan Şehri v1.12.2 — Fotoğrafla Başlayan Gerçek AI İlan Akışı
+
+- AI hızlı başlangıcı ilan alanları doldurulmadan önce çalışacak şekilde formun en üstüne taşındı.
+- Görsel yükleme alanı mobil öncelikli sürükle-bırak, fotoğraf sayacı, kapak adayı, tek tek silme ve tümünü temizleme özellikleriyle yeniden yazıldı.
+- OpenAI Responses API üzerinden gerçek görsel analiz sağlayıcısı eklendi.
+- OpenAI görsel moderasyonu ana analizden önce çalışır; riskli görsellerden ilan oluşturulmaz.
+- Görseller EXIF temizlenerek, küçültülerek ve güvenli JPEG olarak yeniden kodlanarak servise gönderilir.
+- Katı JSON şeması; başlık, açıklama, kategori, durum, marka, model, renk, etiket, teknik alan, kusur, soru ve güvenlik uyarılarını doğrular.
+- Kategori yalnız aktif veritabanı kayıtlarına eşlenir; fiyat önerisi reddedilir.
+- Düşük güvenli bilgiler otomatik uygulanmaz; kullanıcıya kısa soru gösterilir.
+- `color`, `search_tags` ve `technical_features` ilan alanları eklendi.
+- AI önerisi ile kullanıcının yayınladığı son değer arasındaki değişiklik kaydı korundu.
+- Mevcut manuel ilan verme, taslak, üyelik, mesajlaşma, teklif ve moderasyon akışları kaldırılmadı.
+- PWA önbelleği `ilansehri-v1122` olarak yenilendi.
+
 # İlan Şehri v1.12.1.1 — AI Düğmesi Görünürlük Düzeltmesi
 
 - AI kartı artık fotoğraf adımında sessizce kaybolmuyor.

@@ -1,10 +1,11 @@
-# İlan Şehri v1.11 — Bildirim ve Moderasyon Operasyonu
+# İlan Şehri v1.12.2.1 — Gemini ile Fotoğrafla Başlayan Yapay Zekâ İlan Akışı
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
 ## Çalışan ana modüller
 
 - Konum ve kategori odaklı fotoğraflı marketplace akışı
+- Fotoğrafla başlayan yapay zekâ ilan hazırlama, güvenli görsel analiz ve kullanıcı onayı
 - Kategoriye özel gelişmiş arama, filtreleme, sıralama ve ilan karşılaştırma
 - Favoriler, kayıtlı aramalar, son görüntülenenler ve fiyat düşüşü takibi
 - Satıcı takip sistemi ve takip edilen satıcılardan yeni ilan akışı
@@ -66,6 +67,7 @@ Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler 
 - Alan adı ve `CSRF_TRUSTED_ORIGINS`
 - SMTP e-posta hesabı
 - Telefon doğrulaması için SMS servisi
+- Yapay zekâ görsel analizi için Google AI Studio üzerinden Gemini API anahtarı
 - Kullanıcı görselleri için kalıcı disk veya nesne depolama
 - Gerçek şirket bilgileriyle hukukçu tarafından kontrol edilmiş yasal metinler
 
@@ -125,7 +127,25 @@ python manage.py send_notification_digests
 
 Ayrıntılar: `docs/NOTIFICATION_MODERATION.md`
 
+## v1.12.2.1 Gemini Görsel Analizi
 
-## v1.12.1.1 AI görünürlük düzeltmesi
+- AI hızlı başlangıç alanı ilan formunun en üstündedir.
+- Kullanıcı önce 1–8 fotoğraf seçer; Gemini başlık, açıklama, kategori, durum, marka, model, renk, etiket ve teknik özellik önerir.
+- Birincil sağlayıcı Google Gemini Interactions API olarak değiştirildi.
+- Kararlı varsayılan model `gemini-3.6-flash` olarak ayarlandı; model yönetim panelinden değiştirilebilir.
+- Gemini görsel girdileri base64 olarak, şemalı JSON çıktı isteğiyle gönderilir.
+- Görseller gerçek dosya türü, boyut, EXIF temizleme ve güvenli yeniden kodlama kontrollerinden geçer.
+- Katı JSON şeması doğrulanmadan hiçbir AI alanı forma aktarılmaz.
+- Düşük güvenli bilgiler soru olarak gösterilir; fiyat AI tarafından doldurulmaz.
+- OpenAI sağlayıcısı yalnız yedek seçenek olarak korunur.
+- Mevcut manuel beş adımlı ilan verme akışı, taslaklar ve moderasyon korunur.
 
-AI ilan kartı artık ilan formunun fotoğraf adımında her zaman durumunu açıklar. Test sağlayıcısı yalnız personel hesabında çalışır; normal kullanıcıda neden kullanılamadığı gösterilir.
+Gemini kurulumu:
+
+```bash
+python manage.py activate_gemini_ai --enable
+```
+
+Kurulum ve güvenlik: `docs/AI_LISTING_V1122.md`
+
+Dosya raporu: `docs/AI_LISTING_V1122_FILE_REPORT.md`

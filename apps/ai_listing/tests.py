@@ -1,4 +1,6 @@
 from io import BytesIO
+import json
+from unittest.mock import patch
 
 from PIL import Image
 from django.contrib.auth import get_user_model
@@ -11,7 +13,66 @@ from apps.listings.models import Category
 from .models import AIAnalysis, AISettings
 from .templatetags.ai_listing_tags import ai_listing_config
 from .services.image_processor import prepare_images
+from .services.providers import GeminiVisionProvider, OpenAIVisionProvider
+from .services.exceptions import SafetyBlockedError
 from .services.schemas import validate_analysis_payload
+
+
+class _FakeHTTPResponse:
+    def __init__(self, payload, *, headers=None, status=200):
+        self.payload = payload
+        self.headers = headers or {}
+        self.status = status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def read(self, _limit=-1):
+        return json.dumps(self.payload).encode("utf-8")
+
+
+def _provider_payload():
+    technical_keys = [
+        "model_year", "mileage", "fuel_type", "transmission", "room_count",
+        "area_m2", "building_age", "floor_location", "heating_type",
+        "service_area", "fee_type", "job_type", "experience_level",
+    ]
+    confidence_keys = [
+        "title", "description", "category", "condition", "brand", "model", "color",
+        *technical_keys,
+    ]
+    return {
+        "schema_version": "1.0",
+        "title": "Mavi akıllı telefon",
+        "description": "Fotoğraflarda görülen kullanılmış akıllı telefon.",
+        "category_slug": "elektronik",
+        "subcategory_slug": "",
+        "condition": "Kullanılmış",
+        "brand": "",
+        "model": "",
+        "color": "Mavi",
+        "tags": ["telefon", "mavi"],
+        "detected_features": ["Dokunmatik ekran"],
+        "technical_attributes": {key: "" for key in technical_keys},
+        "possible_defects": [],
+        "missing_questions": [
+            {
+                "field": "brand",
+                "question": "Telefonun markası nedir?",
+                "type": "text",
+                "options": [],
+                "required": True,
+            }
+        ],
+        "field_confidence": {key: (88 if key in {"title", "description", "category", "color"} else 0) for key in confidence_keys},
+        "confidence_score": 78,
+        "safety_status": "safe",
+        "safety_warnings": [],
+        "pii_warnings": [],
+    }
 
 
 class AIListingCoreTests(TestCase):
@@ -150,3 +211,141 @@ class AIListingCoreTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error_code"], "usage_limit")
+
+    def test_photo_first_create_page_is_visible(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("listings:create"))
+        self.assertContains(response, "Fotoğrafı yükle, ilan taslağın hazırlansın")
+        self.assertContains(response, "data-ai-drop-zone")
+        self.assertContains(response, "Yapay Zekâ ile İlan Hazırla")
+
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-key", "AI_LISTING_MODEL": "gpt-5-mini"}, clear=False)
+    def test_openai_provider_uses_moderation_images_and_strict_schema(self):
+        prepared = prepare_images([self.image_file()], max_images=8, max_image_size_mb=8)
+        output = _provider_payload()
+        requests = []
+
+        def fake_urlopen(req, timeout=0):
+            body = json.loads(req.data.decode("utf-8"))
+            requests.append((req.full_url, body, timeout))
+            if req.full_url.endswith("/moderations"):
+                return _FakeHTTPResponse({"results": [{"flagged": False}]})
+            return _FakeHTTPResponse(
+                {
+                    "id": "resp_test_123",
+                    "output": [{"content": [{"type": "output_text", "text": json.dumps(output)}]}],
+                },
+                headers={"X-Request-ID": "request-test-123"},
+            )
+
+        provider = OpenAIVisionProvider(model_name="gpt-5-mini")
+        with patch("apps.ai_listing.services.providers.request.urlopen", side_effect=fake_urlopen):
+            response = provider.analyze(
+                images=prepared,
+                context={"instructions": "Güvenli analiz", "allowed_categories": [{"id": 1, "slug": "elektronik", "name": "Elektronik", "parent_id": None}]},
+                timeout_seconds=45,
+            )
+        self.assertEqual(response.payload["title"], "Mavi akıllı telefon")
+        self.assertEqual(len(requests), 2)
+        self.assertTrue(requests[0][0].endswith("/moderations"))
+        response_body = requests[1][1]
+        self.assertFalse(response_body["store"])
+        self.assertTrue(response_body["text"]["format"]["strict"])
+        image_part = response_body["input"][0]["content"][1]
+        self.assertTrue(image_part["image_url"].startswith("data:image/jpeg;base64,"))
+
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}, clear=False)
+    def test_openai_provider_blocks_flagged_images_before_analysis(self):
+        prepared = prepare_images([self.image_file()], max_images=8, max_image_size_mb=8)
+        provider = OpenAIVisionProvider(model_name="gpt-5-mini")
+        with patch(
+            "apps.ai_listing.services.providers.request.urlopen",
+            return_value=_FakeHTTPResponse({"results": [{"flagged": True}]}),
+        ):
+            with self.assertRaises(SafetyBlockedError):
+                provider.analyze(
+                    images=prepared,
+                    context={"instructions": "", "allowed_categories": []},
+                    timeout_seconds=45,
+                )
+
+    @patch.dict(
+        "os.environ",
+        {
+            "GEMINI_API_KEY": "test-gemini-key",
+            "GEMINI_MODEL": "gemini-3.6-flash",
+            "GEMINI_API_BASE": "https://generativelanguage.googleapis.com/v1beta",
+            "GEMINI_API_REVISION": "2026-05-20",
+        },
+        clear=False,
+    )
+    def test_gemini_provider_uses_inline_images_and_json_schema(self):
+        prepared = prepare_images([self.image_file()], max_images=8, max_image_size_mb=8)
+        output = _provider_payload()
+        requests = []
+
+        def fake_urlopen(req, timeout=0):
+            body = json.loads(req.data.decode("utf-8"))
+            requests.append((req.full_url, body, timeout, dict(req.headers)))
+            return _FakeHTTPResponse(
+                {
+                    "id": "interaction_test_123",
+                    "status": "completed",
+                    "steps": [
+                        {
+                            "type": "model_output",
+                            "content": [{"type": "text", "text": json.dumps(output)}],
+                        }
+                    ],
+                },
+                headers={"X-Request-ID": "gemini-request-123"},
+            )
+
+        provider = GeminiVisionProvider(model_name="gemini-3.6-flash")
+        with patch("apps.ai_listing.services.providers.request.urlopen", side_effect=fake_urlopen):
+            response = provider.analyze(
+                images=prepared,
+                context={
+                    "instructions": "Güvenli analiz",
+                    "allowed_categories": [
+                        {"id": 1, "slug": "elektronik", "name": "Elektronik", "parent_id": None}
+                    ],
+                },
+                timeout_seconds=45,
+            )
+
+        self.assertEqual(response.payload["title"], "Mavi akıllı telefon")
+        self.assertEqual(len(requests), 1)
+        url, body, timeout, headers = requests[0]
+        self.assertTrue(url.endswith("/interactions"))
+        self.assertEqual(body["model"], "gemini-3.6-flash")
+        self.assertFalse(body["store"])
+        self.assertEqual(body["response_format"]["mime_type"], "application/json")
+        self.assertEqual(body["response_format"]["schema"]["type"], "object")
+        self.assertEqual(body["input"][1]["type"], "image")
+        self.assertEqual(body["input"][1]["mime_type"], "image/jpeg")
+        self.assertTrue(body["input"][1]["data"])
+        self.assertEqual(timeout, 45)
+
+    @patch.dict("os.environ", {"GEMINI_API_KEY": "test-gemini-key"}, clear=False)
+    def test_gemini_provider_blocks_safety_failure(self):
+        prepared = prepare_images([self.image_file()], max_images=8, max_image_size_mb=8)
+        provider = GeminiVisionProvider(model_name="gemini-3.6-flash")
+        with patch(
+            "apps.ai_listing.services.providers.request.urlopen",
+            return_value=_FakeHTTPResponse(
+                {
+                    "id": "interaction_blocked",
+                    "status": "failed",
+                    "error": {"code": "safety", "message": "Blocked by safety policy"},
+                    "steps": [],
+                }
+            ),
+        ):
+            with self.assertRaises(SafetyBlockedError):
+                provider.analyze(
+                    images=prepared,
+                    context={"instructions": "", "allowed_categories": []},
+                    timeout_seconds=45,
+                )
+

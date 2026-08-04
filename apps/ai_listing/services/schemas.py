@@ -19,6 +19,7 @@ _ALLOWED_KEYS = {
     "color",
     "tags",
     "detected_features",
+    "technical_attributes",
     "possible_defects",
     "missing_questions",
     "field_confidence",
@@ -28,13 +29,138 @@ _ALLOWED_KEYS = {
     "pii_warnings",
 }
 _ALLOWED_SAFETY = {"safe", "review_required", "blocked"}
+_ALLOWED_TECHNICAL_KEYS = {
+    "model_year",
+    "mileage",
+    "fuel_type",
+    "transmission",
+    "room_count",
+    "area_m2",
+    "building_age",
+    "floor_location",
+    "heating_type",
+    "service_area",
+    "fee_type",
+    "job_type",
+    "experience_level",
+}
+_CONFIDENCE_FIELDS = {
+    "title",
+    "description",
+    "category",
+    "condition",
+    "brand",
+    "model",
+    "color",
+    *_ALLOWED_TECHNICAL_KEYS,
+}
+
+
+def provider_json_schema() -> dict[str, Any]:
+    """Gemini, OpenAI ve benzeri sağlayıcılar için katı çıktı sözleşmesi."""
+    technical_properties = {
+        key: {"type": "string"}
+        for key in sorted(_ALLOWED_TECHNICAL_KEYS)
+    }
+    confidence_properties = {
+        key: {"type": "integer"}
+        for key in sorted(_CONFIDENCE_FIELDS)
+    }
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "schema_version": {"type": "string", "enum": ["1.0"]},
+            "title": {"type": "string"},
+            "description": {"type": "string"},
+            "category_slug": {"type": "string"},
+            "subcategory_slug": {"type": "string"},
+            "condition": {"type": "string"},
+            "brand": {"type": "string"},
+            "model": {"type": "string"},
+            "color": {"type": "string"},
+            "tags": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+            "detected_features": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+            "technical_attributes": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": technical_properties,
+                "required": sorted(_ALLOWED_TECHNICAL_KEYS),
+            },
+            "possible_defects": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+            "missing_questions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "field": {"type": "string"},
+                        "question": {"type": "string"},
+                        "type": {"type": "string", "enum": ["text", "choice", "boolean", "number"]},
+                        "options": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "required": {"type": "boolean"},
+                    },
+                    "required": ["field", "question", "type", "options", "required"],
+                },
+            },
+            "field_confidence": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": confidence_properties,
+                "required": sorted(_CONFIDENCE_FIELDS),
+            },
+            "confidence_score": {"type": "integer"},
+            "safety_status": {"type": "string", "enum": sorted(_ALLOWED_SAFETY)},
+            "safety_warnings": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+            "pii_warnings": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
+        },
+        "required": [
+            "schema_version",
+            "title",
+            "description",
+            "category_slug",
+            "subcategory_slug",
+            "condition",
+            "brand",
+            "model",
+            "color",
+            "tags",
+            "detected_features",
+            "technical_attributes",
+            "possible_defects",
+            "missing_questions",
+            "field_confidence",
+            "confidence_score",
+            "safety_status",
+            "safety_warnings",
+            "pii_warnings",
+        ],
+    }
 
 
 def _text(value: Any, *, field: str, limit: int) -> str:
     if value in (None, ""):
         return ""
     if not isinstance(value, str):
-        raise SchemaValidationError(f"{field} metin olmalıdır.")
+        value = str(value)
     return " ".join(value.strip().split())[:limit]
 
 
@@ -44,10 +170,13 @@ def _text_list(value: Any, *, field: str, item_limit: int, count_limit: int) -> 
     if not isinstance(value, list):
         raise SchemaValidationError(f"{field} liste olmalıdır.")
     result: list[str] = []
+    seen: set[str] = set()
     for item in value[:count_limit]:
         cleaned = _text(item, field=field, limit=item_limit)
-        if cleaned and cleaned not in result:
+        folded = cleaned.casefold()
+        if cleaned and folded not in seen:
             result.append(cleaned)
+            seen.add(folded)
     return result
 
 
@@ -80,6 +209,19 @@ def _questions(value: Any) -> list[dict[str, Any]]:
                 "required": bool(item.get("required", False)),
             }
         )
+    return result
+
+
+def _technical_attributes(value: Any) -> dict[str, str]:
+    if value in (None, ""):
+        return {}
+    if not isinstance(value, dict):
+        raise SchemaValidationError("technical_attributes nesne olmalıdır.")
+    result = {}
+    for key in _ALLOWED_TECHNICAL_KEYS:
+        cleaned = _text(value.get(key), field=f"technical_attributes.{key}", limit=160)
+        if cleaned:
+            result[key] = cleaned
     return result
 
 
@@ -120,10 +262,12 @@ def validate_analysis_payload(payload: Any, *, allowed_category_slugs: set[str])
     if not isinstance(field_confidence, dict):
         raise SchemaValidationError("field_confidence nesne olmalıdır.")
     cleaned_confidence: dict[str, int] = {}
-    for key, value in list(field_confidence.items())[:30]:
+    for key, value in list(field_confidence.items())[:40]:
+        if key not in _CONFIDENCE_FIELDS:
+            continue
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             continue
-        cleaned_confidence[_text(key, field="field_confidence", limit=80)] = max(0, min(100, round(value)))
+        cleaned_confidence[key] = max(0, min(100, round(value)))
 
     result = {
         "schema_version": "1.0",
@@ -137,6 +281,7 @@ def validate_analysis_payload(payload: Any, *, allowed_category_slugs: set[str])
         "color": _text(payload.get("color"), field="color", limit=60),
         "tags": _text_list(payload.get("tags", []), field="tags", item_limit=40, count_limit=20),
         "detected_features": _text_list(payload.get("detected_features", []), field="detected_features", item_limit=160, count_limit=30),
+        "technical_attributes": _technical_attributes(payload.get("technical_attributes", {})),
         "possible_defects": _text_list(payload.get("possible_defects", []), field="possible_defects", item_limit=180, count_limit=20),
         "missing_questions": _questions(payload.get("missing_questions", [])),
         "field_confidence": cleaned_confidence,

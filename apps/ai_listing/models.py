@@ -11,13 +11,15 @@ from django.utils import timezone
 
 class AISettings(models.Model):
     class Provider(models.TextChoices):
+        GEMINI = "gemini", "Google Gemini görsel analizi"
         MOCK = "mock", "Test sağlayıcısı"
+        OPENAI = "openai", "OpenAI görsel analizi (yedek)"
         HTTP_JSON = "http_json", "Harici JSON görsel servisi"
 
     singleton_key = models.PositiveSmallIntegerField(default=1, unique=True, editable=False)
     is_enabled = models.BooleanField(default=False, verbose_name="Özellik açık")
-    provider = models.CharField(max_length=24, choices=Provider.choices, default=Provider.MOCK)
-    model_name = models.CharField(max_length=120, blank=True, default="vision-model")
+    provider = models.CharField(max_length=24, choices=Provider.choices, default=Provider.GEMINI)
+    model_name = models.CharField(max_length=120, blank=True, default="gemini-3.6-flash")
     user_daily_limit = models.PositiveSmallIntegerField(
         default=3,
         validators=[MinValueValidator(1), MaxValueValidator(100)],
