@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User, UserBlock, VerificationCode
+from .models import User, UserBlock, UserFollow, VerificationCode
 
 
 @admin.register(User)
@@ -40,3 +40,5 @@ class VerificationCodeAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UserBlock)
+
+admin.site.register(UserFollow)

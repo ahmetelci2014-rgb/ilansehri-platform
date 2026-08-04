@@ -2,8 +2,8 @@ from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 
-from apps.accounts.models import User
-from apps.listings.models import Category, Listing, Notification, Offer
+from apps.accounts.models import User, UserFollow
+from apps.listings.models import Category, Listing, ListingPriceHistory, Notification, Offer, OfferEvent
 from apps.managed_services.models import ManagedActivity, ManagedRequest
 from apps.partners.models import PartnerProfile, Task
 
@@ -198,7 +198,30 @@ class Command(BaseCommand):
         offer, _ = Offer.objects.get_or_create(
             listing=phone_listing,
             sender=buyer,
-            defaults={"amount": Decimal("27000"), "message": "Bugün elden teslim alabilirim."},
+            defaults={
+                "amount": Decimal("27000"),
+                "message": "Bugün elden teslim alabilirim.",
+                "last_actor": buyer,
+            },
+        )
+        if offer.last_actor_id is None:
+            offer.last_actor = buyer
+            offer.save(update_fields=["last_actor", "updated_at"])
+        OfferEvent.objects.get_or_create(
+            offer=offer,
+            event_type=OfferEvent.Type.SUBMITTED,
+            defaults={
+                "actor": buyer,
+                "amount": offer.amount,
+                "message": offer.message,
+            },
+        )
+        UserFollow.objects.get_or_create(follower=buyer, seller=seller)
+        ListingPriceHistory.objects.get_or_create(
+            listing=phone_listing,
+            old_price=Decimal("30000"),
+            new_price=Decimal("28500"),
+            defaults={"changed_by": seller},
         )
         Notification.objects.get_or_create(
             user=seller,

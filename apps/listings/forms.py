@@ -238,10 +238,42 @@ class OfferForm(forms.ModelForm):
             "amount": forms.NumberInput(attrs={"min": "0", "step": "0.01", "placeholder": "TL"}),
         }
 
+    def clean_amount(self):
+        amount = self.cleaned_data.get("amount")
+        if amount is not None and amount <= 0:
+            raise forms.ValidationError("Teklif tutarı sıfırdan büyük olmalıdır.")
+        return amount
+
     def clean_message(self):
         message = self.cleaned_data["message"].strip()
         if len(message) < 5:
             raise forms.ValidationError("Teklif notu en az 5 karakter olmalıdır.")
+        return message
+
+
+class CounterOfferForm(forms.Form):
+    amount = forms.DecimalField(
+        label="Yeni teklif tutarı",
+        max_digits=14,
+        decimal_places=2,
+        min_value=0.01,
+        widget=forms.NumberInput(attrs={"min": "0.01", "step": "0.01", "placeholder": "TL"}),
+    )
+    message = forms.CharField(
+        label="Karşı teklif notu",
+        max_length=1200,
+        widget=forms.Textarea(
+            attrs={
+                "rows": 3,
+                "placeholder": "Yeni tutarı ve teslim koşulunu kısaca açıkla...",
+            }
+        ),
+    )
+
+    def clean_message(self):
+        message = self.cleaned_data["message"].strip()
+        if len(message) < 5:
+            raise forms.ValidationError("Karşı teklif notu en az 5 karakter olmalıdır.")
         return message
 
 

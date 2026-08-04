@@ -1,20 +1,21 @@
-# İlan Şehri v1.2 — Profesyonel Marketplace
+# İlan Şehri v1.3 — Pazarlık, Fiyat Takibi ve Satıcı Ağı
 
-İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını tek platformda buluşturan güven odaklı yerel pazar yeridir.
+İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
 ## Çalışan ana modüller
 
-- Konum ve kategori odaklı marketplace ana sayfası
-- Yoğun fotoğraflı ilan kartları ve mobil iki sütunlu akış
-- Kategoriye özel gelişmiş filtreler ve sıralama
-- Favoriler, kayıtlı aramalar, son görüntülenenler ve ilan karşılaştırma
-- Büyük fotoğraf galerisi, benzer ilanlar ve satıcı vitrini
-- Üyelik, profil, doğrulama ve güven puanı
-- Mesajlaşma, teklif, güvenli işlem kaydı, uyuşmazlık ve yorum
-- İlan moderasyonu, şikâyet merkezi ve profesyonel yönetim paneli
-- Tam Yönetim operasyonları ve Kazanç Ağı görev sistemi
-- PWA, çevrimdışı sayfa, Docker, PostgreSQL, WhiteNoise ve Gunicorn hazırlığı
-- GitHub Actions üzerinde migration, güvenlik, statik dosya ve otomatik test kontrolleri
+- Konum ve kategori odaklı fotoğraflı marketplace akışı
+- Kategoriye özel gelişmiş arama, filtreleme, sıralama ve ilan karşılaştırma
+- Favoriler, kayıtlı aramalar, son görüntülenenler ve fiyat düşüşü takibi
+- Satıcı takip sistemi ve takip edilen satıcılardan yeni ilan akışı
+- Teklif, karşı teklif, pazarlık geçmişi ve güvenli işlem kaydı
+- Gelişmiş mesaj kutusu, alış/satış görüşmesi filtreleri ve görsel mesajlar
+- Büyük fotoğraf galerisi, benzer ilanlar, satıcı vitrini ve kullanıcı değerlendirmeleri
+- Üyelik, profil, telefon/e-posta doğrulama, güven puanı, engelleme ve şikâyet
+- İlan moderasyonu, uyuşmazlık merkezi ve profesyonel yönetim paneli
+- Tam Yönetim operasyonları ve İlan Şehri Kazanç Ağı görev sistemi
+- PWA, Docker, PostgreSQL, WhiteNoise ve Gunicorn canlı sunucu hazırlığı
+- GitHub Actions migration, güvenlik, statik dosya ve otomatik test kontrolleri
 
 ## Codespaces ile çalıştırma
 
@@ -43,6 +44,10 @@ Profesyonel yönetim merkezi: `/yonetim/`
 
 Teknik Django yönetimi: `/admin/`
 
+Teklif ve pazarlık merkezi: `/ilanlar/tekliflerim/`
+
+Takip edilen satıcılar: `/hesap/takip-ettiklerim/`
+
 Bu bilinen şifrelerle oluşturulan hesaplar canlı ortamda kullanılmamalıdır.
 
 ## Düzenli bakım
@@ -63,4 +68,4 @@ Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler 
 - Kullanıcı görselleri için kalıcı disk veya nesne depolama
 - Gerçek şirket bilgileriyle hukukçu tarafından kontrol edilmiş yasal metinler
 
-Ödeme aracılığı henüz aktif değildir. Güvenli işlem ekranı, teklif ve teslim sürecini kayıt altına alır; para transferi tarafların sorumluluğundadır.
+Ödeme aracılığı henüz aktif değildir. Güvenli işlem ekranı teklif, anlaşma ve teslim sürecini kayıt altına alır; para transferi tarafların sorumluluğundadır.

@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction as db_transaction
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -20,10 +20,11 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 from django.views.generic.edit import FormMixin
 
-from apps.accounts.models import UserBlock
+from apps.accounts.models import UserBlock, UserFollow
 from apps.managed_services.models import ManagedRequest
 
 from .forms import (
+    CounterOfferForm,
     ListingForm,
     ListingReportForm,
     MessageForm,
@@ -39,17 +40,24 @@ from .models import (
     Favorite,
     Listing,
     ListingImage,
+    ListingPriceHistory,
     ListingReport,
     Message,
     Notification,
     Offer,
+    OfferEvent,
     Review,
     SavedSearch,
     Transaction,
 )
 from .services import (
     accept_offer,
+    counter_offer,
+    create_offer_event,
     create_notification,
+    notify_followers_new_listing,
+    notify_price_drop_favorites,
+    record_price_change,
     finalize_transaction,
     refresh_user_rating,
     reject_offer,
@@ -126,10 +134,18 @@ class ListingListView(ListView):
     paginate_by = 24
 
     def get_queryset(self):
+        latest_price_history = ListingPriceHistory.objects.filter(
+            listing_id=OuterRef("pk")
+        ).order_by("-created_at")
         qs = (
             Listing.objects.filter(_active_listing_q())
+            .annotate(
+                latest_price_old=Subquery(latest_price_history.values("old_price")[:1]),
+                latest_price_new=Subquery(latest_price_history.values("new_price")[:1]),
+                latest_price_changed_at=Subquery(latest_price_history.values("created_at")[:1]),
+            )
             .select_related("owner", "category")
-            .prefetch_related("images")
+            .prefetch_related("images", "price_history")
         )
         params = self.request.GET
         q = params.get("q", "").strip()
@@ -189,6 +205,11 @@ class ListingListView(ListView):
             qs = qs.filter(management_mode=Listing.ManagementMode.FULL)
         if params.get("verified") == "1":
             qs = qs.filter(owner__is_phone_verified=True)
+        if params.get("price_drop") == "1":
+            qs = qs.filter(latest_price_old__gt=F("latest_price_new"))
+        if params.get("following") == "1" and self.request.user.is_authenticated:
+            followed_ids = UserFollow.objects.filter(follower=self.request.user).values_list("seller_id", flat=True)
+            qs = qs.filter(owner_id__in=followed_ids)
 
         min_price = _safe_decimal(params.get("min_price"))
         max_price = _safe_decimal(params.get("max_price"))
@@ -218,6 +239,7 @@ class ListingListView(ListView):
             "price_desc": ("-price", "-is_featured"),
             "popular": ("-view_count", "-favorite_count", "-created_at"),
             "oldest": ("created_at",),
+            "price_drop": ("-latest_price_changed_at", "-created_at"),
         }.get(sort, ("-is_featured", "-published_at", "-created_at"))
         return qs.order_by(*ordering)
 
@@ -268,7 +290,7 @@ class ListingDetailView(FormMixin, DetailView):
     form_class = OfferForm
 
     def get_queryset(self):
-        qs = Listing.objects.select_related("owner", "category").prefetch_related("images")
+        qs = Listing.objects.select_related("owner", "category").prefetch_related("images", "price_history")
         user = self.request.user
         if user.is_authenticated and user.is_staff:
             return qs
@@ -312,11 +334,25 @@ class ListingDetailView(FormMixin, DetailView):
         )
         context["compare_ids"] = set(_compare_ids(self.request))
         context["is_compared"] = self.object.pk in context["compare_ids"]
+        context["price_history"] = self.object.price_history.all()[:8]
+        context["is_following"] = (
+            user.is_authenticated
+            and user != self.object.owner
+            and UserFollow.objects.filter(follower=user, seller=self.object.owner).exists()
+        )
+        context["my_pending_offer"] = (
+            self.object.offers.filter(sender=user, status=Offer.Status.PENDING)
+            .select_related("last_actor", "listing__owner")
+            .prefetch_related("events__actor")
+            .first()
+            if user.is_authenticated and user != self.object.owner
+            else None
+        )
         similar_base = (
             Listing.objects.filter(_active_listing_q(), kind=self.object.kind)
             .exclude(pk=self.object.pk)
             .select_related("owner", "category")
-            .prefetch_related("images")
+            .prefetch_related("images", "price_history")
         )
         same_city = similar_base.filter(city__iexact=self.object.city)[:8]
         context["similar_listings"] = list(same_city) or list(similar_base[:8])
@@ -324,7 +360,7 @@ class ListingDetailView(FormMixin, DetailView):
             Listing.objects.filter(_active_listing_q(), owner=self.object.owner)
             .exclude(pk=self.object.pk)
             .select_related("owner", "category")
-            .prefetch_related("images")[:6]
+            .prefetch_related("images", "price_history")[:6]
         )
         if user.is_authenticated:
             context["favorite_ids"] = set(
@@ -355,7 +391,15 @@ class ListingDetailView(FormMixin, DetailView):
             offer = form.save(commit=False)
             offer.listing = self.object
             offer.sender = request.user
+            offer.last_actor = request.user
             offer.save()
+            create_offer_event(
+                offer=offer,
+                actor=request.user,
+                event_type=OfferEvent.Type.SUBMITTED,
+                amount=offer.amount,
+                message=offer.message,
+            )
             create_notification(
                 user=self.object.owner,
                 actor=request.user,
@@ -363,7 +407,7 @@ class ListingDetailView(FormMixin, DetailView):
                 notification_type=Notification.Type.OFFER,
                 title="İlanına yeni teklif geldi",
                 body=f"{request.user.display_name} bir teklif gönderdi.",
-                link=reverse("accounts:dashboard") + "#teklifler",
+                link=reverse("listings:offer_center"),
             )
             messages.success(request, "Teklifin ilan sahibine gönderildi.")
             return redirect(self.object.get_absolute_url())
@@ -400,6 +444,7 @@ class ListingCreateView(LoginRequiredMixin, CreateView):
         if self.object.status == Listing.Status.REVIEW:
             messages.success(self.request, "İlanın kaydedildi ve güvenlik incelemesine gönderildi.")
         else:
+            notify_followers_new_listing(self.object)
             messages.success(self.request, "İlanın yayınlandı.")
         return response
 
@@ -410,10 +455,17 @@ class ListingUpdateView(OwnerListingMixin, UpdateView):
     template_name = "listings/form.html"
 
     def form_valid(self, form):
+        previous_price = Listing.objects.only("price").get(pk=self.object.pk).price
         if not self.request.user.is_staff:
             form.instance.status = Listing.Status.REVIEW
             form.instance.review_note = ""
         response = super().form_valid(form)
+        record_price_change(
+            listing=self.object,
+            old_price=previous_price,
+            new_price=self.object.price,
+            actor=self.request.user,
+        )
         _save_images(self.object, form.cleaned_data.get("images", []))
         if self.object.management_mode == Listing.ManagementMode.FULL:
             ManagedRequest.objects.get_or_create(listing=self.object, defaults={"customer": self.request.user})
@@ -449,6 +501,7 @@ def change_listing_status(request, slug, action):
         listing.expires_at = timezone.now() + timedelta(days=60)
         listing.renewal_count += 1
         listing.save(update_fields=["status", "published_at", "expires_at", "renewal_count", "updated_at"])
+        notify_followers_new_listing(listing)
         messages.success(request, "İlan yeniden yayınlandı.")
         return redirect("accounts:dashboard")
     if action not in allowed:
@@ -484,7 +537,7 @@ class CompareListView(TemplateView):
         queryset = (
             Listing.objects.filter(_active_listing_q(), pk__in=compare_ids)
             .select_related("owner", "category")
-            .prefetch_related("images")
+            .prefetch_related("images", "price_history")
         )
         item_map = {item.pk: item for item in queryset}
         listings = [item_map[item_id] for item_id in compare_ids if item_id in item_map]
@@ -599,10 +652,58 @@ def reorder_listing_images(request, slug):
     return redirect("listings:update", slug=listing.slug)
 
 
+class OfferCenterView(LoginRequiredMixin, TemplateView):
+    template_name = "listings/offer_center.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        base = (
+            Offer.objects.filter(Q(sender=user) | Q(listing__owner=user))
+            .select_related("listing", "listing__owner", "sender", "last_actor")
+            .prefetch_related("events__actor", "listing__images")
+            .order_by("-updated_at")
+        )
+        status_filter = self.request.GET.get("status", "").strip()
+        if status_filter in {value for value, _ in Offer.Status.choices}:
+            base = base.filter(status=status_filter)
+        context["offers"] = base[:60]
+        context["status_filter"] = status_filter
+        context["counter_form"] = CounterOfferForm()
+        context["pending_count"] = base.filter(status=Offer.Status.PENDING).count()
+        return context
+
+
+@login_required
+@require_POST
+def counter_offer_action(request, pk):
+    offer = get_object_or_404(
+        Offer.objects.select_related("listing", "listing__owner", "sender", "last_actor"),
+        pk=pk,
+    )
+    form = CounterOfferForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Karşı teklif bilgilerini kontrol et.")
+        return redirect("listings:offer_center")
+    try:
+        counter_offer(
+            offer=offer,
+            actor=request.user,
+            amount=form.cleaned_data["amount"],
+            message=form.cleaned_data["message"],
+        )
+        messages.success(request, "Karşı teklif gönderildi.")
+    except PermissionError:
+        raise Http404
+    except ValueError as exc:
+        messages.error(request, str(exc))
+    return redirect("listings:offer_center")
+
+
 @login_required
 @require_POST
 def offer_action(request, pk, action):
-    offer = get_object_or_404(Offer.objects.select_related("listing", "sender", "listing__owner"), pk=pk)
+    offer = get_object_or_404(Offer.objects.select_related("listing", "sender", "listing__owner", "last_actor"), pk=pk)
     try:
         if action == "accept":
             transaction = accept_offer(offer=offer, actor=request.user)
@@ -617,6 +718,13 @@ def offer_action(request, pk, action):
             offer.status = Offer.Status.WITHDRAWN
             offer.responded_at = timezone.now()
             offer.save(update_fields=["status", "responded_at", "updated_at"])
+            create_offer_event(
+                offer=offer,
+                actor=request.user,
+                event_type=OfferEvent.Type.WITHDRAWN,
+                amount=offer.amount,
+                message="Teklif geri çekildi.",
+            )
             messages.success(request, "Teklifin geri çekildi.")
         else:
             messages.error(request, "Geçersiz teklif işlemi.")
@@ -624,7 +732,7 @@ def offer_action(request, pk, action):
         raise Http404
     except ValueError as exc:
         messages.error(request, str(exc))
-    return redirect("accounts:dashboard")
+    return redirect("listings:offer_center")
 
 
 class TransactionDetailView(LoginRequiredMixin, DetailView):
@@ -838,10 +946,10 @@ class ConversationListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        return (
+        queryset = (
             Conversation.objects.filter(Q(buyer=user, buyer_archived=False) | Q(seller=user, seller_archived=False))
             .select_related("listing", "buyer", "seller")
-            .prefetch_related("messages")
+            .prefetch_related("messages", "listing__images")
             .annotate(
                 unread_count=Coalesce(
                     Count("messages", filter=Q(messages__is_read=False) & ~Q(messages__sender=user)),
@@ -850,6 +958,27 @@ class ConversationListView(LoginRequiredMixin, ListView):
             )
             .order_by("-updated_at")
         )
+        mode = self.request.GET.get("mode", "all")
+        if mode == "buying":
+            queryset = queryset.filter(buyer=user)
+        elif mode == "selling":
+            queryset = queryset.filter(seller=user)
+        elif mode == "unread":
+            queryset = queryset.filter(unread_count__gt=0)
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            queryset = queryset.filter(
+                Q(listing__title__icontains=query)
+                | Q(buyer__username__icontains=query)
+                | Q(seller__username__icontains=query)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["mode"] = self.request.GET.get("mode", "all")
+        context["query"] = self.request.GET.get("q", "").strip()
+        return context
 
 
 class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
@@ -1010,7 +1139,7 @@ class ModerationDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
         context = super().get_context_data(**kwargs)
         context["pending_listings"] = Listing.objects.filter(status=Listing.Status.REVIEW).select_related(
             "owner", "category"
-        ).prefetch_related("images")[:100]
+        ).prefetch_related("images", "price_history")[:100]
         context["open_reports"] = ListingReport.objects.filter(
             status__in=[ListingReport.Status.OPEN, ListingReport.Status.REVIEWING]
         ).select_related("listing", "reporter")[:100]
@@ -1042,6 +1171,13 @@ def moderate_listing(request, pk, action):
     listing.moderated_by = request.user
     listing.moderated_at = timezone.now()
     listing.save()
+    if action == "approve":
+        notify_followers_new_listing(listing)
+        latest_price_change = listing.price_history.filter(
+            notifications_sent_at__isnull=True
+        ).first()
+        if latest_price_change:
+            notify_price_drop_favorites(latest_price_change)
     create_notification(
         user=listing.owner,
         actor=request.user,

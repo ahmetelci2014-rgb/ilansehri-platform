@@ -1,4 +1,5 @@
-<article class="market-card{% if listing.is_featured %} is-featured{% endif %}">
+{% with price_change=listing.latest_price_change %}
+<article class="market-card{% if listing.is_featured %} is-featured{% endif %}{% if price_change and price_change.is_drop %} has-price-drop{% endif %}">
   <a class="market-card-link" href="{{ listing.get_absolute_url }}" aria-label="{{ listing.title }}">
     <div class="market-card-media">
       {% with cover=listing.cover_image %}
@@ -7,13 +8,17 @@
       {% endwith %}
       <div class="market-card-badges">
         <span class="market-card-action">{{ listing.get_action_display }}</span>
+        {% if price_change and price_change.is_drop %}<span class="market-card-price-drop">↓ %{{ listing.price_drop_percent }} fiyat düştü</span>{% endif %}
         {% if listing.is_featured %}<span class="market-card-featured">Öne çıkan</span>{% endif %}
         {% if listing.management_mode == 'full' %}<span class="market-card-managed">✓ Güvenceli</span>{% endif %}
       </div>
       {% if listing.images.count %}<span class="market-card-photo">▣ {{ listing.images.count }}</span>{% endif %}
     </div>
     <div class="market-card-body">
-      <strong class="market-card-price">{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>
+      <div class="market-price-line">
+        <strong class="market-card-price">{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>
+        {% if price_change and price_change.is_drop %}<del>{{ price_change.old_price|floatformat:0 }} TL</del>{% endif %}
+      </div>
       <h3>{{ listing.title }}</h3>
       <div class="market-card-specs">
         {% if listing.kind == 'vehicle' %}{% if listing.model_year %}<span>{{ listing.model_year }}</span>{% endif %}{% if listing.mileage %}<span>{{ listing.mileage }} km</span>{% endif %}{% if listing.transmission %}<span>{{ listing.get_transmission_display }}</span>{% endif %}
@@ -29,3 +34,4 @@
     <form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="market-card-tool compare-tool{% if listing.pk in compare_ids %} active{% endif %}" aria-label="Karşılaştır">⇄</button></form>
   </div>
 </article>
+{% endwith %}

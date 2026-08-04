@@ -19,16 +19,18 @@ from django.views.generic import CreateView, DetailView, TemplateView, UpdateVie
 from apps.listings.models import (
     Conversation,
     Favorite,
+    Listing,
     Notification,
     Offer,
     Review,
     SavedSearch,
     Transaction,
 )
+from apps.listings.services import create_notification
 
 from .delivery import send_phone_verification_code
 from .forms import ProfileForm, SignUpForm, VerificationConfirmForm, VerificationStartForm
-from .models import User, UserBlock, VerificationCode
+from .models import User, UserBlock, UserFollow, VerificationCode
 
 
 class SignUpView(CreateView):
@@ -54,7 +56,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        context["my_listings"] = user.listings.select_related("category").prefetch_related("images").order_by("-updated_at")[:20]
+        context["my_listings"] = user.listings.select_related("category").prefetch_related("images", "price_history").order_by("-updated_at")[:20]
         context["received_offers"] = Offer.objects.filter(listing__owner=user).select_related("listing", "sender").order_by("-created_at")[:15]
         context["sent_offers"] = user.offers.select_related("listing", "listing__owner")[:15]
         context["managed_requests"] = user.managed_requests.select_related("listing").order_by("-updated_at")[:10]
@@ -123,7 +125,7 @@ class PublicProfileView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["published_listings"] = self.object.listings.filter(status="published").filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())).select_related("category", "owner").prefetch_related("images")[:12]
+        context["published_listings"] = self.object.listings.filter(status="published").filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())).select_related("category", "owner").prefetch_related("images", "price_history")[:12]
         context["reviews"] = Review.objects.filter(reviewed_user=self.object, is_visible=True).select_related("reviewer", "transaction__listing")[:20]
         context["compare_ids"] = set(self.request.session.get("compare_listing_ids", []))
         context["favorite_ids"] = (
@@ -131,9 +133,62 @@ class PublicProfileView(DetailView):
             if self.request.user.is_authenticated
             else set()
         )
+        context["follower_count"] = UserFollow.objects.filter(seller=self.object).count()
+        context["following_count"] = UserFollow.objects.filter(follower=self.object).count()
+        context["is_following"] = False
         if self.request.user.is_authenticated and self.request.user != self.object:
             context["is_blocked"] = UserBlock.objects.filter(blocker=self.request.user, blocked=self.object).exists()
+            context["is_following"] = UserFollow.objects.filter(
+                follower=self.request.user, seller=self.object
+            ).exists()
         return context
+
+
+class FollowingListView(LoginRequiredMixin, TemplateView):
+    template_name = "accounts/following.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        follows = UserFollow.objects.filter(follower=self.request.user).select_related("seller")
+        seller_ids = list(follows.values_list("seller_id", flat=True))
+        context["follows"] = follows
+        context["followed_listings"] = (
+            Listing.objects.filter(owner_id__in=seller_ids, status=Listing.Status.PUBLISHED)
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+            .select_related("owner", "category")
+            .prefetch_related("images", "price_history")
+            .order_by("-published_at", "-created_at")[:24]
+        )
+        context["favorite_ids"] = set(
+            Favorite.objects.filter(user=self.request.user).values_list("listing_id", flat=True)
+        )
+        context["compare_ids"] = set(self.request.session.get("compare_listing_ids", []))
+        return context
+
+
+@require_POST
+def toggle_follow(request, pk):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    seller = get_object_or_404(User, pk=pk, is_active=True)
+    if seller == request.user:
+        messages.warning(request, "Kendi hesabını takip edemezsin.")
+        return redirect("accounts:public_profile", username=seller.username)
+    follow, created = UserFollow.objects.get_or_create(follower=request.user, seller=seller)
+    if created:
+        messages.success(request, f"{seller.display_name} takip ediliyor.")
+        create_notification(
+            user=seller,
+            actor=request.user,
+            notification_type=Notification.Type.FOLLOW,
+            title="Yeni takipçin var",
+            body=f"{request.user.display_name} mağazanı takip etmeye başladı.",
+            link=reverse("accounts:public_profile", kwargs={"username": request.user.username}),
+        )
+    else:
+        follow.delete()
+        messages.info(request, f"{seller.display_name} takibi bırakıldı.")
+    return redirect("accounts:public_profile", username=seller.username)
 
 
 class VerificationCenterView(LoginRequiredMixin, TemplateView):

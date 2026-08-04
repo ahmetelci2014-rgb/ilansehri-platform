@@ -1,0 +1,17 @@
+İLAN ŞEHRİ v1.3 — PAZARLIK, FİYAT TAKİBİ VE SATICI AĞI
+
+1. Bu ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.3 pazarlık fiyat takibi
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın ve Ctrl+F5 yapın.
+
+Yeni ekranlar:
+- Teklif ve pazarlık merkezi: /ilanlar/tekliflerim/
+- Takip edilen satıcılar: /hesap/takip-ettiklerim/

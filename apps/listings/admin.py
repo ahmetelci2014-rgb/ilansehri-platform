@@ -8,15 +8,21 @@ from .models import (
     Favorite,
     Listing,
     ListingImage,
+    ListingPriceHistory,
     ListingReport,
     Message,
     Notification,
     Offer,
+    OfferEvent,
     Review,
     SavedSearch,
     Transaction,
 )
-from .services import create_notification
+from .services import (
+    create_notification,
+    notify_followers_new_listing,
+    notify_price_drop_favorites,
+)
 
 
 class ListingImageInline(admin.TabularInline):
@@ -40,6 +46,12 @@ def approve_listings(modeladmin, request, queryset):
         listing.moderated_by = request.user
         listing.review_note = ""
         listing.save()
+        notify_followers_new_listing(listing)
+        latest_price_change = listing.price_history.filter(
+            notifications_sent_at__isnull=True
+        ).first()
+        if latest_price_change:
+            notify_price_drop_favorites(latest_price_change)
         create_notification(
             user=listing.owner,
             actor=request.user,
@@ -110,3 +122,6 @@ admin.site.register(SavedSearch)
 admin.site.register(Conversation)
 admin.site.register(Message)
 admin.site.register(Notification)
+
+admin.site.register(ListingPriceHistory)
+admin.site.register(OfferEvent)

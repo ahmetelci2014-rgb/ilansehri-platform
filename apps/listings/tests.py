@@ -12,12 +12,15 @@ from .models import (
     Favorite,
     Listing,
     ListingImage,
+    ListingPriceHistory,
     Message,
     Notification,
     Offer,
+    OfferEvent,
     Review,
     Transaction,
 )
+from .services import record_price_change
 
 
 TINY_GIF = (
@@ -241,3 +244,122 @@ class ListingFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, listing.title)
         self.assertContains(response, "market-card")
+
+
+    def test_seller_can_counter_and_buyer_can_accept(self):
+        listing = self.create_listing()
+        offer = Offer.objects.create(
+            listing=listing,
+            sender=self.buyer,
+            last_actor=self.buyer,
+            amount="23000",
+            message="İlk teklif",
+        )
+        OfferEvent.objects.create(
+            offer=offer,
+            actor=self.buyer,
+            event_type=OfferEvent.Type.SUBMITTED,
+            amount=offer.amount,
+            message=offer.message,
+        )
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("listings:counter_offer", kwargs={"pk": offer.pk}),
+            {"amount": "24000", "message": "Bu tutarla bugün teslim edebilirim."},
+        )
+        self.assertRedirects(response, reverse("listings:offer_center"))
+        offer.refresh_from_db()
+        self.assertEqual(offer.amount, Decimal("24000"))
+        self.assertEqual(offer.last_actor, self.owner)
+        self.assertEqual(offer.counter_count, 1)
+        self.assertTrue(offer.events.filter(event_type=OfferEvent.Type.COUNTERED).exists())
+
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse("listings:offer_action", kwargs={"pk": offer.pk, "action": "accept"})
+        )
+        transaction = Transaction.objects.get(offer=offer)
+        self.assertRedirects(response, transaction.get_absolute_url())
+        self.assertEqual(transaction.amount, Decimal("24000"))
+
+    def test_price_drop_notifies_users_who_favorited_listing(self):
+        listing = self.create_listing()
+        Favorite.objects.create(user=self.buyer, listing=listing)
+        old_price = listing.price
+        listing.price = Decimal("22000")
+        listing.save(update_fields=["price", "updated_at"])
+        record_price_change(
+            listing=listing,
+            old_price=old_price,
+            new_price=listing.price,
+            actor=self.owner,
+        )
+        history = ListingPriceHistory.objects.get(listing=listing)
+        self.assertTrue(history.is_drop)
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.buyer,
+                listing=listing,
+                notification_type=Notification.Type.PRICE_DROP,
+            ).exists()
+        )
+
+    def test_offer_post_creates_offer_history(self):
+        listing = self.create_listing()
+        self.client.force_login(self.buyer)
+        self.client.post(
+            listing.get_absolute_url(),
+            {"amount": "23000", "message": "Bugün teslim alabilirim."},
+        )
+        offer = Offer.objects.get(listing=listing, sender=self.buyer)
+        self.assertEqual(offer.last_actor, self.buyer)
+        self.assertTrue(offer.events.filter(event_type=OfferEvent.Type.SUBMITTED).exists())
+    def test_price_drop_waits_for_moderation_before_notification(self):
+        listing = self.create_listing(status=Listing.Status.REVIEW)
+        Favorite.objects.create(user=self.buyer, listing=listing)
+        history = record_price_change(
+            listing=listing,
+            old_price=Decimal("25000"),
+            new_price=Decimal("22000"),
+            actor=self.owner,
+        )
+        self.assertIsNone(history.notifications_sent_at)
+        self.assertFalse(
+            Notification.objects.filter(
+                user=self.buyer,
+                listing=listing,
+                notification_type=Notification.Type.PRICE_DROP,
+            ).exists()
+        )
+        self.client.force_login(self.staff)
+        self.client.post(
+            reverse("listings:moderate_listing", kwargs={"pk": listing.pk, "action": "approve"})
+        )
+        history.refresh_from_db()
+        self.assertIsNotNone(history.notifications_sent_at)
+        self.assertEqual(
+            Notification.objects.filter(
+                user=self.buyer,
+                listing=listing,
+                notification_type=Notification.Type.PRICE_DROP,
+            ).count(),
+            1,
+        )
+
+    def test_stranger_cannot_counter_an_offer(self):
+        listing = self.create_listing()
+        offer = Offer.objects.create(
+            listing=listing,
+            sender=self.buyer,
+            last_actor=self.buyer,
+            amount=Decimal("23000"),
+            message="Teklif",
+        )
+        self.client.force_login(self.stranger)
+        response = self.client.post(
+            reverse("listings:counter_offer", kwargs={"pk": offer.pk}),
+            {"amount": "24000", "message": "Yetkisiz karşı teklif"},
+        )
+        self.assertEqual(response.status_code, 404)
+        offer.refresh_from_db()
+        self.assertEqual(offer.amount, Decimal("23000"))

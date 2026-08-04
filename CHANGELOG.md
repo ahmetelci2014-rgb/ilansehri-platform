@@ -1,5 +1,22 @@
 # Değişiklik Günlüğü
 
+## v1.3 — Pazarlık, Fiyat Takibi ve Satıcı Ağı
+
+- Teklif merkezi yenilendi; gönderilen ve alınan teklifler tek ekranda durumlarına göre yönetilebilir hale getirildi.
+- Alıcı ve satıcının sırayla karşı teklif verebildiği gerçek pazarlık akışı eklendi.
+- İlk teklif, karşı teklifler, kabul, ret ve geri çekme adımları zaman çizelgesinde saklanmaya başlandı.
+- Karşı teklif yalnız sırası gelen kullanıcı tarafından yapılabilir; üçüncü kişilerin erişimi engellendi.
+- Fiyat geçmişi modeli, eski fiyat gösterimi, indirim yüzdesi ve fiyatı düşen ilan akışları eklendi.
+- Favoriye alınan ilanın fiyatı düştüğünde kullanıcıya bildirim gönderilmesi eklendi.
+- Moderasyondaki fiyat değişiklikleri için bildirim yalnız ilan yeniden onaylandığında ve tek kez gönderilecek şekilde güvenli hale getirildi.
+- Satıcı takip etme, takipten çıkma, takipçi sayıları ve takip edilen satıcıların ilan akışı eklendi.
+- Takip edilen satıcı yeni ilan yayınladığında bildirim oluşturulması eklendi.
+- Mesaj kutusuna okunmamış, alış ve satış görüşmesi filtreleri ile kullanıcı/ilan araması eklendi.
+- Mesaj ekranı ilan özeti, karşı taraf güven bilgisi, görsel gönderme, arşivleme ve engelleme kontrolleriyle yenilendi.
+- Ana sayfaya takip edilen satıcılar ve fiyatı düşen ilanlar bölümleri eklendi.
+- İlan filtrelerine fiyat düşüşü ve takip edilen satıcı seçenekleri eklendi.
+- Teklif pazarlığı, fiyat bildirimi, takip sistemi ve yetki kontrolleri için yeni otomatik testler eklendi.
+
 ## v1.2 — Profesyonel Marketplace
 
 - Ana sayfa; konuma göre yeni ilanlar, popüler ilanlar, araç, emlak, hizmet ve son görüntülenenler bölümleriyle zenginleştirildi.

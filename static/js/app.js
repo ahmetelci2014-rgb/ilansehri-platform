@@ -198,3 +198,17 @@ document.addEventListener("DOMContentLoaded", () => {
     box.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const chatThread = document.querySelector("[data-chat-thread]");
+  if (chatThread) chatThread.scrollTop = chatThread.scrollHeight;
+
+  document.querySelectorAll(".counter-offer-box").forEach((details) => {
+    details.addEventListener("toggle", () => {
+      if (!details.open) return;
+      document.querySelectorAll(".counter-offer-box").forEach((other) => {
+        if (other !== details) other.open = false;
+      });
+    });
+  });
+});

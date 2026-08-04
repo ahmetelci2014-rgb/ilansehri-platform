@@ -1,6 +1,6 @@
 from django.db.models import Q
 
-from .models import Favorite, Message, Notification
+from .models import Favorite, Message, Notification, Offer
 
 
 def notification_counts(request):
@@ -10,6 +10,7 @@ def notification_counts(request):
             "unread_notification_count": 0,
             "unread_message_count": 0,
             "header_favorite_count": 0,
+            "header_offer_count": 0,
             "compare_count": compare_count,
         }
     unread_messages = Message.objects.filter(
@@ -20,5 +21,9 @@ def notification_counts(request):
         "unread_notification_count": Notification.objects.filter(user=request.user, is_read=False).count(),
         "unread_message_count": unread_messages,
         "header_favorite_count": Favorite.objects.filter(user=request.user).count(),
+        "header_offer_count": Offer.objects.filter(
+            Q(sender=request.user) | Q(listing__owner=request.user),
+            status=Offer.Status.PENDING,
+        ).count(),
         "compare_count": compare_count,
     }

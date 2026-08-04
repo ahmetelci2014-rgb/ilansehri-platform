@@ -142,3 +142,34 @@ class UserBlock(models.Model):
 
     def __str__(self) -> str:
         return f"{self.blocker} → {self.blocked}"
+
+
+class UserFollow(models.Model):
+    follower = models.ForeignKey(
+        User,
+        related_name="following_links",
+        on_delete=models.CASCADE,
+    )
+    seller = models.ForeignKey(
+        User,
+        related_name="follower_links",
+        on_delete=models.CASCADE,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=("follower", "seller"),
+                name="unique_user_follow",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(follower=models.F("seller")),
+                name="prevent_self_follow",
+            ),
+        ]
+        indexes = [models.Index(fields=["seller", "-created_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.follower} → {self.seller}"

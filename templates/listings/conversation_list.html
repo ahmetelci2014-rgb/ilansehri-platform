@@ -1,1 +1,20 @@
-{% extends 'base.html' %}{% block title %}Mesajlarım — İlan Şehri{% endblock %}{% block content %}<section class="account-page shell"><div class="account-heading"><div><span class="section-label">MESAJLAR</span><h1>Görüşmelerim</h1><p>İlan sahipleri ve alıcılarla yaptığın özel görüşmeler.</p></div></div><div class="conversation-list">{% for conversation in conversations %}<a href="{% url 'listings:conversation_detail' conversation.pk %}" class="{% if conversation.unread_count %}unread{% endif %}"><div class="mini-avatar">{% if conversation.buyer == user %}{{ conversation.seller.display_name|first|upper }}{% else %}{{ conversation.buyer.display_name|first|upper }}{% endif %}</div><div><b>{{ conversation.listing.title }}</b><span>{% if conversation.buyer == user %}{{ conversation.seller.display_name }}{% else %}{{ conversation.buyer.display_name }}{% endif %}</span>{% with last=conversation.messages.last %}<p>{{ last.body|default:"Görüşme başladı"|truncatechars:100 }}</p>{% endwith %}</div><div><small>{{ conversation.updated_at|timesince }} önce</small>{% if conversation.unread_count %}<strong>{{ conversation.unread_count }}</strong>{% endif %}</div></a>{% empty %}<div class="empty">Henüz mesajlaşma yok.</div>{% endfor %}</div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Mesajlarım — İlan Şehri{% endblock %}
+{% block content %}
+<section class="inbox-page shell">
+  <div class="market-page-title"><div><span class="section-label">MESAJ KUTUSU</span><h1>Görüşmelerim</h1><p>Alım ve satış görüşmelerini düzenli biçimde takip et.</p></div><a class="button" href="{% url 'listings:offer_center' %}">🤝 Teklif Merkezi</a></div>
+  <div class="inbox-toolbar">
+    <nav><a href="{% url 'listings:conversation_list' %}" class="{% if mode == 'all' %}active{% endif %}">Tümü</a><a href="?mode=unread" class="{% if mode == 'unread' %}active{% endif %}">Okunmamış</a><a href="?mode=buying" class="{% if mode == 'buying' %}active{% endif %}">Alış görüşmeleri</a><a href="?mode=selling" class="{% if mode == 'selling' %}active{% endif %}">Satış görüşmeleri</a></nav>
+    <form method="get"><input type="hidden" name="mode" value="{{ mode }}"><span>⌕</span><input name="q" value="{{ query }}" placeholder="İlan veya kullanıcı ara"><button>Ara</button></form>
+  </div>
+  <div class="conversation-list v13-conversation-list">
+    {% for conversation in conversations %}
+      <a href="{% url 'listings:conversation_detail' conversation.pk %}" class="{% if conversation.unread_count %}unread{% endif %}">
+        <div class="conversation-cover">{% with cover=conversation.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ conversation.listing.title }}">{% else %}<span>▣</span>{% endif %}{% endwith %}</div>
+        <div class="conversation-copy"><div><b>{{ conversation.listing.title }}</b><em>{% if conversation.buyer == user %}Satıcı: {{ conversation.seller.display_name }}{% else %}Alıcı: {{ conversation.buyer.display_name }}{% endif %}</em></div>{% with last=conversation.messages.last %}<p>{% if last.sender == user %}<span>Sen:</span> {% endif %}{{ last.body|default:"Görüşme başladı"|truncatechars:110 }}</p>{% endwith %}<small>{% if conversation.listing.price %}{{ conversation.listing.price|floatformat:0 }} TL{% else %}Teklif alıyor{% endif %}</small></div>
+        <div class="conversation-state"><time>{{ conversation.updated_at|timesince }} önce</time>{% if conversation.unread_count %}<strong>{{ conversation.unread_count }}</strong>{% endif %}<i>›</i></div>
+      </a>
+    {% empty %}<div class="market-empty"><span>💬</span><h3>Görüşme bulunamadı</h3><p>İlan detayından satıcıya mesaj göndererek başlayabilirsin.</p><a class="button" href="{% url 'listings:list' %}">İlanları keşfet</a></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

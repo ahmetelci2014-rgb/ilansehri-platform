@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Takip Ettiklerim — İlan Şehri{% endblock %}
+{% block content %}
+<section class="following-page shell">
+  <div class="market-page-title"><div><span class="section-label">SATICI TAKİBİ</span><h1>Takip ettiklerim</h1><p>Güvendiğin satıcıların yeni ilanlarını kaçırma.</p></div></div>
+  <div class="followed-seller-strip">{% for follow in follows %}<a href="{% url 'accounts:public_profile' follow.seller.username %}"><span>{% if follow.seller.avatar %}<img src="{{ follow.seller.avatar.url }}" alt="{{ follow.seller.display_name }}">{% else %}{{ follow.seller.display_name|first|upper }}{% endif %}</span><b>{{ follow.seller.display_name }}</b><small>★ {{ follow.seller.average_rating }} · {{ follow.seller.listings.count }} ilan</small></a>{% empty %}<div class="market-empty"><span>👤</span><h3>Henüz satıcı takip etmiyorsun</h3><p>İlan detayındaki satıcı kartından takip etmeye başlayabilirsin.</p></div>{% endfor %}</div>
+  {% if followed_listings %}<section class="market-feed"><div class="market-section-head"><div><h2>Takip ettiğin satıcılardan yeni ilanlar</h2><p>En güncel yayınlar</p></div><a href="{% url 'listings:list' %}?following=1">Tümünü gör →</a></div><div class="market-card-grid">{% for listing in followed_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+</section>
+{% endblock %}

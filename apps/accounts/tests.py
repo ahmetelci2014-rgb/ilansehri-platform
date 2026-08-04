@@ -1,7 +1,7 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import User, VerificationCode
+from .models import User, UserFollow, VerificationCode
 
 
 class AccountFlowTests(TestCase):
@@ -68,3 +68,16 @@ class AccountFlowTests(TestCase):
         code.refresh_from_db()
         self.assertTrue(user.is_phone_verified)
         self.assertIsNotNone(code.consumed_at)
+
+
+    def test_user_can_follow_and_unfollow_seller(self):
+        follower = User.objects.create_user(username="follower", password="StrongPass_2026")
+        seller = User.objects.create_user(username="seller", password="StrongPass_2026")
+        self.client.force_login(follower)
+        url = reverse("accounts:toggle_follow", kwargs={"pk": seller.pk})
+        self.client.post(url)
+        self.assertTrue(UserFollow.objects.filter(follower=follower, seller=seller).exists())
+        profile = self.client.get(reverse("accounts:public_profile", kwargs={"username": seller.username}))
+        self.assertContains(profile, "1")
+        self.client.post(url)
+        self.assertFalse(UserFollow.objects.filter(follower=follower, seller=seller).exists())

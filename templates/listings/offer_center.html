@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Teklif Merkezi — İlan Şehri{% endblock %}
+{% block content %}
+<section class="offer-center-page shell">
+  <div class="market-page-title"><div><span class="section-label">PAZARLIK MERKEZİ</span><h1>Tekliflerim</h1><p>Gönderdiğin ve aldığın teklifleri tek ekrandan yönet.</p></div><a class="button" href="{% url 'listings:list' %}">İlan keşfet</a></div>
+  <nav class="offer-tabs"><a href="{% url 'listings:offer_center' %}" class="{% if not status_filter %}active{% endif %}">Tümü</a><a href="?status=pending" class="{% if status_filter == 'pending' %}active{% endif %}">Bekleyenler</a><a href="?status=accepted" class="{% if status_filter == 'accepted' %}active{% endif %}">Kabul edilen</a><a href="?status=rejected" class="{% if status_filter == 'rejected' %}active{% endif %}">Kapananlar</a></nav>
+  <div class="offer-center-list">
+    {% for offer in offers %}
+      <article class="offer-center-card{% if offer.status == 'pending' and offer.current_recipient_id == user.pk %} needs-action{% endif %}">
+        <div class="offer-listing-photo">{% with cover=offer.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ offer.listing.title }}">{% else %}<span>▣</span>{% endif %}{% endwith %}</div>
+        <div class="offer-center-main">
+          <div class="offer-card-head"><div><small>{% if user == offer.sender %}Satıcı: {{ offer.listing.owner.display_name }}{% else %}Alıcı: {{ offer.sender.display_name }}{% endif %}</small><h2><a href="{{ offer.listing.get_absolute_url }}">{{ offer.listing.title }}</a></h2></div><span class="offer-status status-{{ offer.status }}">{{ offer.get_status_display }}</span></div>
+          <div class="offer-current-price"><strong>{% if offer.amount %}{{ offer.amount|floatformat:0 }} TL{% else %}Tutar belirtilmedi{% endif %}</strong>{% if offer.counter_count %}<span>{{ offer.counter_count }} karşı teklif</span>{% endif %}</div>
+          <div class="offer-timeline">
+            {% for event in offer.events.all %}<div><span class="timeline-dot"></span><div><b>{{ event.actor.display_name|default:'Sistem' }}</b><em>{{ event.get_event_type_display }} · {{ event.created_at|date:'d.m H:i' }}</em>{% if event.amount %}<strong>{{ event.amount|floatformat:0 }} TL</strong>{% endif %}{% if event.message %}<p>{{ event.message }}</p>{% endif %}</div></div>{% empty %}<p>Teklif geçmişi bulunmuyor.</p>{% endfor %}
+          </div>
+          {% if offer.status == 'pending' %}
+            <div class="offer-response-row">
+              {% if offer.current_recipient_id == user.pk %}
+                <form method="post" action="{% url 'listings:offer_action' offer.pk 'accept' %}">{% csrf_token %}<button class="button">Kabul et</button></form>
+                <details class="counter-offer-box"><summary>Karşı teklif ver</summary><form method="post" action="{% url 'listings:counter_offer' offer.pk %}">{% csrf_token %}<label>Yeni tutar<input type="number" name="amount" min="0.01" step="0.01" value="{{ offer.amount }}" required></label><label>Not<textarea name="message" rows="3" required>Yeni teklifim ve teslim koşullarım:</textarea></label><button class="button full">Karşı teklifi gönder</button></form></details>
+                <form method="post" action="{% url 'listings:offer_action' offer.pk 'reject' %}">{% csrf_token %}<button class="market-secondary-button">Reddet</button></form>
+              {% else %}<div class="offer-waiting">Karşı tarafın yanıtı bekleniyor.</div>{% endif %}
+              {% if user == offer.sender %}<form method="post" action="{% url 'listings:offer_action' offer.pk 'withdraw' %}">{% csrf_token %}<button class="text-danger-button">Teklifi geri çek</button></form>{% endif %}
+            </div>
+          {% elif offer.status == 'accepted' and offer.transaction %}<a class="button" href="{{ offer.transaction.get_absolute_url }}">Güvenli işlemi aç</a>{% endif %}
+        </div>
+      </article>
+    {% empty %}<div class="market-empty"><span>🤝</span><h3>Henüz teklif yok</h3><p>İlanları keşfedip pazarlığa başlayabilirsin.</p></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

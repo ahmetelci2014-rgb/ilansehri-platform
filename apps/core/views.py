@@ -3,13 +3,13 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.db.models import Count, Q
+from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.generic import TemplateView
 
-from apps.accounts.models import User
-from apps.listings.models import Favorite, Listing, ListingReport, Review, Transaction
+from apps.accounts.models import User, UserFollow
+from apps.listings.models import Favorite, Listing, ListingPriceHistory, ListingReport, Review, Transaction
 from apps.managed_services.models import ManagedRequest
 from apps.partners.models import PartnerProfile, Task
 
@@ -24,7 +24,7 @@ def _listing_queryset():
     return (
         Listing.objects.filter(_active_listing_q())
         .select_related("category", "owner")
-        .prefetch_related("images")
+        .prefetch_related("images", "price_history")
     )
 
 
@@ -47,6 +47,26 @@ class HomeView(TemplateView):
         vehicles = list(published.filter(kind=Listing.Kind.VEHICLE).order_by("-is_featured", "-created_at")[:10])
         estates = list(published.filter(kind=Listing.Kind.REAL_ESTATE).order_by("-is_featured", "-created_at")[:10])
         services = list(published.filter(kind=Listing.Kind.SERVICE).order_by("-is_featured", "-created_at")[:10])
+
+        latest_price_history = ListingPriceHistory.objects.filter(
+            listing_id=OuterRef("pk")
+        ).order_by("-created_at")
+        price_drops = list(
+            published.annotate(
+                latest_price_old=Subquery(latest_price_history.values("old_price")[:1]),
+                latest_price_new=Subquery(latest_price_history.values("new_price")[:1]),
+                latest_price_changed_at=Subquery(latest_price_history.values("created_at")[:1]),
+            )
+            .filter(latest_price_old__gt=F("latest_price_new"))
+            .order_by("-latest_price_changed_at", "-created_at")[:10]
+        )
+
+        following_listings = []
+        if self.request.user.is_authenticated:
+            followed_sellers = UserFollow.objects.filter(follower=self.request.user).values_list("seller_id", flat=True)
+            following_listings = list(
+                published.filter(owner_id__in=followed_sellers).order_by("-published_at", "-created_at")[:10]
+            )
 
         recent_ids = self.request.session.get("recently_viewed", [])[:8]
         recent_map = {
@@ -73,6 +93,8 @@ class HomeView(TemplateView):
                 "vehicle_listings": vehicles,
                 "estate_listings": estates,
                 "service_listings": services,
+                "price_drop_listings": price_drops,
+                "following_listings": following_listings,
                 "recently_viewed": recently_viewed,
                 "favorite_ids": favorite_ids,
                 "compare_ids": set(self.request.session.get("compare_listing_ids", [])),
@@ -172,7 +194,7 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.2"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.3"})
 
 
 def manifest(request):
@@ -203,7 +225,7 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v12";
+const CACHE = "ilansehri-v13";
 const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/js/app.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
 const PRIVATE_PREFIXES = ["/hesap/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));

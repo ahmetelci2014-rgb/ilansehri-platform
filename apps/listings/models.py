@@ -252,6 +252,20 @@ class Listing(models.Model):
             items.append(("Teslim / hizmet", self.get_delivery_type_display()))
         return items
 
+    @property
+    def latest_price_change(self):
+        cached = getattr(self, "_prefetched_objects_cache", {}).get("price_history")
+        if cached is not None:
+            return cached[0] if cached else None
+        return self.price_history.first()
+
+    @property
+    def price_drop_percent(self) -> int:
+        change = self.latest_price_change
+        if not change or change.old_price <= 0 or change.new_price >= change.old_price:
+            return 0
+        return round(((change.old_price - change.new_price) / change.old_price) * 100)
+
     def __str__(self) -> str:
         return self.title
 
@@ -271,6 +285,36 @@ class ListingImage(models.Model):
         return f"{self.listing} · görsel {self.pk}"
 
 
+class ListingPriceHistory(models.Model):
+    listing = models.ForeignKey(
+        Listing,
+        related_name="price_history",
+        on_delete=models.CASCADE,
+    )
+    old_price = models.DecimalField(max_digits=14, decimal_places=2)
+    new_price = models.DecimalField(max_digits=14, decimal_places=2)
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="listing_price_changes",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    notifications_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=["listing", "-created_at"])]
+
+    @property
+    def is_drop(self) -> bool:
+        return self.new_price < self.old_price
+
+    def __str__(self) -> str:
+        return f"{self.listing} · {self.old_price} → {self.new_price}"
+
+
 class Offer(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Bekliyor"
@@ -282,6 +326,14 @@ class Offer(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="offers", on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     message = models.TextField(max_length=1200)
+    last_actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="last_acted_offers",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    counter_count = models.PositiveSmallIntegerField(default=0)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
     responded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -291,8 +343,51 @@ class Offer(models.Model):
         ordering = ("-created_at",)
         indexes = [models.Index(fields=["listing", "status", "-created_at"])]
 
+    @property
+    def current_actor_id(self):
+        return self.last_actor_id or self.sender_id
+
+    @property
+    def current_recipient_id(self):
+        return self.sender_id if self.current_actor_id == self.listing.owner_id else self.listing.owner_id
+
+    def can_respond(self, user) -> bool:
+        return self.status == self.Status.PENDING and user.pk == self.current_recipient_id
+
+    def other_participant(self, user):
+        return self.listing.owner if user.pk == self.sender_id else self.sender
+
     def __str__(self) -> str:
         return f"{self.listing} · {self.sender}"
+
+
+class OfferEvent(models.Model):
+    class Type(models.TextChoices):
+        SUBMITTED = "submitted", "Teklif gönderildi"
+        COUNTERED = "countered", "Karşı teklif gönderildi"
+        ACCEPTED = "accepted", "Teklif kabul edildi"
+        REJECTED = "rejected", "Teklif reddedildi"
+        WITHDRAWN = "withdrawn", "Teklif geri çekildi"
+
+    offer = models.ForeignKey(Offer, related_name="events", on_delete=models.CASCADE)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="offer_events",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    event_type = models.CharField(max_length=16, choices=Type.choices)
+    amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    message = models.TextField(max_length=1200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at",)
+        indexes = [models.Index(fields=["offer", "created_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.offer} · {self.get_event_type_display()}"
 
 
 class Transaction(models.Model):
@@ -432,6 +527,8 @@ class Notification(models.Model):
         MANAGED = "managed", "Tam yönetim"
         TASK = "task", "Görev"
         VERIFICATION = "verification", "Doğrulama"
+        PRICE_DROP = "price_drop", "Fiyat düşüşü"
+        FOLLOW = "follow", "Satıcı takibi"
         SYSTEM = "system", "Sistem"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="notifications", on_delete=models.CASCADE)
