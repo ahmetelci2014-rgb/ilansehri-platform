@@ -9,7 +9,16 @@ class MultipleFileInput(forms.ClearableFileInput):
 
 class MultipleFileField(forms.FileField):
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("widget", MultipleFileInput(attrs={"accept": "image/*"}))
+        kwargs.setdefault(
+            "widget",
+            MultipleFileInput(
+                attrs={
+                    "accept": "image/*",
+                    "data-image-input": "true",
+                    "class": "file-input",
+                }
+            ),
+        )
         super().__init__(*args, **kwargs)
 
     def clean(self, data, initial=None):
@@ -48,10 +57,31 @@ class ListingForm(forms.ModelForm):
             "management_mode": "İlanı kim yönetecek?",
             "condition": "Ürün / hizmet durumu",
             "price_on_request": "Fiyat yerine teklif almak istiyorum",
+            "category": "Kategori",
+            "price": "Fiyat",
+            "city": "Şehir",
+            "district": "İlçe",
+            "neighborhood": "Mahalle",
         }
         widgets = {
-            "description": forms.Textarea(attrs={"rows": 7, "placeholder": "Ürün, hizmet veya ihtiyacını ayrıntılı anlat..."}),
-            "title": forms.TextInput(attrs={"placeholder": "Kısa ve açıklayıcı ilan başlığı"}),
+            "description": forms.Textarea(
+                attrs={
+                    "rows": 7,
+                    "placeholder": "Ürün, hizmet veya ihtiyacını ayrıntılı anlat. Ölçü, özellik, teslim ve kullanım durumunu ekle...",
+                }
+            ),
+            "title": forms.TextInput(
+                attrs={"placeholder": "Örn. Az kullanılmış iPhone 15 Pro 256 GB"}
+            ),
+            "price": forms.NumberInput(
+                attrs={"min": "0", "step": "0.01", "placeholder": "0,00"}
+            ),
+            "condition": forms.TextInput(
+                attrs={"placeholder": "Örn. Sıfır, az kullanılmış, iyi durumda"}
+            ),
+            "city": forms.TextInput(attrs={"placeholder": "Örn. Şanlıurfa"}),
+            "district": forms.TextInput(attrs={"placeholder": "Örn. Karaköprü"}),
+            "neighborhood": forms.TextInput(attrs={"placeholder": "Mahalle (isteğe bağlı)"}),
         }
 
     def clean_images(self):
@@ -76,6 +106,10 @@ class OfferForm(forms.ModelForm):
         fields = ("amount", "message")
         labels = {"amount": "Teklif tutarı", "message": "Mesajın"}
         widgets = {
-            "message": forms.Textarea(attrs={"rows": 4, "placeholder": "Teklif koşullarını ve teslim planını yaz..."}),
-            "amount": forms.NumberInput(attrs={"min": "0", "step": "0.01", "placeholder": "TL"}),
+            "message": forms.Textarea(
+                attrs={"rows": 4, "placeholder": "Teklif koşullarını ve teslim planını yaz..."}
+            ),
+            "amount": forms.NumberInput(
+                attrs={"min": "0", "step": "0.01", "placeholder": "TL"}
+            ),
         }
