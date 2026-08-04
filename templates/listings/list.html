@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}İlanlar | İlan Şehri{% endblock %}
+{% block content %}
+<section class="page-head"><span class="eyebrow">YAKININDAKİ FIRSATLAR</span><h1>İlanları keşfet</h1>
+<form class="filter-bar"><input name="q" value="{{ request.GET.q }}" placeholder="Ürün, hizmet veya ihtiyaç ara"><input name="city" value="{{ request.GET.city }}" placeholder="Şehir"><select name="kind"><option value="">Tüm kategoriler</option><option value="product">Ürün & Eşya</option><option value="vehicle">Araç</option><option value="real_estate">Emlak</option><option value="service">Hizmet</option><option value="need">İhtiyaç</option><option value="job">İş</option></select><button>Ara</button></form></section>
+<section class="section"><div class="listing-grid">{% for listing in listings %}<a class="listing-card" href="{{ listing.get_absolute_url }}"><div class="listing-placeholder">{{ listing.get_kind_display }}</div><div class="listing-body"><span>{{ listing.city }} / {{ listing.district }}</span><h3>{{ listing.title }}</h3><strong>{% if listing.price_on_request %}Teklif Al{% elif listing.price %}{{ listing.price }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong></div></a>{% empty %}<div class="empty">Aramanıza uygun ilan bulunamadı.</div>{% endfor %}</div></section>
+{% endblock %}
