@@ -14,7 +14,15 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - run: pip install -r requirements.txt
-      - run: cp .env.example .env
-      - run: python manage.py makemigrations --dry-run --verbosity 1
-      - run: python manage.py check
+      - name: Bağımlılıkları kur
+        run: pip install -r requirements.txt
+      - name: Test ortamını hazırla
+        run: cp .env.example .env
+      - name: Migration üret ve uygula
+        run: |
+          python manage.py makemigrations accounts listings managed_services partners
+          python manage.py migrate
+      - name: Sistem kontrolü
+        run: python manage.py check
+      - name: Otomatik testler
+        run: python manage.py test
