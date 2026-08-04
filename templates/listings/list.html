@@ -1,7 +1,57 @@
 {% extends 'base.html' %}
 {% block title %}İlanlar | İlan Şehri{% endblock %}
 {% block content %}
-<section class="page-head"><span class="eyebrow">YAKININDAKİ FIRSATLAR</span><h1>İlanları keşfet</h1>
-<form class="filter-bar"><input name="q" value="{{ request.GET.q }}" placeholder="Ürün, hizmet veya ihtiyaç ara"><input name="city" value="{{ request.GET.city }}" placeholder="Şehir"><select name="kind"><option value="">Tüm kategoriler</option><option value="product">Ürün & Eşya</option><option value="vehicle">Araç</option><option value="real_estate">Emlak</option><option value="service">Hizmet</option><option value="need">İhtiyaç</option><option value="job">İş</option></select><button>Ara</button></form></section>
-<section class="section"><div class="listing-grid">{% for listing in listings %}<a class="listing-card" href="{{ listing.get_absolute_url }}"><div class="listing-placeholder">{{ listing.get_kind_display }}</div><div class="listing-body"><span>{{ listing.city }} / {{ listing.district }}</span><h3>{{ listing.title }}</h3><strong>{% if listing.price_on_request %}Teklif Al{% elif listing.price %}{{ listing.price }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong></div></a>{% empty %}<div class="empty">Aramanıza uygun ilan bulunamadı.</div>{% endfor %}</div></section>
+<section class="page-head">
+  <span class="eyebrow">YAKININDAKİ FIRSATLAR</span>
+  <h1>İlanları keşfet</h1>
+  <form class="filter-bar extended">
+    <input name="q" value="{{ request.GET.q }}" placeholder="Ürün, hizmet veya ihtiyaç ara">
+    <input name="city" value="{{ request.GET.city }}" placeholder="Şehir">
+    <input name="district" value="{{ request.GET.district }}" placeholder="İlçe">
+    <select name="kind">
+      <option value="">Tüm ilan türleri</option>
+      <option value="product" {% if request.GET.kind == 'product' %}selected{% endif %}>Ürün & Eşya</option>
+      <option value="vehicle" {% if request.GET.kind == 'vehicle' %}selected{% endif %}>Araç</option>
+      <option value="real_estate" {% if request.GET.kind == 'real_estate' %}selected{% endif %}>Emlak</option>
+      <option value="service" {% if request.GET.kind == 'service' %}selected{% endif %}>Hizmet</option>
+      <option value="need" {% if request.GET.kind == 'need' %}selected{% endif %}>İhtiyaç</option>
+      <option value="job" {% if request.GET.kind == 'job' %}selected{% endif %}>İş</option>
+    </select>
+    <select name="action">
+      <option value="">Tüm işlemler</option>
+      <option value="sell" {% if request.GET.action == 'sell' %}selected{% endif %}>Satılık</option>
+      <option value="rent" {% if request.GET.action == 'rent' %}selected{% endif %}>Kiralık</option>
+      <option value="swap" {% if request.GET.action == 'swap' %}selected{% endif %}>Takas</option>
+      <option value="wanted" {% if request.GET.action == 'wanted' %}selected{% endif %}>Arıyorum</option>
+      <option value="service_offer" {% if request.GET.action == 'service_offer' %}selected{% endif %}>Hizmet Veriyorum</option>
+      <option value="service_request" {% if request.GET.action == 'service_request' %}selected{% endif %}>Hizmet Arıyorum</option>
+    </select>
+    <button>Ara</button>
+  </form>
+</section>
+<section class="section">
+  <div class="listing-grid">
+    {% for listing in listings %}
+      <a class="listing-card" href="{{ listing.get_absolute_url }}">
+        {% with cover=listing.images.first %}
+          {% if cover %}<img class="card-image" src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder">{{ listing.get_kind_display }}</div>{% endif %}
+        {% endwith %}
+        <div class="listing-body">
+          <span>{{ listing.city }} / {{ listing.district }}</span>
+          <h3>{{ listing.title }}</h3>
+          <strong>{% if listing.price_on_request %}Teklif Al{% elif listing.price %}{{ listing.price }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>
+        </div>
+      </a>
+    {% empty %}
+      <div class="empty">Aramana uygun ilan bulunamadı. Yeni bir “arıyorum” ilanı oluşturabilirsin.</div>
+    {% endfor %}
+  </div>
+  {% if is_paginated %}
+    <nav class="pagination">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&city={{ request.GET.city }}&district={{ request.GET.district }}&kind={{ request.GET.kind }}&action={{ request.GET.action }}">← Önceki</a>{% endif %}
+      <span>Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&city={{ request.GET.city }}&district={{ request.GET.district }}&kind={{ request.GET.kind }}&action={{ request.GET.action }}">Sonraki →</a>{% endif %}
+    </nav>
+  {% endif %}
+</section>
 {% endblock %}
