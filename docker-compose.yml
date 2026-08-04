@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ilansehri
+      POSTGRES_USER: ilansehri
+      POSTGRES_PASSWORD: ilansehri_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  web:
+    build: .
+    command: sh -c "python manage.py makemigrations accounts listings managed_services partners && python manage.py migrate && python manage.py seed_categories && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SECRET_KEY: development-only
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost
+      DATABASE_URL: postgres://ilansehri:ilansehri_dev@db:5432/ilansehri
+    depends_on:
+      - db
+volumes:
+  postgres_data:
