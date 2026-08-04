@@ -1,0 +1,21 @@
+İLAN ŞEHRİ v0.5 YÜKLEME
+
+1. Bu paketin içindeki bütün dosya ve klasörleri kopyalayın.
+2. GitHub Desktop > Repository > Show in Explorer ile ilansehri-platform klasörünü açın.
+3. Dosyaları ana klasöre yapıştırın ve hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary: İlan Şehri v0.5 ilan yönetimi favoriler mesajlaşma
+5. Commit to main > Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde çalıştırın:
+
+   git pull origin main
+   pkill -f "python manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+7. Port 8000 önizlemesini açıp Ctrl + F5 yapın.
+
+Yeni özellikler:
+- İlan duraklatma, yeniden yayınlama, sonuçlandırma ve silme
+- Favoriler
+- Özel mesajlaşma
+- Okunmamış mesaj sayacı
+- Gelen teklifler ve yeni Hesabım paneli
