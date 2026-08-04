@@ -1,47 +1,43 @@
 {% extends 'base.html' %}
 {% block title %}İlanları Keşfet | İlan Şehri{% endblock %}
 {% block content %}
-<section class="catalog-hero">
-  <div class="shell">
-    <div class="breadcrumbs"><a href="{% url 'core:home' %}">Ana Sayfa</a><span>›</span><span>İlanlar</span></div>
-    <div class="catalog-heading"><div><span class="section-label">YAKININDAKİ FIRSATLAR</span><h1>Şehrindeki ilanları keşfet</h1><p>Ürünlerden hizmetlere, emlaktan iş fırsatlarına kadar aradığın her şey burada.</p></div><a class="button" href="{% url 'listings:create' %}">+ Ücretsiz İlan Ver</a></div>
-    <form class="catalog-search" method="get">
-      <div class="catalog-search-main"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input name="q" value="{{ request.GET.q }}" placeholder="Ürün, hizmet, iş veya ihtiyaç ara"></div>
-      <div><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><input name="city" value="{{ request.GET.city }}" placeholder="Şehir"></div>
-      <div><input name="district" value="{{ request.GET.district }}" placeholder="İlçe"></div>
-      <select name="kind" aria-label="İlan türü"><option value="">Tüm kategoriler</option><option value="product" {% if request.GET.kind == 'product' %}selected{% endif %}>Ürün & Eşya</option><option value="vehicle" {% if request.GET.kind == 'vehicle' %}selected{% endif %}>Araç</option><option value="real_estate" {% if request.GET.kind == 'real_estate' %}selected{% endif %}>Emlak</option><option value="service" {% if request.GET.kind == 'service' %}selected{% endif %}>Hizmet</option><option value="need" {% if request.GET.kind == 'need' %}selected{% endif %}>İhtiyaç</option><option value="job" {% if request.GET.kind == 'job' %}selected{% endif %}>İş</option></select>
-      <select name="action" aria-label="İşlem türü"><option value="">Tüm işlemler</option><option value="sell" {% if request.GET.action == 'sell' %}selected{% endif %}>Satılık</option><option value="rent" {% if request.GET.action == 'rent' %}selected{% endif %}>Kiralık</option><option value="swap" {% if request.GET.action == 'swap' %}selected{% endif %}>Takas</option><option value="wanted" {% if request.GET.action == 'wanted' %}selected{% endif %}>Arıyorum</option><option value="service_offer" {% if request.GET.action == 'service_offer' %}selected{% endif %}>Hizmet Veriyorum</option><option value="service_request" {% if request.GET.action == 'service_request' %}selected{% endif %}>Hizmet Arıyorum</option><option value="job_offer" {% if request.GET.action == 'job_offer' %}selected{% endif %}>Çalışan Arıyorum</option><option value="job_request" {% if request.GET.action == 'job_request' %}selected{% endif %}>İş Arıyorum</option></select>
-      <button type="submit">Ara</button>
-    </form>
-  </div>
-</section>
+<section class="listing-search-hero"><div class="shell"><span class="section-label light-label">GELİŞMİŞ ARAMA</span><h1>Aradığını ayrıntılı filtrelerle bul</h1><p>Araç, emlak, ürün, hizmet ve iş ilanlarını konum ve özelliklerine göre keşfet.</p></div></section>
+<section class="section listing-browser-section">
+  <div class="shell browser-layout">
+    <aside class="advanced-filter-card">
+      <div class="filter-card-head"><div><span class="section-label">FİLTRELER</span><h2>Aramanı daralt</h2></div><a href="{% url 'listings:list' %}">Temizle</a></div>
+      <form method="get" class="advanced-filter-form">
+        <div class="field field-wide"><label for="filter-q">Arama</label><input id="filter-q" name="q" value="{{ request.GET.q }}" placeholder="İlan, marka, model veya kategori"></div>
+        <div class="field"><label for="filter-city">Şehir</label><select id="filter-city" name="city"><option value="">Tüm şehirler</option>{% for value, label in city_choices %}<option value="{{ value }}" {% if request.GET.city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="filter-district">İlçe</label><input id="filter-district" name="district" value="{{ request.GET.district }}" placeholder="İlçe"></div>
+        <div class="field"><label for="filter-kind">İlan türü</label><select id="filter-kind" name="kind"><option value="">Tüm türler</option>{% for value, label in kind_choices %}<option value="{{ value }}" {% if request.GET.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="filter-action">İşlem</label><select id="filter-action" name="action"><option value="">Tüm işlemler</option>{% for value, label in action_choices %}<option value="{{ value }}" {% if request.GET.action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="filter-divider"><span>Fiyat</span></div>
+        <div class="filter-two"><div class="field"><label for="min-price">En az</label><input id="min-price" type="number" name="min_price" value="{{ request.GET.min_price }}" min="0" placeholder="0"></div><div class="field"><label for="max-price">En çok</label><input id="max-price" type="number" name="max_price" value="{{ request.GET.max_price }}" min="0" placeholder="500000"></div></div>
+        <div class="filter-divider"><span>Araç / Ürün</span></div>
+        <div class="field"><label for="filter-brand">Marka</label><input id="filter-brand" name="brand" value="{{ request.GET.brand }}" placeholder="Örn. Toyota, Apple"></div>
+        <div class="field"><label for="filter-model">Model</label><input id="filter-model" name="model" value="{{ request.GET.model }}" placeholder="Model adı"></div>
+        <div class="filter-two"><div class="field"><label for="min-year">Min. yıl</label><input id="min-year" type="number" name="min_year" value="{{ request.GET.min_year }}"></div><div class="field"><label for="max-year">Maks. yıl</label><input id="max-year" type="number" name="max_year" value="{{ request.GET.max_year }}"></div></div>
+        <div class="field"><label for="max-mileage">Maksimum kilometre</label><input id="max-mileage" type="number" name="max_mileage" value="{{ request.GET.max_mileage }}"></div>
+        <div class="filter-divider"><span>Emlak</span></div>
+        <div class="field"><label for="room-count">Oda sayısı</label><input id="room-count" name="room_count" value="{{ request.GET.room_count }}" placeholder="Örn. 3+1"></div>
+        <div class="filter-two"><div class="field"><label for="min-area">Min. m²</label><input id="min-area" type="number" name="min_area" value="{{ request.GET.min_area }}"></div><div class="field"><label for="max-area">Maks. m²</label><input id="max-area" type="number" name="max_area" value="{{ request.GET.max_area }}"></div></div>
+        <button class="button full" type="submit">İlanları Göster</button>
+      </form>
+    </aside>
 
-<div class="category-chip-wrap"><div class="shell category-chips"><a class="{% if not request.GET.kind %}active{% endif %}" href="{% url 'listings:list' %}">Tümü</a><a class="{% if request.GET.kind == 'product' %}active{% endif %}" href="?kind=product">🛍️ Ürün</a><a class="{% if request.GET.kind == 'real_estate' %}active{% endif %}" href="?kind=real_estate">🏠 Emlak</a><a class="{% if request.GET.kind == 'vehicle' %}active{% endif %}" href="?kind=vehicle">🚗 Araç</a><a class="{% if request.GET.kind == 'service' %}active{% endif %}" href="?kind=service">🔧 Hizmet</a><a class="{% if request.GET.kind == 'need' %}active{% endif %}" href="?kind=need">🔎 Arıyorum</a><a class="{% if request.GET.kind == 'job' %}active{% endif %}" href="?kind=job">💼 İş</a></div></div>
-
-<section class="section catalog-section">
-  <div class="shell">
-    <div class="result-head"><div><h2>{% if request.GET.q %}“{{ request.GET.q }}” sonuçları{% else %}Güncel ilanlar{% endif %}</h2><p>{% if is_paginated %}{{ page_obj.paginator.count }}{% else %}{{ listings|length }}{% endif %} ilan bulundu</p></div><div class="result-note"><span class="verified-dot">✓</span> Güven odaklı ilan deneyimi</div></div>
-    <div class="listing-grid premium-grid catalog-grid">
-      {% for listing in listings %}
-        <a class="listing-card premium-card" href="{{ listing.get_absolute_url }}">
-          <div class="card-media">
-            {% with cover=listing.images.first %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}
-            <span class="card-action-badge">{{ listing.get_action_display }}</span>
-            {% if listing.management_mode == 'full' %}<span class="managed-pin">✓ Yönetilen İlan</span>{% endif %}
-          </div>
-          <div class="listing-body"><div class="card-location"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>{{ listing.city }} · {{ listing.district }}</div><h3>{{ listing.title }}</h3><span class="card-category">{{ listing.category.name }}</span><div class="card-footer"><strong>{% if listing.price_on_request %}Teklif Alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><span>{{ listing.created_at|timesince }} önce</span></div></div>
-        </a>
-      {% empty %}
-        <div class="empty-state"><div class="empty-icon">🔎</div><h3>Aramana uygun ilan bulamadık</h3><p>Filtreleri değiştirebilir veya ihtiyacını “Arıyorum” ilanı olarak yayınlayabilirsin.</p><a class="button" href="{% url 'listings:create' %}">İlan Oluştur</a></div>
-      {% endfor %}
+    <div class="browser-results">
+      <div class="browser-results-head"><div><span class="section-label">SONUÇLAR</span><h2>{{ page_obj.paginator.count }} ilan bulundu</h2></div><a class="button secondary" href="{% url 'listings:create' %}">+ İlan Ver</a></div>
+      <div class="listing-grid premium-grid browser-grid">
+        {% for listing in listings %}
+          <a class="listing-card premium-card" href="{{ listing.get_absolute_url }}">
+            <div class="card-media">{% with cover=listing.images.first %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}<span class="card-action-badge">{{ listing.get_action_display }}</span>{% if listing.management_mode == 'full' %}<span class="managed-pin">✓ Yönetilen İlan</span>{% endif %}</div>
+            <div class="listing-body"><div class="card-location">📍 {{ listing.city }} · {{ listing.district }}</div><h3>{{ listing.title }}</h3>{% if listing.brand or listing.model_year or listing.room_count or listing.area_m2 %}<div class="card-specs">{% if listing.brand %}<span>{{ listing.brand }}</span>{% endif %}{% if listing.model_year %}<span>{{ listing.model_year }}</span>{% endif %}{% if listing.room_count %}<span>{{ listing.room_count }}</span>{% endif %}{% if listing.area_m2 %}<span>{{ listing.area_m2 }} m²</span>{% endif %}</div>{% endif %}<div class="card-footer"><strong>{% if listing.price_on_request %}Teklif Alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><span>{{ listing.created_at|timesince }} önce</span></div></div>
+          </a>
+        {% empty %}<div class="empty-state browser-empty"><div class="empty-icon">🔎</div><h3>Bu filtrelerle ilan bulunamadı</h3><p>Filtreleri azaltarak yeniden deneyebilirsin.</p><a class="button secondary" href="{% url 'listings:list' %}">Filtreleri Temizle</a></div>{% endfor %}
+      </div>
+      {% if is_paginated %}<nav class="pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">Sonraki →</a>{% endif %}</nav>{% endif %}
     </div>
-    {% if is_paginated %}
-      <nav class="pagination" aria-label="Sayfalama">
-        {% if page_obj.has_previous %}<a class="page-arrow" href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&city={{ request.GET.city }}&district={{ request.GET.district }}&kind={{ request.GET.kind }}&action={{ request.GET.action }}">← Önceki</a>{% endif %}
-        <span class="page-current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}<a class="page-arrow" href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&city={{ request.GET.city }}&district={{ request.GET.district }}&kind={{ request.GET.kind }}&action={{ request.GET.action }}">Sonraki →</a>{% endif %}
-      </nav>
-    {% endif %}
   </div>
 </section>
 {% endblock %}
