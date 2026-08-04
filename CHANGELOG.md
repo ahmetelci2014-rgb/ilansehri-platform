@@ -1,3 +1,12 @@
+# Değişiklik Günlüğü
+
+## 0.3.0
+- GitHub Codespaces tek tık önizleme eklendi.
+- Codespaces için güvenli host ve CSRF ayarları eklendi.
+- Üyelik akışı otomatik testi eklendi.
+- İlan oluşturma, tam yönetim, teklif ve yetki testleri eklendi.
+- GitHub Actions migration, sistem kontrolü ve tüm testleri çalıştıracak şekilde geliştirildi.
+
 # Değişiklik Kaydı
 
 ## 0.2.0
