@@ -31,6 +31,7 @@
       <a href="{% url 'listings:list' %}?kind=vehicle">Araç</a>
       <a href="{% url 'listings:list' %}?kind=service">Hizmetler</a>
       <a href="{% url 'listings:list' %}?kind=job">İş & Kazanç</a>
+      {% if user.is_staff %}<a class="staff-nav-link" href="{% url 'listings:moderation' %}">Moderasyon</a>{% endif %}
     </nav>
 
     <div class="header-actions">
@@ -39,6 +40,10 @@
         <span>{% if user.is_authenticated and user.city %}{{ user.city }}{% else %}Şehrini seç{% endif %}</span>
       </a>
       {% if user.is_authenticated %}
+        <a class="icon-link notification-link" href="{% url 'listings:notifications' %}" aria-label="Bildirimlerim" title="Bildirimlerim">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/></svg>
+          {% if unread_notification_count %}<span class="header-count">{{ unread_notification_count }}</span>{% endif %}
+        </a>
         <a class="icon-link" href="{% url 'listings:favorites' %}" aria-label="Favorilerim" title="Favorilerim">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
         </a>
@@ -69,8 +74,10 @@
       <a href="{% url 'listings:list' %}?kind=job">İş & Kazanç</a>
       {% if user.is_authenticated %}
         <a href="{% url 'accounts:dashboard' %}">Hesabım</a>
+        <a href="{% url 'listings:notifications' %}">Bildirimlerim{% if unread_notification_count %} ({{ unread_notification_count }}){% endif %}</a>
         <a href="{% url 'listings:favorites' %}">Favorilerim</a>
         <a href="{% url 'listings:conversation_list' %}">Mesajlarım</a>
+        {% if user.is_staff %}<a href="{% url 'listings:moderation' %}">Moderasyon Paneli</a>{% endif %}
         <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="mobile-logout">Çıkış Yap</button></form>
       {% else %}
         <a href="{% url 'login' %}">Giriş Yap</a>
@@ -100,8 +107,8 @@
       <div class="trust-mini"><span>✓ Şeffaf ücret</span><span>✓ Yerel destek</span><span>✓ Güven odaklı</span></div>
     </div>
     <div><h4>Keşfet</h4><a href="{% url 'listings:list' %}">Tüm ilanlar</a><a href="{% url 'listings:list' %}?kind=product">Ürün & Eşya</a><a href="{% url 'listings:list' %}?kind=service">Hizmetler</a><a href="{% url 'listings:list' %}?kind=job">İş & Kazanç</a></div>
-    <div><h4>İlan Şehri</h4><a href="{% url 'listings:create' %}">İlan ver</a><a href="{% url 'accounts:signup' %}">Ücretsiz üye ol</a><a href="{% url 'listings:list' %}?action=wanted">Arıyorum ilanları</a><a href="{% url 'listings:list' %}?action=service_request">Hizmet talepleri</a></div>
-    <div><h4>Güven</h4><span>Kimlik ve telefon doğrulama</span><span>Şeffaf tam yönetim</span><span>Teklif ve süreç kayıtları</span><span>Yerel görev ağı</span></div>
+    <div><h4>İlan Şehri</h4><a href="{% url 'listings:create' %}">İlan ver</a><a href="{% url 'accounts:signup' %}">Ücretsiz üye ol</a><a href="{% url 'listings:notifications' %}">Bildirimler</a><a href="{% url 'listings:list' %}?action=service_request">Hizmet talepleri</a></div>
+    <div><h4>Güven</h4><span>İlan inceleme sistemi</span><span>Şeffaf tam yönetim</span><span>Teklif ve süreç kayıtları</span><span>Şikâyet ve moderasyon</span></div>
   </div>
   <div class="shell footer-bottom"><span>© {% now "Y" %} İlan Şehri. Tüm hakları saklıdır.</span><span>Türkiye için yerel teknoloji</span></div>
 </footer>
@@ -111,7 +118,7 @@
   <a href="{% url 'listings:list' %}"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Keşfet</span></a>
   <a class="mobile-add" href="{% url 'listings:create' %}"><span>+</span><small>İlan Ver</small></a>
   {% if user.is_authenticated %}
-    <a href="{% url 'listings:conversation_list' %}"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg><span>Mesajlar</span></a>
+    <a href="{% url 'listings:notifications' %}" class="mobile-notification"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/></svg><span>Bildirim</span>{% if unread_notification_count %}<b>{{ unread_notification_count }}</b>{% endif %}</a>
     <a href="{% url 'accounts:dashboard' %}"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg><span>Hesabım</span></a>
   {% else %}
     <a href="{% url 'login' %}"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg><span>Giriş</span></a>
