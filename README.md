@@ -2,7 +2,7 @@
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını tek yerel platformda birleştiren, kullanıcının ilanını kendisinin yönetebildiği veya İlan Şehri Tam Yönetim hizmetine bırakabildiği yeni nesil pazar yeri projesidir.
 
-## Sürüm 0.2 — İlk kullanılabilir akış
+## Sürüm 0.3 — Tarayıcı önizleme ve otomatik test
 
 - Ücretsiz kullanıcı kaydı ve otomatik giriş
 - Kullanıcı hesabım paneli
@@ -12,6 +12,11 @@
 - İlan detayından teklif gönderme
 - “İlan Şehri yönetsin” seçiminde otomatik Tam Yönetim kaydı
 - Geliştirme ortamında otomatik yayın seçeneği
+
+- GitHub Codespaces ile hosting almadan tarayıcıda önizleme
+- Port 8000 otomatik açılış ve önizleme
+- Üyelik, ilan, tam yönetim, teklif ve yetki testleri
+- GitHub Actions üzerinde migration ve tam test çalıştırma
 
 ## Bu ilk sürümde bulunan çekirdek
 
@@ -27,6 +32,17 @@
 - Mobil uyumlu başlangıç arayüzü
 - PostgreSQL ve Docker hazırlığı
 - GitHub Actions kontrolü
+
+
+## GitHub Codespaces ile önizleme
+
+1. GitHub deposunda **Code** butonuna basın.
+2. **Codespaces** sekmesini açın.
+3. **Create codespace on main** seçeneğine basın.
+4. Kurulum tamamlanınca port 8000 otomatik açılır ve İlan Şehri önizlemesi görünür.
+5. Önizleme açılmazsa terminalde `bash scripts/start_codespace.sh` çalıştırın.
+
+İlk kurulum; bağımlılıkları kurar, migrationları oluşturur, veritabanını hazırlar ve başlangıç kategorilerini ekler.
 
 ## Yerel kurulum
 
