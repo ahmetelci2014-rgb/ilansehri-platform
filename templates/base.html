@@ -10,6 +10,7 @@
   <link rel="manifest" href="{% url 'core:manifest' %}">
   <link rel="icon" href="{% static 'img/icon-192.svg' %}" type="image/svg+xml">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/v14-polish.css' %}">
   <script defer src="{% static 'js/app.js' %}"></script>
 </head>
 <body class="marketplace-body">
@@ -43,7 +44,7 @@
   </div></div>
 </header>
 <main id="main-content">{% if messages %}<div class="message-stack" aria-live="polite">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% block content %}{% endblock %}</main>
-<footer class="market-footer"><div class="shell market-footer-row"><a class="market-brand footer-logo" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a><div><a href="{% url 'core:trust' %}">Güven</a><a href="{% url 'core:terms' %}">Koşullar</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:about' %}">Hakkımızda</a><a href="{% url 'managed_services:list' %}">Tam Yönetim</a></div><small>© {% now "Y" %} İlan Şehri · v1.3</small></div></footer>
+<footer class="market-footer"><div class="shell market-footer-row"><a class="market-brand footer-logo" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a><div><a href="{% url 'core:trust' %}">Güven</a><a href="{% url 'core:terms' %}">Koşullar</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:about' %}">Hakkımızda</a><a href="{% url 'managed_services:list' %}">Tam Yönetim</a></div><small>© {% now "Y" %} İlan Şehri · v1.4</small></div></footer>
 <nav class="market-mobile-nav"><a href="{% url 'core:home' %}"><span>⌂</span><small>Ana sayfa</small></a><a href="{% url 'listings:list' %}"><span>⌕</span><small>Keşfet</small></a><a class="mobile-post" href="{% url 'listings:create' %}"><span>＋</span><small>İlan ver</small></a>{% if user.is_authenticated %}<a href="{% url 'listings:conversation_list' %}"><span>💬</span><small>Mesaj</small></a><a href="{% url 'accounts:dashboard' %}"><span>●</span><small>Hesabım</small></a>{% else %}<a href="{% url 'listings:compare' %}"><span>⇄</span><small>Karşılaştır</small></a><a href="{% url 'login' %}"><span>●</span><small>Giriş</small></a>{% endif %}</nav>
 {% if compare_count %}<a class="compare-floating" href="{% url 'listings:compare' %}"><span>⇄</span><b>{{ compare_count }} ilanı karşılaştır</b></a>{% endif %}
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("{% url 'core:service_worker' %}").catch(()=>{}));}</script>

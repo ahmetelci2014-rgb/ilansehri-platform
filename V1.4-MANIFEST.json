@@ -1,0 +1,39 @@
+{
+  "version": "v1.4",
+  "name": "Tasarım dengeleme ve responsive kalite turu",
+  "changed_file_count": 7,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "docs/UI_QA.md",
+    "static/css/v14-polish.css",
+    "static/js/app.js",
+    "templates/base.html"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "css_parse": "passed",
+    "css_brace_balance": "passed",
+    "django_template_block_balance": "passed",
+    "critical_review_url_order": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload"
+  },
+  "scope": [
+    "Global horizontal overflow prevention",
+    "Header and navigation responsive balance",
+    "Home search, categories, statistics and feeds",
+    "Equal-height marketplace cards and badge collision fixes",
+    "Listing filters and mobile filter drawer",
+    "Listing detail gallery, sidebar and mobile contact bar",
+    "Offer center and counter-offer modal",
+    "Inbox and conversation layout",
+    "Seller profile and account screens",
+    "Forms, notifications, Tam Yönetim and Kazanç Ağı screens",
+    "Professional management dashboard",
+    "Mobile safe-area and menu closing behavior"
+  ]
+}

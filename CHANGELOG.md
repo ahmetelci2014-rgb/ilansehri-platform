@@ -1,56 +1,23 @@
-# Değişiklik Günlüğü
+# İlan Şehri v1.4 — Tasarım Dengeleme ve Responsive Kalite Turu
 
-## v1.3 — Pazarlık, Fiyat Takibi ve Satıcı Ağı
+## Düzeltilenler
 
-- Teklif merkezi yenilendi; gönderilen ve alınan teklifler tek ekranda durumlarına göre yönetilebilir hale getirildi.
-- Alıcı ve satıcının sırayla karşı teklif verebildiği gerçek pazarlık akışı eklendi.
-- İlk teklif, karşı teklifler, kabul, ret ve geri çekme adımları zaman çizelgesinde saklanmaya başlandı.
-- Karşı teklif yalnız sırası gelen kullanıcı tarafından yapılabilir; üçüncü kişilerin erişimi engellendi.
-- Fiyat geçmişi modeli, eski fiyat gösterimi, indirim yüzdesi ve fiyatı düşen ilan akışları eklendi.
-- Favoriye alınan ilanın fiyatı düştüğünde kullanıcıya bildirim gönderilmesi eklendi.
-- Moderasyondaki fiyat değişiklikleri için bildirim yalnız ilan yeniden onaylandığında ve tek kez gönderilecek şekilde güvenli hale getirildi.
-- Satıcı takip etme, takipten çıkma, takipçi sayıları ve takip edilen satıcıların ilan akışı eklendi.
-- Takip edilen satıcı yeni ilan yayınladığında bildirim oluşturulması eklendi.
-- Mesaj kutusuna okunmamış, alış ve satış görüşmesi filtreleri ile kullanıcı/ilan araması eklendi.
-- Mesaj ekranı ilan özeti, karşı taraf güven bilgisi, görsel gönderme, arşivleme ve engelleme kontrolleriyle yenilendi.
-- Ana sayfaya takip edilen satıcılar ve fiyatı düşen ilanlar bölümleri eklendi.
-- İlan filtrelerine fiyat düşüşü ve takip edilen satıcı seçenekleri eklendi.
-- Teklif pazarlığı, fiyat bildirimi, takip sistemi ve yetki kontrolleri için yeni otomatik testler eklendi.
+- Masaüstü, tablet ve mobil ekranlarda yatay taşma ve içerik kaymaları azaltıldı.
+- Üst menü farklı ekran genişliklerinde kademeli ve dengeli biçimde sadeleştirildi.
+- Ana sayfa arama, kategori, istatistik ve ilan bölümlerinin hizaları düzeltildi.
+- İlan kartlarında eşit yükseklik, fiyat/başlık/spec alanı ve rozet çakışmaları düzenlendi.
+- Listeleme ekranında filtre, sonuç başlığı, sıralama ve mobil filtre çekmecesi dengelendi.
+- İlan detayında galeri, sabit yan panel, özellik tablosu ve mobil iletişim çubuğu düzeltildi.
+- Teklif merkezi, karşı teklif penceresi ve zaman çizelgesi mobil uyumlu hale getirildi.
+- Mesaj kutusu ve konuşma ekranında uzun başlık, taşma ve yan panel kaymaları giderildi.
+- Satıcı profili, hesap ekranları, formlar, bildirimler ve yönetim merkezi responsive hale getirildi.
+- Çok küçük metinler okunabilir seviyeye yükseltildi.
+- Mobil alt menü ve sabit iletişim alanlarına güvenli ekran boşluğu eklendi.
+- Mobil menü bağlantı seçilince, Escape tuşunda veya masaüstüne geçince otomatik kapanır.
+- Hareket azaltma tercihi olan kullanıcılar için animasyonlar sınırlandı.
 
-## v1.2 — Profesyonel Marketplace
+## Teknik yaklaşım
 
-- Ana sayfa; konuma göre yeni ilanlar, popüler ilanlar, araç, emlak, hizmet ve son görüntülenenler bölümleriyle zenginleştirildi.
-- İlan kartlarına satıcı doğrulaması, değerlendirme, fotoğraf sayısı, kategoriye özel kısa bilgiler, gerçek favori durumu ve karşılaştırma düğmesi eklendi.
-- Aynı türde en fazla dört ilanı yan yana inceleyen oturum tabanlı karşılaştırma sistemi eklendi.
-- İlan listeleme filtrelerine kategori, ürün durumu, teslimat, model yılı, kilometre, yakıt, vites, oda ve metrekare alanları eklendi.
-- Mobil filtre çekmecesi, aktif filtre etiketleri ve karşılaştırma kısayolu eklendi.
-- İlan detayına büyütülebilir galeri, satıcı güven puanı, değerlendirmeler, benzer ilanlar ve satıcının diğer ilanları eklendi.
-- Son görüntülenen ilanlar oturumda saklanarak ana sayfada gösterilmeye başlandı.
-- Favoriler sayfasındaki eski kart yapısı kaldırılarak marketplace kartlarıyla birleştirildi.
-- Django teknik admininden ayrı profesyonel yönetim merkezi eklendi.
-- Yönetim merkezinde ilan, kullanıcı, şikâyet, işlem, Tam Yönetim ve Kazanç Ağı göstergeleri bir araya getirildi.
-- Karşılaştırma, son görüntüleme, favoriler ve yönetim merkezi için otomatik testler eklendi.
-- v1.0.2 yorum URL sırası düzeltmesi korunmuştur.
-
-## v1.1 — Marketplace dönüşümü
-
-- Ana sayfa ilan odaklı gerçek pazar yeri düzenine geçirildi.
-- Yoğun fotoğraflı ilan kartları ve mobil iki sütunlu akış eklendi.
-- Arama, konum ve kategoriler ilk ekrana taşındı.
-- İlan listeleme ekranı profesyonel filtreli katalog olarak yenilendi.
-- İlan detayı büyük galeri, satıcı kartı, favori, mesaj ve teklif odaklı yenilendi.
-- Kurumsal tanıtım blokları ana sayfadan kaldırıldı.
-- Üst menü ve mobil alt navigasyon marketplace kullanımına göre sadeleştirildi.
-
-## v1.0 — Tamamlanmış MVP
-
-- Profil, doğrulama, güven puanı, ilan, mesajlaşma, teklif, işlem, yorum, moderasyon, Tam Yönetim ve Kazanç Ağı modülleri tamamlandı.
-- PWA, Docker/PostgreSQL/Gunicorn/WhiteNoise hazırlığı ve GitHub Actions kontrolleri eklendi.
-
-## v0.6
-
-- Türkiye konum seçimleri, kategoriye özel alanlar, bildirim merkezi ve moderasyon eklendi.
-
-## v0.5
-
-- İlan yönetimi, favoriler ve özel mesajlaşma eklendi.
+- İş mantığı ve veritabanı modelleri değiştirilmedi.
+- Bütün düzeltmeler geri alınabilir ayrı `static/css/v14-polish.css` katmanında tutuldu.
+- Mevcut v1.3 pazarlık, fiyat takibi, satıcı takibi ve bildirim özellikleri korundu.

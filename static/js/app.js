@@ -212,3 +212,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+/* v1.4 — menü ve responsive davranış düzeltmeleri */
+document.addEventListener("DOMContentLoaded", () => {
+  const toggle = document.querySelector("[data-menu-toggle]");
+  const menu = document.querySelector("[data-mobile-menu]");
+  const filterPanel = document.querySelector("[data-filter-panel]");
+  const filterOverlay = document.querySelector("[data-filter-overlay]");
+
+  const closeMenu = () => {
+    if (!toggle || !menu) return;
+    menu.classList.remove("is-open");
+    toggle.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded", "false");
+    if (!filterPanel?.classList.contains("is-open")) document.body.classList.remove("menu-open");
+  };
+
+  menu?.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    closeMenu();
+    filterPanel?.classList.remove("is-open");
+    filterOverlay?.classList.remove("is-open");
+    document.body.classList.remove("menu-open");
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 780) closeMenu();
+  }, { passive: true });
+
+  document.querySelectorAll("details.counter-offer-box").forEach((details) => {
+    details.querySelector("form")?.addEventListener("click", (event) => event.stopPropagation());
+  });
+});
