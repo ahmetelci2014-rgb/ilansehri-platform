@@ -1,0 +1,24 @@
+İLAN ŞEHRİ v1.5 — KEŞİF VE KULLANICI DENEYİMİ
+
+1. Bu ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.5 keşif deneyimi
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+
+Yeni ekranlar:
+- Kategori vitrinleri: /ilanlar/kategori/product/ vb.
+- Kayıtlı aramalar: /ilanlar/aramalarim/
+- Gelişmiş bildirim merkezi: /ilanlar/bildirimler/
+
+Not:
+- Bu sürüm yeni veritabanı alanı eklemez; migration gerektirmez.
+- Tam Django çalışma testleri GitHub Actions üzerinde çalışacaktır.

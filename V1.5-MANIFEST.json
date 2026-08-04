@@ -1,0 +1,47 @@
+{
+  "version": "v1.5",
+  "name": "Keşif ve kullanıcı deneyimi",
+  "changed_file_count": 17,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/views.py",
+    "apps/listings/tests.py",
+    "apps/listings/urls.py",
+    "apps/listings/views.py",
+    "static/css/v15-experience.css",
+    "static/js/app.js",
+    "templates/accounts/dashboard.html",
+    "templates/base.html",
+    "templates/core/home.html",
+    "templates/listings/category_landing.html",
+    "templates/listings/form.html",
+    "templates/listings/list.html",
+    "templates/listings/notifications.html",
+    "templates/listings/saved_searches.html"
+  ],
+  "features": [
+    "Başlık, kategori ve marka için canlı arama önerileri",
+    "Alt kategori ve şehir kısayollu kategori vitrinleri",
+    "Kayıtlı arama yönetimi ve bildirim aç/kapat",
+    "İlan sonuçlarından tek adımda arama kaydetme",
+    "Tür ve okunma durumuna göre bildirim filtreleme",
+    "İlan verme ilerleme göstergesi",
+    "Canlı ilan kartı ve fotoğraf önizlemesi",
+    "Sayfalama sorgusu düzeltmeleri"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "python_ast": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "css_brace_balance": "passed",
+    "django_template_block_balance": "passed",
+    "template_url_name_check": "passed",
+    "critical_url_order": "passed",
+    "listing_form_nested_form_check": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload"
+  }
+}

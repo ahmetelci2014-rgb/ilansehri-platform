@@ -18,6 +18,7 @@ from .models import (
     Offer,
     OfferEvent,
     Review,
+    SavedSearch,
     Transaction,
 )
 from .services import record_price_change
@@ -363,3 +364,51 @@ class ListingFlowTests(TestCase):
         self.assertEqual(response.status_code, 404)
         offer.refresh_from_db()
         self.assertEqual(offer.amount, Decimal("23000"))
+
+
+    def test_kind_landing_page_lists_matching_items(self):
+        listing = self.create_listing(title="Kategori vitrini telefonu")
+        response = self.client.get(reverse("listings:kind_landing", kwargs={"kind": Listing.Kind.PRODUCT}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, listing.title)
+        self.assertContains(response, "İkinci el ve sıfır ürünleri keşfet")
+
+    def test_search_suggestions_returns_active_listing(self):
+        listing = self.create_listing(title="Özel arama telefonu")
+        response = self.client.get(reverse("listings:search_suggestions"), {"q": "Özel arama"})
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(any(item["url"] == listing.get_absolute_url() for item in payload["results"]))
+
+    def test_saved_search_page_and_alert_toggle_are_private(self):
+        saved = SavedSearch.objects.create(
+            user=self.buyer,
+            name="Telefon aramam",
+            query_params={"q": "telefon", "city": "Şanlıurfa"},
+            alert_enabled=True,
+        )
+        anonymous = self.client.get(reverse("listings:saved_searches"))
+        self.assertEqual(anonymous.status_code, 302)
+        self.client.force_login(self.buyer)
+        response = self.client.get(reverse("listings:saved_searches"))
+        self.assertContains(response, "Telefon aramam")
+        self.client.post(reverse("listings:toggle_saved_search_alert", kwargs={"pk": saved.pk}))
+        saved.refresh_from_db()
+        self.assertFalse(saved.alert_enabled)
+
+    def test_notifications_can_be_filtered(self):
+        Notification.objects.create(
+            user=self.buyer,
+            notification_type=Notification.Type.MESSAGE,
+            title="Yeni mesaj",
+        )
+        Notification.objects.create(
+            user=self.buyer,
+            notification_type=Notification.Type.OFFER,
+            title="Yeni teklif",
+            is_read=True,
+        )
+        self.client.force_login(self.buyer)
+        response = self.client.get(reverse("listings:notifications"), {"type": "message", "status": "unread"})
+        self.assertContains(response, "Yeni mesaj")
+        self.assertNotContains(response, "Yeni teklif")

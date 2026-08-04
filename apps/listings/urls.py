@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     CompareListView,
+    KindLandingView,
     ConversationDetailView,
     ConversationListView,
     FavoriteListView,
@@ -12,6 +13,7 @@ from .views import (
     ListingUpdateView,
     ModerationDashboardView,
     NotificationListView,
+    SavedSearchListView,
     OfferCenterView,
     TransactionDetailView,
     archive_conversation,
@@ -30,10 +32,12 @@ from .views import (
     reorder_listing_images,
     report_listing,
     save_search,
+    search_suggestions,
     set_cover_image,
     start_conversation,
     toggle_compare,
     toggle_favorite,
+    toggle_saved_search_alert,
     transaction_action,
 )
 
@@ -43,9 +47,13 @@ urlpatterns = [
     path("", ListingListView.as_view(), name="list"),
     path("yeni/", ListingCreateView.as_view(), name="create"),
     path("favorilerim/", FavoriteListView.as_view(), name="favorites"),
+    path("kategori/<str:kind>/", KindLandingView.as_view(), name="kind_landing"),
     path("karsilastir/", CompareListView.as_view(), name="compare"),
+    path("arama-onerileri/", search_suggestions, name="search_suggestions"),
+    path("aramalarim/", SavedSearchListView.as_view(), name="saved_searches"),
     path("aramalar/kaydet/", save_search, name="save_search"),
     path("aramalar/<int:pk>/sil/", delete_saved_search, name="delete_saved_search"),
+    path("aramalar/<int:pk>/bildirim/", toggle_saved_search_alert, name="toggle_saved_search_alert"),
     path("mesajlar/", ConversationListView.as_view(), name="conversation_list"),
     path("mesajlar/<int:pk>/", ConversationDetailView.as_view(), name="conversation_detail"),
     path("mesajlar/<int:pk>/arsivle/", archive_conversation, name="archive_conversation"),

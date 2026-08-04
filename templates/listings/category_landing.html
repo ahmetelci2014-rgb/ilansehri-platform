@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{{ kind_label }} İlanları — İlan Şehri{% endblock %}
+{% block content %}
+<section class="kind-hero kind-{{ kind }}">
+  <div class="shell kind-hero-grid">
+    <div><span class="kind-hero-icon">{{ kind_meta.icon }}</span><span class="section-label light-label">{{ kind_label|upper }}</span><h1>{{ kind_meta.headline }}</h1><p>{{ kind_meta.description }}</p><div class="kind-hero-actions"><a class="button button-light" href="{% url 'listings:list' %}?kind={{ kind }}">{{ listing_count }} ilanı keşfet</a><a class="kind-post-link" href="{% url 'listings:create' %}">Bu kategoride ilan ver →</a></div></div>
+    <form class="kind-search-card" action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}">
+      <input type="hidden" name="kind" value="{{ kind }}"><label>Bu kategoride ara<div class="kind-search-input"><span>⌕</span><input name="q" placeholder="Marka, model veya ilan ara" autocomplete="off" data-search-input><button>Ara</button></div></label><div class="search-suggestion-panel" data-search-results hidden></div>
+      {% if city_rows %}<div class="kind-city-shortcuts"><span>Popüler şehirler</span>{% for row in city_rows|slice:':5' %}<a href="{% url 'listings:list' %}?kind={{ kind }}&city={{ row.city|urlencode }}">{{ row.city }} <small>{{ row.total }}</small></a>{% endfor %}</div>{% endif %}
+    </form>
+  </div>
+</section>
+
+{% if category_rows %}<section class="kind-subcategories shell"><div class="market-section-head compact"><div><h2>Öne çıkan alt kategoriler</h2><p>Doğrudan ilgili ilanlara git</p></div></div><div class="kind-subcategory-grid">{% for row in category_rows %}<a href="{% url 'listings:list' %}?kind={{ kind }}&category={{ row.category_id }}"><span>{{ kind_meta.icon }}</span><b>{{ row.category__name }}</b><small>{{ row.total }} ilan</small><i>→</i></a>{% endfor %}</div></section>{% endif %}
+
+<section class="market-feed shell"><div class="market-section-head"><div><h2>En yeni {{ kind_label|lower }} ilanları</h2><p>Yeni eklenen fırsatlar</p></div><a href="{% url 'listings:list' %}?kind={{ kind }}&sort=newest">Tümünü gör →</a></div><div class="market-card-grid">{% for listing in latest_listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}<div class="market-empty"><span>{{ kind_meta.icon }}</span><h3>Henüz ilan yok</h3><p>Bu kategoride ilk ilanı sen yayınla.</p><a class="button" href="{% url 'listings:create' %}">İlan ver</a></div>{% endfor %}</div></section>
+
+{% if price_drop_listings %}<section class="market-feed shell price-drop-feed"><div class="market-section-head"><div><h2>Fiyatı düşenler</h2><p>Yeni fiyatıyla öne çıkan ilanlar</p></div><a href="{% url 'listings:list' %}?kind={{ kind }}&price_drop=1&sort=price_drop">Tüm fiyat düşüşleri →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in price_drop_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+
+{% if popular_listings %}<section class="market-feed shell alt-feed"><div class="market-section-head"><div><h2>En çok ilgi görenler</h2><p>Görüntüleme ve favori sayılarına göre</p></div><a href="{% url 'listings:list' %}?kind={{ kind }}&sort=popular">Popüler ilanlar →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in popular_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+{% endblock %}

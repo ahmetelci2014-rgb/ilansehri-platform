@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -127,6 +128,171 @@ def _compare_ids(request):
     return valid_ids[:4]
 
 
+
+
+_KIND_META = {
+    Listing.Kind.PRODUCT: {"icon": "📱", "headline": "İkinci el ve sıfır ürünleri keşfet", "description": "Elektronikten ev eşyasına, yakındaki ürün ilanlarını karşılaştır."},
+    Listing.Kind.VEHICLE: {"icon": "🚗", "headline": "Aradığın aracı güvenle bul", "description": "Otomobil, motosiklet ve ticari araç ilanlarını ayrıntılı filtrele."},
+    Listing.Kind.REAL_ESTATE: {"icon": "🏠", "headline": "Satılık ve kiralık emlak ilanları", "description": "Şehrindeki konut, işyeri ve arsa seçeneklerini tek ekranda incele."},
+    Listing.Kind.SERVICE: {"icon": "🛠️", "headline": "Yakınındaki hizmet verenlere ulaş", "description": "Usta, bakım, taşıma, eğitim ve yerel hizmetleri keşfet."},
+    Listing.Kind.NEED: {"icon": "📣", "headline": "İhtiyacını yaz, teklifler gelsin", "description": "Aradığın ürünü veya hizmeti ilan et; uygun kişiler sana ulaşsın."},
+    Listing.Kind.JOB: {"icon": "💼", "headline": "İş ve kazanç fırsatlarını keşfet", "description": "Yerel iş ilanlarına ulaş, çalışan veya görev ortağı bul."},
+}
+
+
+class KindLandingView(TemplateView):
+    template_name = "listings/category_landing.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.kind = kwargs.get("kind", "")
+        if self.kind not in dict(Listing.Kind.choices):
+            raise Http404("Kategori bulunamadı.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        latest_price_history = ListingPriceHistory.objects.filter(
+            listing_id=OuterRef("pk")
+        ).order_by("-created_at")
+        base = (
+            Listing.objects.filter(_active_listing_q(), kind=self.kind)
+            .annotate(
+                latest_price_old=Subquery(latest_price_history.values("old_price")[:1]),
+                latest_price_new=Subquery(latest_price_history.values("new_price")[:1]),
+                latest_price_changed_at=Subquery(latest_price_history.values("created_at")[:1]),
+            )
+            .select_related("owner", "category")
+            .prefetch_related("images", "price_history")
+        )
+        favorite_ids = set()
+        if self.request.user.is_authenticated:
+            favorite_ids = set(
+                Favorite.objects.filter(user=self.request.user).values_list("listing_id", flat=True)
+            )
+        count_base = Listing.objects.filter(_active_listing_q(), kind=self.kind)
+        category_rows = list(
+            count_base.values("category_id", "category__name")
+            .annotate(total=Count("id"))
+            .order_by("-total", "category__name")[:12]
+        )
+        city_rows = list(
+            count_base.values("city").annotate(total=Count("id")).order_by("-total", "city")[:10]
+        )
+        context.update(
+            {
+                "kind": self.kind,
+                "kind_label": dict(Listing.Kind.choices)[self.kind],
+                "kind_meta": _KIND_META[self.kind],
+                "latest_listings": base.order_by("-is_featured", "-published_at", "-created_at")[:12],
+                "popular_listings": base.order_by("-view_count", "-favorite_count", "-created_at")[:10],
+                "price_drop_listings": base.filter(latest_price_old__gt=F("latest_price_new")).order_by(
+                    "-latest_price_changed_at", "-created_at"
+                )[:10],
+                "category_rows": category_rows,
+                "city_rows": city_rows,
+                "listing_count": base.count(),
+                "favorite_ids": favorite_ids,
+                "compare_ids": set(_compare_ids(self.request)),
+            }
+        )
+        return context
+
+
+class SavedSearchListView(LoginRequiredMixin, TemplateView):
+    template_name = "listings/saved_searches.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        searches = list(SavedSearch.objects.filter(user=self.request.user))
+        label_map = {
+            "q": "Arama", "city": "Şehir", "district": "İlçe", "kind": "İlan türü",
+            "action": "İşlem", "brand": "Marka", "model": "Model", "min_price": "En az",
+            "max_price": "En çok", "price_drop": "Fiyat düşüşü", "verified": "Doğrulanmış",
+        }
+        for saved in searches:
+            saved.query_string = urlencode(saved.query_params or {}, doseq=True)
+            saved.filter_summary = [
+                {"label": label_map.get(key, key.replace("_", " ").title()), "value": value}
+                for key, value in (saved.query_params or {}).items()
+                if value
+            ]
+        context["saved_searches"] = searches
+        return context
+
+
+@require_GET
+def search_suggestions(request):
+    query = request.GET.get("q", "").strip()[:80]
+    if len(query) < 2:
+        return JsonResponse({"results": []})
+
+    results = []
+    seen = set()
+
+    listings = (
+        Listing.objects.filter(_active_listing_q())
+        .filter(
+            Q(title__icontains=query)
+            | Q(brand__icontains=query)
+            | Q(model_name__icontains=query)
+            | Q(category__name__icontains=query)
+        )
+        .select_related("category")
+        .order_by("-is_featured", "-view_count", "-created_at")[:6]
+    )
+    for listing in listings:
+        key = ("listing", listing.title.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(
+            {
+                "label": listing.title,
+                "meta": f"{listing.get_kind_display()} · {listing.city}",
+                "type": "listing",
+                "url": listing.get_absolute_url(),
+            }
+        )
+
+    categories = Category.objects.filter(is_active=True, name__icontains=query).order_by("sort_order", "name")[:4]
+    for category in categories:
+        key = ("category", category.name.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(
+            {
+                "label": category.name,
+                "meta": "Kategori",
+                "type": "category",
+                "url": f"{reverse('listings:list')}?{urlencode({'category': category.pk})}",
+            }
+        )
+
+    brands = (
+        Listing.objects.filter(_active_listing_q(), brand__icontains=query)
+        .exclude(brand="")
+        .order_by("brand")
+        .values_list("brand", flat=True)
+        .distinct()[:4]
+    )
+    for brand in brands:
+        key = ("brand", brand.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(
+            {
+                "label": brand,
+                "meta": "Marka",
+                "type": "brand",
+                "url": f"{reverse('listings:list')}?{urlencode({'brand': brand})}",
+            }
+        )
+
+    return JsonResponse({"results": results[:10]})
+
+
 class ListingListView(ListView):
     model = Listing
     template_name = "listings/list.html"
@@ -245,6 +411,9 @@ class ListingListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        pagination_params = self.request.GET.copy()
+        pagination_params.pop("page", None)
+        context["pagination_query"] = pagination_params.urlencode()
         favorite_ids = set()
         if self.request.user.is_authenticated:
             favorite_ids = set(
@@ -1057,7 +1226,33 @@ class NotificationListView(LoginRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user).select_related("actor", "listing")
+        qs = Notification.objects.filter(user=self.request.user).select_related("actor", "listing")
+        notification_type = self.request.GET.get("type", "").strip()
+        status = self.request.GET.get("status", "").strip()
+        valid_types = {value for value, _ in Notification.Type.choices}
+        if notification_type in valid_types:
+            qs = qs.filter(notification_type=notification_type)
+        if status == "unread":
+            qs = qs.filter(is_read=False)
+        elif status == "read":
+            qs = qs.filter(is_read=True)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pagination_params = self.request.GET.copy()
+        pagination_params.pop("page", None)
+        context.update(
+            {
+                "notification_type_choices": Notification.Type.choices,
+                "active_type": self.request.GET.get("type", ""),
+                "active_status": self.request.GET.get("status", ""),
+                "pagination_query": pagination_params.urlencode(),
+                "all_notification_count": Notification.objects.filter(user=self.request.user).count(),
+                "unread_page_count": Notification.objects.filter(user=self.request.user, is_read=False).count(),
+            }
+        )
+        return context
 
 
 @login_required
@@ -1104,7 +1299,20 @@ def save_search(request):
 def delete_saved_search(request, pk):
     get_object_or_404(SavedSearch, pk=pk, user=request.user).delete()
     messages.success(request, "Kayıtlı arama silindi.")
-    return redirect("accounts:dashboard")
+    return redirect(_safe_next_url(request, reverse("listings:saved_searches")))
+
+
+@login_required
+@require_POST
+def toggle_saved_search_alert(request, pk):
+    saved = get_object_or_404(SavedSearch, pk=pk, user=request.user)
+    saved.alert_enabled = not saved.alert_enabled
+    saved.save(update_fields=["alert_enabled"])
+    messages.success(
+        request,
+        "Arama bildirimi açıldı." if saved.alert_enabled else "Arama bildirimi kapatıldı.",
+    )
+    return redirect(_safe_next_url(request, reverse("listings:saved_searches")))
 
 
 @login_required

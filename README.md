@@ -70,6 +70,11 @@ Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler 
 
 Ödeme aracılığı henüz aktif değildir. Güvenli işlem ekranı teklif, anlaşma ve teslim sürecini kayıt altına alır; para transferi tarafların sorumluluğundadır.
 
-## v1.4 tasarım kalite turu
 
-v1.4, çalışan işlevleri değiştirmeden tüm temel ekranlarda responsive ve hizalama düzeltmeleri getirir. Düzeltmeler `static/css/v14-polish.css` dosyasında ayrı katman olarak tutulur. Ayrıntılı manuel kontrol listesi `docs/UI_QA.md` içindedir.
+## v1.5 keşif deneyimi
+
+- Canlı arama önerileri
+- Kategori vitrinleri
+- Kayıtlı arama yönetimi
+- Filtrelenebilir bildirim merkezi
+- İlan tamamlama göstergesi ve canlı önizleme

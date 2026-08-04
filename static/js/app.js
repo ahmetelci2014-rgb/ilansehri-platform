@@ -29,6 +29,15 @@ document.addEventListener("DOMContentLoaded", () => {
           item.innerHTML = `<img alt="Seçilen fotoğraf ${index + 1}"><span>${index === 0 ? "Yeni kapak adayı" : index + 1}</span>`;
           item.querySelector("img").src = reader.result;
           preview.appendChild(item);
+          if (index === 0) {
+            const liveMedia = document.querySelector("[data-preview-media]");
+            if (liveMedia) {
+              const liveImage = document.createElement("img");
+              liveImage.src = reader.result;
+              liveImage.alt = "İlan fotoğrafı önizlemesi";
+              liveMedia.replaceChildren(liveImage);
+            }
+          }
         });
         reader.readAsDataURL(file);
       });
@@ -111,14 +120,17 @@ document.addEventListener("DOMContentLoaded", () => {
   districtInput?.addEventListener("blur", () => loadLocations());
 
   const sortable = document.querySelector("[data-sortable-images]");
-  const orderForm = document.querySelector("[data-image-order-form]");
-  const orderInput = orderForm?.querySelector("[data-image-order]");
+  const orderInput = document.querySelector("[data-image-order]");
+  const orderSubmit = document.querySelector("[data-image-order-submit]");
   if (sortable && orderInput) {
     let dragged = null;
+    const syncImageOrder = () => {
+      orderInput.value = Array.from(sortable.querySelectorAll("[data-image-id]")).map((item) => item.dataset.imageId).join(",");
+    };
     sortable.querySelectorAll("[data-image-id]").forEach((item) => {
       item.draggable = true;
       item.addEventListener("dragstart", () => { dragged = item; item.classList.add("dragging"); });
-      item.addEventListener("dragend", () => { dragged = null; item.classList.remove("dragging"); });
+      item.addEventListener("dragend", () => { dragged = null; item.classList.remove("dragging"); syncImageOrder(); });
       item.addEventListener("dragover", (event) => {
         event.preventDefault();
         if (!dragged || dragged === item) return;
@@ -126,9 +138,8 @@ document.addEventListener("DOMContentLoaded", () => {
         sortable.insertBefore(dragged, event.clientX < box.left + box.width / 2 ? item : item.nextSibling);
       });
     });
-    orderForm.addEventListener("submit", () => {
-      orderInput.value = Array.from(sortable.querySelectorAll("[data-image-id]")).map((item) => item.dataset.imageId).join(",");
-    });
+    orderSubmit?.addEventListener("click", syncImageOrder);
+    syncImageOrder();
   }
 
   document.querySelectorAll(".message").forEach((message) => {
@@ -245,4 +256,122 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("details.counter-offer-box").forEach((details) => {
     details.querySelector("form")?.addEventListener("click", (event) => event.stopPropagation());
   });
+});
+
+
+/* v1.5 — arama önerileri ve ilan oluşturma deneyimi */
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("[data-search-suggest]").forEach((form) => {
+    const input = form.querySelector("[data-search-input]");
+    const panel = form.querySelector("[data-search-results]");
+    const endpoint = form.dataset.searchUrl;
+    if (!input || !panel || !endpoint) return;
+
+    let timer;
+    let controller;
+    const close = () => { panel.hidden = true; panel.replaceChildren(); };
+    const render = (items) => {
+      panel.replaceChildren();
+      if (!items.length) { close(); return; }
+      items.forEach((item) => {
+        const link = document.createElement("a");
+        link.href = item.url;
+        link.className = `search-suggestion-item type-${item.type || "query"}`;
+        const icon = document.createElement("span");
+        icon.textContent = item.type === "listing" ? "▣" : item.type === "category" ? "⌘" : "⌕";
+        const copy = document.createElement("div");
+        const label = document.createElement("b");
+        label.textContent = item.label;
+        const meta = document.createElement("small");
+        meta.textContent = item.meta || "";
+        copy.append(label, meta);
+        link.append(icon, copy);
+        panel.append(link);
+      });
+      panel.hidden = false;
+    };
+    input.addEventListener("input", () => {
+      window.clearTimeout(timer);
+      const query = input.value.trim();
+      if (query.length < 2) { controller?.abort(); close(); return; }
+      timer = window.setTimeout(async () => {
+        controller?.abort();
+        controller = new AbortController();
+        try {
+          const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+            signal: controller.signal,
+          });
+          if (!response.ok) throw new Error("search failed");
+          const data = await response.json();
+          render(Array.isArray(data.results) ? data.results : []);
+        } catch (error) {
+          if (error.name !== "AbortError") close();
+        }
+      }, 220);
+    });
+    input.addEventListener("focus", () => {
+      if (panel.childElementCount) panel.hidden = false;
+    });
+    document.addEventListener("click", (event) => {
+      if (!form.contains(event.target)) close();
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") close();
+    });
+  });
+
+  const listingForm = document.querySelector("[data-listing-form]");
+  const progress = document.querySelector("[data-listing-progress]");
+  if (!listingForm || !progress) return;
+
+  const percent = progress.querySelector("[data-progress-percent]");
+  const bar = progress.querySelector("[data-progress-bar]");
+  const label = progress.querySelector("[data-progress-label]");
+  const sections = Array.from(listingForm.querySelectorAll("[data-form-step]"));
+  const links = Array.from(progress.querySelectorAll("[data-step-link]"));
+  const required = Array.from(listingForm.querySelectorAll("input[required], select[required], textarea[required]"));
+
+  const valueOf = (selector) => listingForm.querySelector(selector)?.value?.trim() || "";
+  const updatePreview = () => {
+    const title = valueOf("#id_title") || "İlan başlığın";
+    const price = valueOf("#id_price");
+    const requestPrice = listingForm.querySelector("#id_price_on_request")?.checked;
+    const kindSelect = listingForm.querySelector("#id_kind");
+    const kind = kindSelect?.selectedOptions?.[0]?.textContent || "İlan türü";
+    const city = valueOf("#id_city");
+    const district = valueOf("#id_district");
+    document.querySelector("[data-preview-title]")?.replaceChildren(document.createTextNode(title));
+    document.querySelector("[data-preview-price]")?.replaceChildren(document.createTextNode(requestPrice ? "Teklif alıyor" : price ? `${Number(price).toLocaleString("tr-TR")} TL` : "Fiyat"));
+    document.querySelector("[data-preview-kind]")?.replaceChildren(document.createTextNode(kind));
+    document.querySelector("[data-preview-location]")?.replaceChildren(document.createTextNode([city, district].filter(Boolean).join(" · ") || "Şehir · İlçe"));
+  };
+
+  const updateProgress = () => {
+    const visibleRequired = required.filter((field) => field.offsetParent !== null && !field.disabled);
+    const completed = visibleRequired.filter((field) => field.type === "checkbox" ? field.checked : Boolean(field.value.trim())).length;
+    const total = Math.max(visibleRequired.length, 1);
+    const value = Math.min(100, Math.round((completed / total) * 100));
+    if (percent) percent.textContent = `${value}%`;
+    if (bar) bar.style.width = `${value}%`;
+    if (label) label.textContent = value >= 100 ? "İlanın yayınlanmaya hazır" : value >= 70 ? "Son kontrolleri tamamla" : value >= 35 ? "İlanın şekilleniyor" : "Temel bilgileri doldur";
+    updatePreview();
+  };
+
+  listingForm.addEventListener("input", updateProgress);
+  listingForm.addEventListener("change", updateProgress);
+  links.forEach((link) => link.addEventListener("click", () => {
+    links.forEach((item) => item.classList.remove("active"));
+    link.classList.add("active");
+  }));
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      const step = visible.target.dataset.formStep;
+      links.forEach((link) => link.classList.toggle("active", link.dataset.stepLink === step));
+    }, { rootMargin: "-25% 0px -60%", threshold: [0.05, 0.4] });
+    sections.forEach((section) => observer.observe(section));
+  }
+  updateProgress();
 });

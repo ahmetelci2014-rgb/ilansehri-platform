@@ -4,8 +4,8 @@
 <section class="market-home-head v12-home-head">
   <div class="shell">
     <div class="home-search-copy"><h1>Yakınındaki fırsatları keşfet</h1><p>Ürün, araç, emlak, hizmet ve iş ilanları tek pazarda.</p></div>
-    <form class="market-searchbar home-search-v12" action="{% url 'listings:list' %}">
-      <div class="market-search-main"><span>⌕</span><input name="q" placeholder="Telefon, araba, ev, koltuk, usta ara..."></div>
+    <form class="market-searchbar home-search-v12" action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}">
+      <div class="market-search-main"><span>⌕</span><input name="q" placeholder="Telefon, araba, ev, koltuk, usta ara..." autocomplete="off" data-search-input><div class="search-suggestion-panel" data-search-results hidden></div></div>
       <div class="market-search-city"><span>⌖</span><input name="city" value="{{ preferred_city }}" placeholder="Şehir"></div>
       <input class="market-district-input" name="district" placeholder="İlçe">
       <button type="submit">İlan ara</button>
@@ -14,7 +14,7 @@
   </div>
 </section>
 
-<section class="market-category-strip v12-category-strip"><div class="shell"><div class="market-section-head compact"><div><h2>Kategoriler</h2><p>İhtiyacına doğrudan ulaş</p></div><a href="{% url 'listings:list' %}">Tümünü gör →</a></div><div class="market-categories v12-categories">{% for tile in category_tiles %}<a href="{% url 'listings:list' %}?kind={{ tile.kind }}"><span>{{ tile.icon }}</span><b>{{ tile.label }}</b><small>{{ tile.count }} ilan</small></a>{% endfor %}</div></div></section>
+<section class="market-category-strip v12-category-strip"><div class="shell"><div class="market-section-head compact"><div><h2>Kategoriler</h2><p>İhtiyacına doğrudan ulaş</p></div><a href="{% url 'listings:list' %}">Tümünü gör →</a></div><div class="market-categories v12-categories">{% for tile in category_tiles %}<a href="{% url 'listings:kind_landing' tile.kind %}"><span>{{ tile.icon }}</span><b>{{ tile.label }}</b><small>{{ tile.count }} ilan</small></a>{% endfor %}</div></div></section>
 
 <section class="market-overview shell"><div><b>{{ listing_count }}</b><span>aktif ilan</span></div><div><b>{{ member_count }}</b><span>üye</span></div><div><b>{{ partner_count }}</b><span>görev ortağı</span></div><div><b>{{ review_count }}</b><span>gerçek değerlendirme</span></div><a href="{% url 'listings:create' %}"><span>＋</span><b>Ücretsiz ilan ver</b><small>Dakikalar içinde yayınla</small></a></section>
 
