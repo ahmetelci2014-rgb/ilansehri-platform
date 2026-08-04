@@ -2,6 +2,17 @@
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını tek yerel platformda birleştiren, kullanıcının ilanını kendisinin yönetebildiği veya İlan Şehri Tam Yönetim hizmetine bırakabildiği yeni nesil pazar yeri projesidir.
 
+## Sürüm 0.2 — İlk kullanılabilir akış
+
+- Ücretsiz kullanıcı kaydı ve otomatik giriş
+- Kullanıcı hesabım paneli
+- Çoklu ilan fotoğrafı yükleme
+- İlan oluşturma ve ilan sahibi tarafından düzenleme
+- Gelişmiş ilan filtreleri
+- İlan detayından teklif gönderme
+- “İlan Şehri yönetsin” seçiminde otomatik Tam Yönetim kaydı
+- Geliştirme ortamında otomatik yayın seçeneği
+
 ## Bu ilk sürümde bulunan çekirdek
 
 - Özel kullanıcı modeli: bireysel, kurumsal, hizmet veren ve görev ortağı
