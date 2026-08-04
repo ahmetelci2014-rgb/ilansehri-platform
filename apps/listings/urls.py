@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    CompareListView,
     ConversationDetailView,
     ConversationListView,
     FavoriteListView,
@@ -29,6 +30,7 @@ from .views import (
     save_search,
     set_cover_image,
     start_conversation,
+    toggle_compare,
     toggle_favorite,
     transaction_action,
 )
@@ -39,6 +41,7 @@ urlpatterns = [
     path("", ListingListView.as_view(), name="list"),
     path("yeni/", ListingCreateView.as_view(), name="create"),
     path("favorilerim/", FavoriteListView.as_view(), name="favorites"),
+    path("karsilastir/", CompareListView.as_view(), name="compare"),
     path("aramalar/kaydet/", save_search, name="save_search"),
     path("aramalar/<int:pk>/sil/", delete_saved_search, name="delete_saved_search"),
     path("mesajlar/", ConversationListView.as_view(), name="conversation_list"),
@@ -60,6 +63,7 @@ urlpatterns = [
     path("<slug:slug>/sil/", ListingDeleteView.as_view(), name="delete"),
     path("<slug:slug>/durum/<str:action>/", change_listing_status, name="change_status"),
     path("<slug:slug>/favori/", toggle_favorite, name="toggle_favorite"),
+    path("<slug:slug>/karsilastir/", toggle_compare, name="toggle_compare"),
     path("<slug:slug>/mesaj-gonder/", start_conversation, name="start_conversation"),
     path("<slug:slug>/sikayet/", report_listing, name="report"),
     path("<slug:slug>/fotograf/<int:image_id>/kapak/", set_cover_image, name="set_cover_image"),

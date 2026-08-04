@@ -104,6 +104,21 @@ def _active_listing_q():
     )
 
 
+def _compare_ids(request):
+    raw_ids = request.session.get("compare_listing_ids", [])
+    valid_ids = []
+    for value in raw_ids:
+        try:
+            item_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if item_id not in valid_ids:
+            valid_ids.append(item_id)
+    if valid_ids != raw_ids:
+        request.session["compare_listing_ids"] = valid_ids
+    return valid_ids[:4]
+
+
 class ListingListView(ListView):
     model = Listing
     template_name = "listings/list.html"
@@ -125,6 +140,13 @@ class ListingListView(ListView):
         brand = params.get("brand", "").strip()
         model_name = params.get("model", "").strip()
         room_count = params.get("room_count", "").strip()
+        category_id = params.get("category", "").strip()
+        condition = params.get("condition", "").strip()
+        delivery_type = params.get("delivery_type", "").strip()
+        fuel_type = params.get("fuel_type", "").strip()
+        transmission = params.get("transmission", "").strip()
+        fee_type = params.get("fee_type", "").strip()
+        job_type = params.get("job_type", "").strip()
         sort = params.get("sort", "newest")
 
         if q:
@@ -149,6 +171,20 @@ class ListingListView(ListView):
             qs = qs.filter(model_name__icontains=model_name)
         if room_count:
             qs = qs.filter(room_count=room_count)
+        if category_id:
+            qs = qs.filter(category_id=category_id)
+        if condition:
+            qs = qs.filter(condition__icontains=condition)
+        if delivery_type:
+            qs = qs.filter(delivery_type=delivery_type)
+        if fuel_type:
+            qs = qs.filter(fuel_type=fuel_type)
+        if transmission:
+            qs = qs.filter(transmission=transmission)
+        if fee_type:
+            qs = qs.filter(fee_type=fee_type)
+        if job_type:
+            qs = qs.filter(job_type=job_type)
         if params.get("managed") == "1":
             qs = qs.filter(management_mode=Listing.ManagementMode.FULL)
         if params.get("verified") == "1":
@@ -181,18 +217,44 @@ class ListingListView(ListView):
             "price_asc": ("price", "-is_featured"),
             "price_desc": ("-price", "-is_featured"),
             "popular": ("-view_count", "-favorite_count", "-created_at"),
+            "oldest": ("created_at",),
         }.get(sort, ("-is_featured", "-published_at", "-created_at"))
         return qs.order_by(*ordering)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        favorite_ids = set()
+        if self.request.user.is_authenticated:
+            favorite_ids = set(
+                Favorite.objects.filter(user=self.request.user).values_list("listing_id", flat=True)
+            )
+        active_labels = []
+        label_map = {
+            "q": "Arama", "city": "Şehir", "district": "İlçe", "brand": "Marka",
+            "model": "Model", "condition": "Durum", "room_count": "Oda",
+            "min_price": "En az fiyat", "max_price": "En çok fiyat",
+            "min_year": "En düşük yıl", "max_year": "En yüksek yıl",
+            "max_mileage": "Azami km", "min_area": "En az m²", "max_area": "En çok m²",
+        }
+        for key, label in label_map.items():
+            value = self.request.GET.get(key, "").strip()
+            if value:
+                active_labels.append({"key": key, "label": label, "value": value})
         context.update(
             {
                 "kind_choices": Listing.Kind.choices,
                 "action_choices": Listing.Action.choices,
                 "city_choices": CITY_CHOICES,
-                "category_choices": Category.objects.filter(is_active=True),
+                "category_choices": Category.objects.filter(is_active=True).select_related("parent"),
+                "fuel_choices": Listing.FuelType.choices,
+                "transmission_choices": Listing.Transmission.choices,
+                "delivery_choices": Listing.DeliveryType.choices,
+                "fee_choices": Listing.FeeType.choices,
+                "job_choices": Listing.JobType.choices,
                 "active_filters": self.request.GET,
+                "active_filter_labels": active_labels,
+                "favorite_ids": favorite_ids,
+                "compare_ids": set(_compare_ids(self.request)),
                 "saved_search_form": SavedSearchForm(),
             }
         )
@@ -230,6 +292,9 @@ class ListingDetailView(FormMixin, DetailView):
             Listing.objects.filter(pk=obj.pk).update(view_count=F("view_count") + 1)
             self.request.session[session_key] = True
             obj.view_count += 1
+        recent = [item_id for item_id in self.request.session.get("recently_viewed", []) if item_id != obj.pk]
+        recent.insert(0, obj.pk)
+        self.request.session["recently_viewed"] = recent[:12]
         return obj
 
     def get_context_data(self, **kwargs):
@@ -245,6 +310,28 @@ class ListingDetailView(FormMixin, DetailView):
             if user.is_authenticated and user == self.object.owner
             else Offer.objects.none()
         )
+        context["compare_ids"] = set(_compare_ids(self.request))
+        context["is_compared"] = self.object.pk in context["compare_ids"]
+        similar_base = (
+            Listing.objects.filter(_active_listing_q(), kind=self.object.kind)
+            .exclude(pk=self.object.pk)
+            .select_related("owner", "category")
+            .prefetch_related("images")
+        )
+        same_city = similar_base.filter(city__iexact=self.object.city)[:8]
+        context["similar_listings"] = list(same_city) or list(similar_base[:8])
+        context["seller_other_listings"] = (
+            Listing.objects.filter(_active_listing_q(), owner=self.object.owner)
+            .exclude(pk=self.object.pk)
+            .select_related("owner", "category")
+            .prefetch_related("images")[:6]
+        )
+        if user.is_authenticated:
+            context["favorite_ids"] = set(
+                Favorite.objects.filter(user=user).values_list("listing_id", flat=True)
+            )
+        else:
+            context["favorite_ids"] = set()
         return context
 
     def post(self, request, *args, **kwargs):
@@ -388,6 +475,63 @@ def toggle_favorite(request, slug):
     return redirect(_safe_next_url(request, listing.get_absolute_url()))
 
 
+class CompareListView(TemplateView):
+    template_name = "listings/compare.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        compare_ids = _compare_ids(self.request)
+        queryset = (
+            Listing.objects.filter(_active_listing_q(), pk__in=compare_ids)
+            .select_related("owner", "category")
+            .prefetch_related("images")
+        )
+        item_map = {item.pk: item for item in queryset}
+        listings = [item_map[item_id] for item_id in compare_ids if item_id in item_map]
+        context["listings"] = listings
+        context["compare_ids"] = set(compare_ids)
+        context["favorite_ids"] = (
+            set(Favorite.objects.filter(user=self.request.user).values_list("listing_id", flat=True))
+            if self.request.user.is_authenticated
+            else set()
+        )
+        labels = []
+        detail_maps = []
+        for listing in listings:
+            item_map = dict(listing.detail_items)
+            detail_maps.append(item_map)
+            for label in item_map:
+                if label not in labels:
+                    labels.append(label)
+        context["comparison_rows"] = [
+            {"label": label, "values": [item_map.get(label, "—") for item_map in detail_maps]}
+            for label in labels
+        ]
+        return context
+
+
+@require_POST
+def toggle_compare(request, slug):
+    listing = get_object_or_404(Listing, _active_listing_q(), slug=slug)
+    compare_ids = _compare_ids(request)
+    if listing.pk in compare_ids:
+        compare_ids.remove(listing.pk)
+        messages.info(request, "İlan karşılaştırmadan çıkarıldı.")
+    else:
+        existing = Listing.objects.filter(pk__in=compare_ids).first() if compare_ids else None
+        if existing and existing.kind != listing.kind:
+            messages.warning(request, "Yalnız aynı ilan türündeki seçenekler karşılaştırılabilir.")
+            return redirect(_safe_next_url(request, listing.get_absolute_url()))
+        if len(compare_ids) >= 4:
+            messages.warning(request, "Aynı anda en fazla 4 ilan karşılaştırılabilir.")
+            return redirect(_safe_next_url(request, reverse("listings:compare")))
+        compare_ids.append(listing.pk)
+        messages.success(request, "İlan karşılaştırmaya eklendi.")
+    request.session["compare_listing_ids"] = compare_ids
+    request.session.modified = True
+    return redirect(_safe_next_url(request, listing.get_absolute_url()))
+
+
 class FavoriteListView(LoginRequiredMixin, ListView):
     template_name = "listings/favorites.html"
     context_object_name = "favorite_items"
@@ -397,6 +541,12 @@ class FavoriteListView(LoginRequiredMixin, ListView):
         return Favorite.objects.filter(user=self.request.user, listing__status=Listing.Status.PUBLISHED).filter(Q(listing__expires_at__isnull=True) | Q(listing__expires_at__gt=timezone.now())).select_related(
             "listing", "listing__category", "listing__owner"
         ).prefetch_related("listing__images")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["favorite_ids"] = set(item.listing_id for item in context["favorite_items"])
+        context["compare_ids"] = set(_compare_ids(self.request))
+        return context
 
 
 @login_required

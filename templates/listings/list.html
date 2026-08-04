@@ -1,40 +1,42 @@
 {% extends 'base.html' %}
 {% block title %}İlanları Keşfet — İlan Şehri{% endblock %}
 {% block content %}
-<section class="market-list-head">
-  <div class="shell">
-    <form class="market-searchbar list-search" method="get">
-      <div class="market-search-main"><span>⌕</span><input name="q" value="{{ active_filters.q }}" placeholder="Ne arıyorsun?"></div>
-      <div class="market-search-city"><span>⌖</span><select name="city"><option value="">Tüm Türkiye</option>{% for value,label in city_choices %}<option value="{{ value }}" {% if active_filters.city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-      <input class="market-district-input" name="district" value="{{ active_filters.district }}" placeholder="İlçe">
-      <button>Ara</button>
-    </form>
-    <div class="market-list-chips">
-      <a href="{% url 'listings:list' %}" class="{% if not active_filters.kind %}active{% endif %}">Tümü</a>
-      {% for value,label in kind_choices %}<a href="?kind={{ value }}" class="{% if active_filters.kind == value %}active{% endif %}">{{ label }}</a>{% endfor %}
-    </div>
-  </div>
-</section>
+<section class="market-list-head v12-list-head"><div class="shell">
+  <form class="market-searchbar list-search v12-list-search" method="get">
+    <div class="market-search-main"><span>⌕</span><input name="q" value="{{ active_filters.q }}" placeholder="Ne arıyorsun?"></div>
+    <div class="market-search-city"><span>⌖</span><select name="city"><option value="">Tüm Türkiye</option>{% for value,label in city_choices %}<option value="{{ value }}" {% if active_filters.city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <input class="market-district-input" name="district" value="{{ active_filters.district }}" placeholder="İlçe">
+    <button>Ara</button>
+  </form>
+  <div class="market-list-chips"><a href="{% url 'listings:list' %}" class="{% if not active_filters.kind %}active{% endif %}">Tümü</a>{% for value,label in kind_choices %}<a href="?kind={{ value }}" class="{% if active_filters.kind == value %}active{% endif %}">{{ label }}</a>{% endfor %}</div>
+</div></section>
 
 <section class="market-list-layout shell">
-  <aside class="market-filter">
-    <div class="market-filter-title"><h2>Filtreler</h2><a href="{% url 'listings:list' %}">Temizle</a></div>
+  <aside class="market-filter v12-filter" data-filter-panel>
+    <div class="market-filter-title"><h2>Filtreler</h2><button type="button" class="filter-close" data-filter-close>×</button><a href="{% url 'listings:list' %}">Temizle</a></div>
     <form method="get">
       <input type="hidden" name="q" value="{{ active_filters.q }}"><input type="hidden" name="city" value="{{ active_filters.city }}"><input type="hidden" name="district" value="{{ active_filters.district }}">
+      <label>Kategori<select name="category"><option value="">Tüm kategoriler</option>{% for category in category_choices %}<option value="{{ category.pk }}" {% if active_filters.category == category.pk|stringformat:'s' %}selected{% endif %}>{% if category.parent %}{{ category.parent.name }} / {% endif %}{{ category.name }}</option>{% endfor %}</select></label>
       <label>İlan türü<select name="kind"><option value="">Tümü</option>{% for value,label in kind_choices %}<option value="{{ value }}" {% if active_filters.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
       <label>İşlem türü<select name="action"><option value="">Tümü</option>{% for value,label in action_choices %}<option value="{{ value }}" {% if active_filters.action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-      <div class="market-filter-pair"><label>En az<input type="number" name="min_price" value="{{ active_filters.min_price }}" placeholder="0 TL"></label><label>En çok<input type="number" name="max_price" value="{{ active_filters.max_price }}" placeholder="Fiyat"></label></div>
+      <div class="market-filter-group"><b>Fiyat aralığı</b><div class="market-filter-pair"><label>En az<input type="number" name="min_price" value="{{ active_filters.min_price }}" placeholder="0"></label><label>En çok<input type="number" name="max_price" value="{{ active_filters.max_price }}" placeholder="Fiyat"></label></div></div>
       <label>Marka<input name="brand" value="{{ active_filters.brand }}" placeholder="Örn. Toyota, Apple"></label>
       <label>Model<input name="model" value="{{ active_filters.model }}" placeholder="Model"></label>
+      <label>Ürün durumu<input name="condition" value="{{ active_filters.condition }}" placeholder="Sıfır, az kullanılmış..."></label>
+      <label>Teslimat<select name="delivery_type"><option value="">Tümü</option>{% for value,label in delivery_choices %}<option value="{{ value }}" {% if active_filters.delivery_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <div class="filter-vehicle-fields"><b>Araç filtreleri</b><div class="market-filter-pair"><label>Min. yıl<input type="number" name="min_year" value="{{ active_filters.min_year }}" placeholder="2018"></label><label>Maks. yıl<input type="number" name="max_year" value="{{ active_filters.max_year }}" placeholder="2026"></label></div><label>En fazla kilometre<input type="number" name="max_mileage" value="{{ active_filters.max_mileage }}" placeholder="100000"></label><label>Yakıt<select name="fuel_type"><option value="">Tümü</option>{% for value,label in fuel_choices %}<option value="{{ value }}" {% if active_filters.fuel_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><label>Vites<select name="transmission"><option value="">Tümü</option>{% for value,label in transmission_choices %}<option value="{{ value }}" {% if active_filters.transmission == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></div>
+      <div class="filter-estate-fields"><b>Emlak filtreleri</b><label>Oda sayısı<input name="room_count" value="{{ active_filters.room_count }}" placeholder="3+1"></label><div class="market-filter-pair"><label>Min. m²<input type="number" name="min_area" value="{{ active_filters.min_area }}"></label><label>Maks. m²<input type="number" name="max_area" value="{{ active_filters.max_area }}"></label></div></div>
       <label class="market-check"><input type="checkbox" name="verified" value="1" {% if active_filters.verified == '1' %}checked{% endif %}> Doğrulanmış satıcı</label>
       <label class="market-check"><input type="checkbox" name="managed" value="1" {% if active_filters.managed == '1' %}checked{% endif %}> İlan Şehri güvenceli</label>
       <button class="button full">Sonuçları göster</button>
     </form>
   </aside>
+  <div class="filter-overlay" data-filter-overlay></div>
 
   <div class="market-results">
-    <div class="market-results-top"><div><h1>{% if active_filters.q %}“{{ active_filters.q }}” ilanları{% else %}Tüm ilanlar{% endif %}</h1><p><b>{{ paginator.count }}</b> ilan bulundu</p></div><form method="get">{% for key,value in active_filters.items %}{% if key != 'sort' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}<select name="sort" onchange="this.form.submit()"><option value="newest" {% if active_filters.sort == 'newest' %}selected{% endif %}>En yeni</option><option value="popular" {% if active_filters.sort == 'popular' %}selected{% endif %}>En popüler</option><option value="price_asc" {% if active_filters.sort == 'price_asc' %}selected{% endif %}>Fiyat: düşükten</option><option value="price_desc" {% if active_filters.sort == 'price_desc' %}selected{% endif %}>Fiyat: yüksekten</option></select></form></div>
-    <div class="market-card-grid list-grid">{% for listing in listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}<div class="market-empty"><span>⌕</span><h3>İlan bulunamadı</h3><p>Filtreleri değiştirerek tekrar ara.</p></div>{% endfor %}</div>
+    <div class="market-results-top"><div><h1>{% if active_filters.q %}“{{ active_filters.q }}” ilanları{% elif active_filters.kind %}Filtrelenen ilanlar{% else %}Tüm ilanlar{% endif %}</h1><p><b>{{ paginator.count }}</b> ilan bulundu</p></div><div class="result-actions"><button class="mobile-filter-button" type="button" data-filter-open>☰ Filtrele</button><a class="compare-result-link" href="{% url 'listings:compare' %}">⇄ Karşılaştır{% if compare_count %} ({{ compare_count }}){% endif %}</a><form method="get">{% for key,value in active_filters.items %}{% if key != 'sort' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}<select name="sort" onchange="this.form.submit()"><option value="newest" {% if active_filters.sort == 'newest' or not active_filters.sort %}selected{% endif %}>En yeni</option><option value="popular" {% if active_filters.sort == 'popular' %}selected{% endif %}>En popüler</option><option value="price_asc" {% if active_filters.sort == 'price_asc' %}selected{% endif %}>Fiyat: düşükten</option><option value="price_desc" {% if active_filters.sort == 'price_desc' %}selected{% endif %}>Fiyat: yüksekten</option><option value="oldest" {% if active_filters.sort == 'oldest' %}selected{% endif %}>En eski</option></select></form></div></div>
+    {% if active_filter_labels %}<div class="active-filter-row">{% for item in active_filter_labels %}<span><b>{{ item.label }}:</b> {{ item.value }}</span>{% endfor %}<a href="{% url 'listings:list' %}">Tümünü temizle</a></div>{% endif %}
+    <div class="market-card-grid list-grid">{% for listing in listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}<div class="market-empty"><span>⌕</span><h3>İlan bulunamadı</h3><p>Filtreleri değiştirerek tekrar ara.</p><a href="{% url 'listings:list' %}" class="button">Filtreleri temizle</a></div>{% endfor %}</div>
     {% if is_paginated %}<nav class="market-pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Sonraki →</a>{% endif %}</nav>{% endif %}
   </div>
 </section>

@@ -1,10 +1,11 @@
 from django.urls import path
 
-from .views import HomeView, StaticPageView, health_check, manifest, service_worker
+from .views import HomeView, StaffDashboardView, StaticPageView, health_check, manifest, service_worker
 
 app_name = "core"
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("yonetim/", StaffDashboardView.as_view(), name="staff_dashboard"),
     path("hakkimizda/", StaticPageView.as_view(template_name="core/about.html"), name="about"),
     path("nasil-calisir/", StaticPageView.as_view(template_name="core/how_it_works.html"), name="how_it_works"),
     path("guven-merkezi/", StaticPageView.as_view(template_name="core/trust.html"), name="trust"),

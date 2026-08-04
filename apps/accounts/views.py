@@ -123,8 +123,14 @@ class PublicProfileView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["published_listings"] = self.object.listings.filter(status="published").filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())).select_related("category").prefetch_related("images")[:12]
+        context["published_listings"] = self.object.listings.filter(status="published").filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())).select_related("category", "owner").prefetch_related("images")[:12]
         context["reviews"] = Review.objects.filter(reviewed_user=self.object, is_visible=True).select_related("reviewer", "transaction__listing")[:20]
+        context["compare_ids"] = set(self.request.session.get("compare_listing_ids", []))
+        context["favorite_ids"] = (
+            set(Favorite.objects.filter(user=self.request.user).values_list("listing_id", flat=True))
+            if self.request.user.is_authenticated
+            else set()
+        )
         if self.request.user.is_authenticated and self.request.user != self.object:
             context["is_blocked"] = UserBlock.objects.filter(blocker=self.request.user, blocked=self.object).exists()
         return context

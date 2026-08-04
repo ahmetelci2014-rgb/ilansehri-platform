@@ -207,3 +207,37 @@ class ListingFlowTests(TestCase):
         self.client.post(url, {"amount": "23000", "message": "İlk teklifim"})
         self.client.post(url, {"amount": "24000", "message": "İkinci teklifim"})
         self.assertEqual(Offer.objects.filter(listing=listing, sender=self.buyer, status=Offer.Status.PENDING).count(), 1)
+
+    def test_same_kind_listings_can_be_compared(self):
+        first = self.create_listing(title="Birinci telefon")
+        second = self.create_listing(title="İkinci telefon")
+        vehicle = self.create_listing(
+            title="Test aracı",
+            category=self.vehicle_category,
+            kind=Listing.Kind.VEHICLE,
+            brand="Toyota",
+        )
+        self.client.post(reverse("listings:toggle_compare", kwargs={"slug": first.slug}))
+        self.client.post(reverse("listings:toggle_compare", kwargs={"slug": second.slug}))
+        self.assertEqual(self.client.session["compare_listing_ids"], [first.pk, second.pk])
+        self.client.post(reverse("listings:toggle_compare", kwargs={"slug": vehicle.slug}))
+        self.assertEqual(self.client.session["compare_listing_ids"], [first.pk, second.pk])
+        response = self.client.get(reverse("listings:compare"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Birinci telefon")
+        self.assertContains(response, "İkinci telefon")
+
+    def test_listing_detail_is_added_to_recently_viewed(self):
+        listing = self.create_listing()
+        response = self.client.get(listing.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session["recently_viewed"][0], listing.pk)
+
+    def test_favorites_page_uses_marketplace_cards(self):
+        listing = self.create_listing()
+        Favorite.objects.create(user=self.buyer, listing=listing)
+        self.client.force_login(self.buyer)
+        response = self.client.get(reverse("listings:favorites"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, listing.title)
+        self.assertContains(response, "market-card")

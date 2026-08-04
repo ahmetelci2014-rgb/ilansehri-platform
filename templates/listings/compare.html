@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}İlan Karşılaştırma — İlan Şehri{% endblock %}
+{% block content %}
+<section class="compare-page shell">
+  <nav class="market-breadcrumb"><a href="{% url 'core:home' %}">Ana sayfa</a><span>›</span><a href="{% url 'listings:list' %}">İlanlar</a><span>›</span><b>Karşılaştır</b></nav>
+  <div class="compare-head"><div><h1>İlanları karşılaştır</h1><p>Aynı türde en fazla 4 ilanı yan yana inceleyebilirsin.</p></div><a href="{% url 'listings:list' %}">＋ İlan ekle</a></div>
+  {% if listings %}
+    <div class="compare-scroll"><div class="compare-table" style="--compare-columns:{{ listings|length }}">
+      <div class="compare-label compare-top-label">İlan</div>
+      {% for listing in listings %}<article class="compare-product"><a href="{{ listing.get_absolute_url }}">{% with cover=listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="market-card-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}<h2>{{ listing.title }}</h2><strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat yok{% endif %}</strong><small>{{ listing.location_text }}</small></a><form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'listings:compare' %}"><button>Karşılaştırmadan çıkar</button></form></article>{% endfor %}
+      <div class="compare-label">Satıcı</div>{% for listing in listings %}<div class="compare-value"><b>{{ listing.owner.display_name }}</b><span>{% if listing.owner.is_phone_verified %}✓ Doğrulandı{% else %}Temel hesap{% endif %}</span><small>★ {{ listing.owner.average_rating }}</small></div>{% endfor %}
+      <div class="compare-label">İlan türü</div>{% for listing in listings %}<div class="compare-value">{{ listing.get_action_display }}</div>{% endfor %}
+      <div class="compare-label">Konum</div>{% for listing in listings %}<div class="compare-value">{{ listing.location_text }}</div>{% endfor %}
+      <div class="compare-label">Durum</div>{% for listing in listings %}<div class="compare-value">{{ listing.condition|default:'—' }}</div>{% endfor %}
+      {% for row in comparison_rows %}<div class="compare-label">{{ row.label }}</div>{% for value in row.values %}<div class="compare-value">{{ value }}</div>{% endfor %}{% endfor %}
+      <div class="compare-label">İşlem</div>{% for listing in listings %}<div class="compare-value compare-actions"><a href="{{ listing.get_absolute_url }}">İlanı aç</a>{% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'listings:compare' %}"><button>{% if listing.pk in favorite_ids %}♥ Favoride{% else %}♡ Favoriye ekle{% endif %}</button></form>{% endif %}</div>{% endfor %}
+    </div></div>
+  {% else %}
+    <div class="compare-empty"><span>⇄</span><h2>Henüz karşılaştırma listesi boş</h2><p>İlan kartlarındaki karşılaştırma simgesine basarak aynı türdeki seçenekleri buraya ekle.</p><a class="button" href="{% url 'listings:list' %}">İlanları keşfet</a></div>
+  {% endif %}
+</section>
+{% endblock %}

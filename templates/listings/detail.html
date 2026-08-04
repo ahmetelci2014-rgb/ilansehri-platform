@@ -1,33 +1,46 @@
-{% extends 'base.html' %}{% block title %}{{ listing.title }} — İlan Şehri{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ listing.title }} — İlan Şehri{% endblock %}
 {% block content %}
 {% if listing.status != 'published' %}<div class="owner-status-banner"><div class="shell"><b>{{ listing.get_status_display }}</b><span>{{ listing.review_note|default:'Bu ilan yalnız ilan sahibi ve yetkili ekip tarafından görüntülenebilir.' }}</span></div></div>{% endif %}
-<div class="market-detail shell">
+<div class="market-detail shell v12-detail">
   <nav class="market-breadcrumb"><a href="{% url 'core:home' %}">Ana sayfa</a><span>›</span><a href="{% url 'listings:list' %}?kind={{ listing.kind }}">{{ listing.get_kind_display }}</a><span>›</span><b>{{ listing.title|truncatechars:48 }}</b></nav>
   <section class="market-detail-grid">
     <div class="market-gallery-column">
-      <div class="market-gallery-main">{% with cover=listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}" data-main-image>{% else %}<div class="market-card-placeholder large kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}{% if listing.images.count %}<span class="photo-count">📷 {{ listing.images.count }}</span>{% endif %}</div>
+      <div class="market-gallery-main" data-gallery-open>{% with cover=listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}" data-main-image>{% else %}<div class="market-card-placeholder large kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}{% if listing.images.count %}<span class="photo-count">▣ {{ listing.images.count }} fotoğraf</span>{% endif %}</div>
       {% if listing.images.count > 1 %}<div class="market-thumbs">{% for image in listing.images.all %}<button type="button" data-gallery-thumb="{{ image.image.url }}"><img src="{{ image.image.url }}" alt="{{ listing.title }}"></button>{% endfor %}</div>{% endif %}
       <article class="market-detail-panel"><div class="market-panel-head"><h2>İlan açıklaması</h2><span>İlan no: {{ listing.pk }}</span></div><p>{{ listing.description|linebreaksbr }}</p></article>
       {% if listing.detail_items %}<article class="market-detail-panel"><h2>Özellikler</h2><dl class="market-spec-grid">{% for label,value in listing.detail_items %}<div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}</dl></article>{% endif %}
-      <article class="market-detail-panel"><h2>Konum</h2><p class="market-location-line">⌖ {{ listing.location_text }}</p><small>Güvenlik için açık adres gösterilmez.</small></article>
+      <article class="market-detail-panel"><h2>Konum</h2><div class="detail-location-box"><span>⌖</span><div><b>{{ listing.location_text }}</b><p>Güvenlik için açık adres gösterilmez. Satıcıyla mesajlaşarak buluşma noktasını belirleyebilirsin.</p></div></div></article>
+      {% if owner_reviews %}<article class="market-detail-panel"><div class="market-panel-head"><h2>Satıcı değerlendirmeleri</h2><a href="{% url 'accounts:public_profile' listing.owner.username %}">Tüm profil →</a></div><div class="seller-review-grid">{% for review in owner_reviews %}<div><b>★ {{ review.rating }}/5</b><p>{{ review.comment|default:'Puan verildi.'|truncatechars:130 }}</p><small>{{ review.reviewer.display_name }} · {{ review.created_at|date:'d.m.Y' }}</small></div>{% endfor %}</div></article>{% endif %}
     </div>
+
     <aside class="market-detail-side">
       <div class="market-detail-summary">
-        <div class="market-detail-labels"><span>{{ listing.get_action_display }}</span>{% if listing.management_mode == 'full' %}<b>✓ İlan Şehri güvenceli</b>{% endif %}</div>
+        <div class="market-detail-labels"><span>{{ listing.get_action_display }}</span>{% if listing.is_featured %}<span>Öne çıkan</span>{% endif %}{% if listing.management_mode == 'full' %}<b>✓ İlan Şehri güvenceli</b>{% endif %}</div>
         <h1>{{ listing.title }}</h1><p class="market-detail-loc">⌖ {{ listing.location_text }}</p>
         <div class="market-detail-price">{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</div>
         {% if listing.is_negotiable %}<span class="negotiable">Pazarlık payı var</span>{% endif %}
-        <div class="market-detail-stats"><span>👁 {{ listing.view_count }}</span><span>♡ {{ listing.favorite_count }}</span><span>{{ listing.created_at|date:'d.m.Y' }}</span></div>
-        <a class="market-seller" href="{% url 'accounts:public_profile' listing.owner.username %}"><span class="seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span><div><b>{{ listing.owner.display_name }}</b><small>★ {{ listing.owner.average_rating }} · {{ listing.owner.get_user_type_display }}</small><em>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %}</em></div><i>›</i></a>
+        <div class="market-detail-stats"><span>👁 {{ listing.view_count }}</span><span>♡ {{ listing.favorite_count }}</span><span>▣ {{ listing.images.count }}</span><span>{{ listing.created_at|date:'d.m.Y' }}</span></div>
+        <div class="detail-quick-tools">
+          <form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="market-secondary-button full{% if is_compared %} active{% endif %}">⇄ {% if is_compared %}Karşılaştırmadan çıkar{% else %}Karşılaştırmaya ekle{% endif %}</button></form>
+          {% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="market-secondary-button full{% if is_favorite %} active{% endif %}">{% if is_favorite %}♥ Favorilerden çıkar{% else %}♡ Favoriye ekle{% endif %}</button></form>{% endif %}
+        </div>
+        <a class="market-seller v12-seller" href="{% url 'accounts:public_profile' listing.owner.username %}"><span class="seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span><div><b>{{ listing.owner.display_name }}</b><small>★ {{ listing.owner.average_rating }} · {{ listing.owner.rating_count }} değerlendirme</small><em>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %} · Güven puanı {{ listing.owner.trust_score }}/100</em></div><i>›</i></a>
         {% if user == listing.owner %}<a class="button full" href="{% url 'listings:update' listing.slug %}">İlanı düzenle</a><a class="market-secondary-button" href="{% url 'accounts:dashboard' %}#teklifler">Gelen teklifleri gör</a>
         {% elif listing.status != 'published' %}<div class="notice warning">Bu ilan henüz yayında değil.</div>
         {% elif user.is_authenticated %}
-          <div class="market-detail-actions"><form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="market-secondary-button full">{% if is_favorite %}♥ Favorilerden çıkar{% else %}♡ Favoriye ekle{% endif %}</button></form>
-          {% if not blocked_between %}<details class="market-action-box" open><summary>Teklif ver</summary><form method="post">{% csrf_token %}{{ form.as_p }}<button class="button full">Teklifi gönder</button></form></details><details class="market-action-box"><summary>Satıcıya mesaj gönder</summary><form method="post" enctype="multipart/form-data" action="{% url 'listings:start_conversation' listing.slug %}">{% csrf_token %}{{ message_form.as_p }}<button class="button full">Mesajı gönder</button></form></details>{% endif %}</div>
+          {% if not blocked_between %}<div class="market-detail-actions"><details class="market-action-box" open><summary>Fiyat teklifi ver</summary><form method="post">{% csrf_token %}{{ form.as_p }}<button class="button full">Teklifi gönder</button></form></details><details class="market-action-box"><summary>Satıcıya mesaj gönder</summary><form method="post" enctype="multipart/form-data" action="{% url 'listings:start_conversation' listing.slug %}">{% csrf_token %}{{ message_form.as_p }}<button class="button full">Mesajı gönder</button></form></details></div>{% else %}<div class="notice warning">Bu kullanıcıyla iletişim kurulamıyor.</div>{% endif %}
         {% else %}<a class="button full" href="{% url 'login' %}?next={{ request.path }}">Mesaj ve teklif için giriş yap</a>{% endif %}
         <div class="market-safe-note"><b>🛡 Güvenli alışveriş</b><p>Ürünü görmeden ödeme yapma. Şifreni ve doğrulama kodunu paylaşma.</p><a href="{% url 'core:trust' %}">Güven ipuçları →</a></div>
+        {% if user.is_authenticated and user != listing.owner %}<details class="detail-report"><summary>İlanı şikâyet et</summary><form method="post" action="{% url 'listings:report' listing.slug %}">{% csrf_token %}{{ report_form.as_p }}<button class="market-secondary-button full">Şikâyeti gönder</button></form></details>{% endif %}
       </div>
     </aside>
   </section>
+
+  {% if similar_listings %}<section class="market-feed detail-feed"><div class="market-section-head"><div><h2>Benzer ilanlar</h2><p>{{ listing.city }} ve çevresindeki alternatifler</p></div><a href="{% url 'listings:list' %}?kind={{ listing.kind }}&city={{ listing.city|urlencode }}">Tümünü gör →</a></div><div class="market-card-grid horizontal-mobile">{% for item in similar_listings %}{% include 'listings/_card.html' with listing=item %}{% endfor %}</div></section>{% endif %}
+  {% if seller_other_listings %}<section class="market-feed detail-feed alt-feed"><div class="market-section-head"><div><h2>Bu satıcının diğer ilanları</h2><p>{{ listing.owner.display_name }} tarafından yayınlananlar</p></div><a href="{% url 'accounts:public_profile' listing.owner.username %}">Satıcı profilini aç →</a></div><div class="market-card-grid horizontal-mobile">{% for item in seller_other_listings %}{% include 'listings/_card.html' with listing=item %}{% endfor %}</div></section>{% endif %}
 </div>
+
+{% if listing.status == 'published' and user != listing.owner %}<div class="mobile-contact-bar">{% if user.is_authenticated and not blocked_between %}<a href="#message-box" data-open-message>Mesaj gönder</a><button type="button" data-open-offer>Teklif ver</button>{% else %}<a href="{% url 'login' %}?next={{ request.path }}">Giriş yap ve iletişime geç</a>{% endif %}</div>{% endif %}
+<div class="gallery-lightbox" data-gallery-lightbox hidden><button type="button" data-gallery-close>×</button><img alt="{{ listing.title }}" data-lightbox-image></div>
 {% endblock %}

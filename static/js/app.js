@@ -135,3 +135,66 @@ document.addEventListener("DOMContentLoaded", () => {
     window.setTimeout(() => message.classList.add("fade-out"), 5000);
   });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const filterPanel = document.querySelector("[data-filter-panel]");
+  const filterOverlay = document.querySelector("[data-filter-overlay]");
+  const openFilter = () => {
+    filterPanel?.classList.add("is-open");
+    filterOverlay?.classList.add("is-open");
+    document.body.classList.add("menu-open");
+  };
+  const closeFilter = () => {
+    filterPanel?.classList.remove("is-open");
+    filterOverlay?.classList.remove("is-open");
+    document.body.classList.remove("menu-open");
+  };
+  document.querySelector("[data-filter-open]")?.addEventListener("click", openFilter);
+  document.querySelector("[data-filter-close]")?.addEventListener("click", closeFilter);
+  filterOverlay?.addEventListener("click", closeFilter);
+
+  const gallery = document.querySelector("[data-gallery-lightbox]");
+  const lightboxImage = gallery?.querySelector("[data-lightbox-image]");
+  const mainImage = document.querySelector("[data-main-image]");
+  const openGallery = () => {
+    if (!gallery || !lightboxImage || !mainImage?.src) return;
+    lightboxImage.src = mainImage.src;
+    gallery.hidden = false;
+    document.body.classList.add("menu-open");
+  };
+  document.querySelector("[data-gallery-open]")?.addEventListener("click", (event) => {
+    if (event.target.closest("button,a")) return;
+    openGallery();
+  });
+  gallery?.querySelector("[data-gallery-close]")?.addEventListener("click", () => {
+    gallery.hidden = true;
+    document.body.classList.remove("menu-open");
+  });
+  gallery?.addEventListener("click", (event) => {
+    if (event.target === gallery) {
+      gallery.hidden = true;
+      document.body.classList.remove("menu-open");
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && gallery && !gallery.hidden) {
+      gallery.hidden = true;
+      document.body.classList.remove("menu-open");
+    }
+  });
+
+  const actionDetails = document.querySelectorAll(".market-action-box");
+  document.querySelector("[data-open-offer]")?.addEventListener("click", () => {
+    const box = actionDetails[0];
+    if (!box) return;
+    box.open = true;
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  document.querySelector("[data-open-message]")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    const box = actionDetails[1];
+    if (!box) return;
+    box.open = true;
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+});

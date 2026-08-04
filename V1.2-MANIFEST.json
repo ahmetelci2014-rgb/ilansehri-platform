@@ -1,0 +1,24 @@
+{
+  "version": "v1.2",
+  "changed_file_count": 22,
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "django_template_block_balance": "passed",
+    "template_url_name_check": "passed",
+    "css_brace_balance": "passed",
+    "review_url_order": "passed",
+    "compare_url_order": "passed",
+    "django_runtime_tests": "GitHub Actions after upload"
+  },
+  "features": [
+    "Oturum tabanlı ilan karşılaştırma",
+    "Son görüntülenen ilanlar",
+    "Gelişmiş marketplace filtreleri",
+    "Mobil filtre çekmecesi",
+    "Benzer ilanlar ve satıcı vitrini",
+    "Profesyonel yönetim merkezi",
+    "Yeni otomatik testler"
+  ]
+}

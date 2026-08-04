@@ -1,0 +1,19 @@
+İLAN ŞEHRİ v1.2 PROFESYONEL MARKETPLACE
+
+1. ZIP dosyasını ayıklayın.
+2. İçindeki tüm dosya ve klasörleri GitHub Desktop'taki ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.2 profesyonel marketplace
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın ve Ctrl+F5 yapın.
+
+Profesyonel yönetim merkezi:
+  /yonetim/
+
+Teknik Django admin:
+  /admin/
