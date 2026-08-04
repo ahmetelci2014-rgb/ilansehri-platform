@@ -1,0 +1,12 @@
+İLAN ŞEHRİ v0.6 KONTROL NOTU
+
+Tamamlanan kontroller:
+- Tüm Python dosyaları sözdizimi kontrolünden geçti.
+- Django şablonlarının if/for/block/with açılış-kapanışları doğrulandı.
+- JavaScript ve CSS parantez dengeleri kontrol edildi.
+- Codespaces kabuk komutları bash sözdizimi kontrolünden geçti.
+- Güncelleme paketinde derleme artığı (__pycache__ / .pyc) bulunmuyor.
+
+Not:
+Tam Django veritabanı ve çalışma testleri, paket GitHub'a yüklendikten sonra
+GitHub Actions üzerindeki “Django Kontrol” iş akışında çalışacaktır.
