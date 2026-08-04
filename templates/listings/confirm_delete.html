@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}İlanı Sil | İlan Şehri{% endblock %}
+{% block content %}
+<section class="form-page narrow delete-page"><div class="delete-card"><div class="delete-icon">🗑️</div><span class="section-label">KALICI İŞLEM</span><h1>İlanı silmek istediğine emin misin?</h1><p><strong>{{ object.title }}</strong> ilanı, fotoğrafları, teklifleri ve mesajlarıyla birlikte kalıcı olarak silinecek.</p><div class="delete-warning">Bu işlem geri alınamaz. Yalnızca geçici olarak kaldırmak istiyorsan Hesabım sayfasından ilanı duraklat.</div><form method="post">{% csrf_token %}<button class="button danger-button full" type="submit">Evet, İlanı Kalıcı Olarak Sil</button><a class="button secondary full" href="{% url 'accounts:dashboard' %}">Vazgeç ve Hesabıma Dön</a></form></div></section>
+{% endblock %}
