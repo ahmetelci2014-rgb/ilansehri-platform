@@ -12,7 +12,7 @@
 
     <article class="detail-content-card"><div class="detail-content-head"><h2>İlan açıklaması</h2><span>İlan No: {{ listing.id }}</span></div><div class="detail-description">{{ listing.description|linebreaks }}</div></article>
     <article class="detail-content-card"><h2>İlan bilgileri</h2><div class="detail-meta-grid"><div><span>İlan türü</span><strong>{{ listing.get_kind_display }}</strong></div><div><span>İşlem</span><strong>{{ listing.get_action_display }}</strong></div><div><span>Kategori</span><strong>{{ listing.category.name }}</strong></div><div><span>Durum</span><strong>{{ listing.condition|default:"Belirtilmedi" }}</strong></div><div><span>Konum</span><strong>{{ listing.city }} / {{ listing.district }}</strong></div><div><span>Yayın tarihi</span><strong>{{ listing.created_at|date:"d F Y" }}</strong></div></div></article>
-    <article class="safety-card"><div class="safety-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V7Z"/><path d="m9 12 2 2 4-4"/></svg></div><div><h3>Güvenli işlem önerileri</h3><p>Ürünü görmeden ödeme yapma, kişisel şifrelerini paylaşma ve görüşmeleri kayıtlı kanallar üzerinden sürdür.</p></div></article>
+    <article class="safety-card"><div class="safety-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V7Z"/><path d="m9 12 2 2 4-4"/></svg></div><div><h3>Güvenli işlem önerileri</h3><p>Ürünü görmeden ödeme yapma, kişisel şifrelerini paylaşma ve görüşmeleri İlan Şehri mesajları üzerinden sürdür.</p></div></article>
   </div>
 
   <aside class="detail-sidebar">
@@ -23,16 +23,27 @@
       <div class="price">{% if listing.price_on_request %}Teklif Alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} <small>TL</small>{% else %}Fiyat belirtilmedi{% endif %}</div>
       <div class="listing-summary"><span><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ listing.created_at|timesince }} önce</span><span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>{{ listing.view_count }} görüntülenme</span></div>
 
+      {% if user.is_authenticated and user != listing.owner %}
+        <form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}" class="favorite-form">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="favorite-button {% if is_favorite %}is-favorite{% endif %}" type="submit"><span>{% if is_favorite %}♥{% else %}♡{% endif %}</span>{% if is_favorite %}Favorilerden Çıkar{% else %}Favoriye Ekle{% endif %}</button></form>
+      {% endif %}
+
       <div class="owner-card"><div class="owner-avatar">{{ listing.owner.first_name|first|default:listing.owner.username|first|upper }}</div><div><small>İlan sahibi</small><strong>{{ listing.owner.get_full_name|default:listing.owner.username }}</strong><span>{% if listing.owner.is_phone_verified %}✓ Telefonu doğrulandı{% else %}İlan Şehri üyesi{% endif %}</span></div></div>
 
       {% if user == listing.owner %}
-        <a class="button full" href="{% url 'listings:update' listing.slug %}">İlanı Düzenle</a>
+        <div class="owner-detail-actions">
+          <a class="button full" href="{% url 'listings:update' listing.slug %}">İlanı Düzenle</a>
+          <a class="button secondary full" href="{% url 'accounts:dashboard' %}">Yönetim Paneline Git</a>
+        </div>
       {% elif can_offer %}
-        <form method="post" class="offer-form">{% csrf_token %}<div class="offer-title"><span>💬</span><div><h3>Teklif gönder</h3><p>İlan sahibine güvenli şekilde ulaş.</p></div></div>{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endfor %}<button class="button full" type="submit">Teklifi Gönder <span>→</span></button></form>
+        <div class="contact-card message-contact-card">
+          <div class="offer-title"><span>✉️</span><div><h3>Özel mesaj gönder</h3><p>Telefon numaran görünmeden güvenli şekilde konuş.</p></div></div>
+          <form method="post" action="{% url 'listings:start_conversation' listing.slug %}">{% csrf_token %}<div class="field"><label for="{{ message_form.body.id_for_label }}">{{ message_form.body.label }}</label>{{ message_form.body }}</div><button class="button full" type="submit">Mesaj Gönder <span>→</span></button></form>
+        </div>
+        <details class="offer-details"><summary>Fiyat teklifi gönder</summary><form method="post" class="offer-form">{% csrf_token %}{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endfor %}<button class="button secondary full" type="submit">Teklifi Gönder</button></form></details>
       {% else %}
-        <a class="button full" href="{% url 'login' %}?next={{ request.path }}">Teklif vermek için giriş yap</a>
+        <a class="button full" href="{% url 'login' %}?next={{ request.path }}">Mesaj göndermek için giriş yap</a>
       {% endif %}
-      <div class="privacy-note"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>İletişim ve teklif bilgilerin güvenli biçimde saklanır.</div>
+      <div class="privacy-note"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Mesaj ve teklif kayıtlarını yalnız ilgili kullanıcılar görebilir.</div>
     </div>
   </aside>
 </div></section>
