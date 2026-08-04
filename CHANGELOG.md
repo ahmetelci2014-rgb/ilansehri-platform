@@ -29,3 +29,13 @@
 - Tam Yönetim seçilen ilanlar için operasyon kaydı otomatikleştirildi.
 - Şehir, ilçe, ilan türü ve işlem filtresi geliştirildi.
 - Mobil kullanıcı arayüzü iyileştirildi.
+
+## v0.5 — İlan Yönetimi, Favoriler ve Mesajlaşma
+
+- İlan duraklatma, yeniden yayınlama, sonuçlandırma ve kalıcı silme
+- Favoriye ekleme/çıkarma ve Favorilerim sayfası
+- İlan sahibi ile özel mesajlaşma
+- Mesaj kutusu, okunmamış mesaj sayacı ve konuşma ekranı
+- Hesabım panelinde yeni ilan yönetim kontrolleri
+- Gelen teklifler, favoriler ve son konuşmaların panelde gösterimi
+- Yetki ve gizlilik testleri
