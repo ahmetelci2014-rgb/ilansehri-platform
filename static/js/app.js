@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.addEventListener("load", () => {
           const item = document.createElement("div");
           item.className = "image-preview-item";
-          item.innerHTML = `<img alt="Seçilen fotoğraf ${index + 1}"><span>${index === 0 ? "Kapak" : index + 1}</span>`;
+          item.innerHTML = `<img alt="Seçilen fotoğraf ${index + 1}"><span>${index === 0 ? "Yeni kapak adayı" : index + 1}</span>`;
           item.querySelector("img").src = reader.result;
           preview.appendChild(item);
         });
@@ -45,99 +45,93 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  const chatMessages = document.querySelector("[data-chat-messages]");
-  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  // İlan türüne göre kategoriye özel alanlar.
   const listingForm = document.querySelector("[data-listing-form]");
   const kindSelect = listingForm?.querySelector("#id_kind");
   const actionSelect = listingForm?.querySelector("#id_action");
-  const kindGroups = listingForm?.querySelectorAll("[data-kind-group]") || [];
-  const kindEmpty = listingForm?.querySelector("[data-kind-empty]");
-  const updateKindGroups = () => {
-    const selectedKind = kindSelect?.value || "";
-    let visibleCount = 0;
-    kindGroups.forEach((group) => {
-      const kinds = (group.dataset.kindGroup || "").split(",");
-      const visible = kinds.includes(selectedKind);
-      group.classList.toggle("is-visible", visible);
-      group.querySelectorAll("input, select, textarea").forEach((field) => {
-        field.disabled = !visible;
-      });
-      if (visible) visibleCount += 1;
+  const fieldKinds = {
+    condition: ["product", "vehicle"], brand: ["product", "vehicle"], model_name: ["product", "vehicle"],
+    model_year: ["vehicle"], mileage: ["vehicle"], fuel_type: ["vehicle"], transmission: ["vehicle"],
+    room_count: ["real_estate"], area_m2: ["real_estate"], building_age: ["real_estate"], floor_location: ["real_estate"], heating_type: ["real_estate"],
+    service_area: ["service"], fee_type: ["service"], job_type: ["job"], experience_level: ["job"],
+  };
+  const allowedActions = {
+    product: ["sell", "rent", "swap", "wanted"], vehicle: ["sell", "rent", "swap", "wanted"],
+    real_estate: ["sell", "rent", "wanted"], service: ["service_offer", "service_request"],
+    need: ["wanted", "service_request"], job: ["job_offer", "job_request"],
+  };
+  const updateKindFields = () => {
+    const selected = kindSelect?.value || "";
+    listingForm?.querySelectorAll("[data-kind-field]").forEach((wrapper) => {
+      const name = wrapper.dataset.kindField;
+      const visible = (fieldKinds[name] || []).includes(selected);
+      wrapper.hidden = !visible;
+      wrapper.querySelectorAll("input,select,textarea").forEach((field) => { field.disabled = !visible; });
     });
-    kindEmpty?.classList.toggle("is-hidden", visibleCount > 0 || selectedKind === "need");
-
-    const allowedActions = {
-      product: ["sell", "rent", "swap", "wanted"],
-      vehicle: ["sell", "rent", "swap", "wanted"],
-      real_estate: ["sell", "rent", "wanted"],
-      service: ["service_offer", "service_request"],
-      need: ["wanted", "service_request"],
-      job: ["job_offer", "job_request"],
-    };
-    if (actionSelect && selectedKind) {
-      const allowed = allowedActions[selectedKind] || [];
+    if (actionSelect && selected) {
+      const allowed = allowedActions[selected] || [];
       Array.from(actionSelect.options).forEach((option) => {
         if (!option.value) return;
         option.hidden = !allowed.includes(option.value);
         option.disabled = !allowed.includes(option.value);
       });
-      if (actionSelect.value && !allowed.includes(actionSelect.value)) {
-        actionSelect.value = "";
-      }
+      if (actionSelect.value && !allowed.includes(actionSelect.value)) actionSelect.value = "";
     }
   };
   if (kindSelect) {
-    updateKindGroups();
-    kindSelect.addEventListener("change", updateKindGroups);
+    updateKindFields();
+    kindSelect.addEventListener("change", updateKindFields);
   }
 
-  // Şehir → ilçe → mahalle önerileri. Alanlar serbest yazmaya devam eder.
   const cityInput = listingForm?.querySelector("[data-location-city]");
   const districtInput = listingForm?.querySelector("[data-location-district]");
   const neighborhoodInput = listingForm?.querySelector("[data-location-neighborhood]");
   const districtOptions = document.querySelector("#district-options");
   const neighborhoodOptions = document.querySelector("#neighborhood-options");
   const locationUrl = listingForm?.dataset.locationUrl;
-
   const fillDatalist = (element, values) => {
     if (!element) return;
     element.innerHTML = "";
     values.forEach((value) => {
-      const option = document.createElement("option");
-      option.value = value;
-      element.appendChild(option);
+      const option = document.createElement("option"); option.value = value; element.appendChild(option);
     });
   };
-
   const loadLocations = async ({ clearDistrict = false } = {}) => {
     if (!locationUrl || !cityInput) return;
-    if (clearDistrict && districtInput) {
-      districtInput.value = "";
-      if (neighborhoodInput) neighborhoodInput.value = "";
-    }
-    const params = new URLSearchParams({
-      city: cityInput.value || "",
-      district: districtInput?.value || "",
-    });
+    if (clearDistrict && districtInput) { districtInput.value = ""; if (neighborhoodInput) neighborhoodInput.value = ""; }
+    const params = new URLSearchParams({ city: cityInput.value || "", district: districtInput?.value || "" });
     try {
-      const response = await fetch(`${locationUrl}?${params.toString()}`, {
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-      });
+      const response = await fetch(`${locationUrl}?${params.toString()}`, { headers: { "X-Requested-With": "XMLHttpRequest" } });
       if (!response.ok) return;
       const data = await response.json();
-      fillDatalist(districtOptions, data.districts || []);
-      fillDatalist(neighborhoodOptions, data.neighborhoods || []);
-    } catch (_error) {
-      // Konum önerileri yüklenemezse kullanıcı alanlara serbestçe yazabilir.
-    }
+      fillDatalist(districtOptions, data.districts || []); fillDatalist(neighborhoodOptions, data.neighborhoods || []);
+    } catch (_error) { /* Serbest giriş devam eder. */ }
   };
-
-  if (cityInput) {
-    loadLocations();
-    cityInput.addEventListener("change", () => loadLocations({ clearDistrict: true }));
-  }
+  if (cityInput) { loadLocations(); cityInput.addEventListener("change", () => loadLocations({ clearDistrict: true })); }
   districtInput?.addEventListener("change", () => loadLocations());
   districtInput?.addEventListener("blur", () => loadLocations());
+
+  const sortable = document.querySelector("[data-sortable-images]");
+  const orderForm = document.querySelector("[data-image-order-form]");
+  const orderInput = orderForm?.querySelector("[data-image-order]");
+  if (sortable && orderInput) {
+    let dragged = null;
+    sortable.querySelectorAll("[data-image-id]").forEach((item) => {
+      item.draggable = true;
+      item.addEventListener("dragstart", () => { dragged = item; item.classList.add("dragging"); });
+      item.addEventListener("dragend", () => { dragged = null; item.classList.remove("dragging"); });
+      item.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        if (!dragged || dragged === item) return;
+        const box = item.getBoundingClientRect();
+        sortable.insertBefore(dragged, event.clientX < box.left + box.width / 2 ? item : item.nextSibling);
+      });
+    });
+    orderForm.addEventListener("submit", () => {
+      orderInput.value = Array.from(sortable.querySelectorAll("[data-image-id]")).map((item) => item.dataset.imageId).join(",");
+    });
+  }
+
+  document.querySelectorAll(".message").forEach((message) => {
+    window.setTimeout(() => message.classList.add("fade-out"), 5000);
+  });
 });

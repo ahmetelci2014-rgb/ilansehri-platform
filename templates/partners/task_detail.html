@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ task.title }} — İlan Şehri{% endblock %}
+{% block content %}
+<section class="account-page shell">
+  <div class="account-heading">
+    <div><span class="badge">{{ task.get_task_type_display }}</span><h1>{{ task.title }}</h1><p>📍 {{ task.city }}/{{ task.district }} · {{ task.get_status_display }}</p></div>
+    <div class="task-reward"><small>Görev kazancı</small><strong>{{ task.reward }} TL</strong>{% if task.success_bonus %}<span>+ {{ task.success_bonus }} TL başarı bonusu</span>{% endif %}</div>
+  </div>
+  <div class="detail-columns">
+    <div class="description-card">
+      <h2>Görev açıklaması</h2><p>{{ task.description|linebreaksbr }}</p>
+      <dl><dt>Son tarih</dt><dd>{{ task.due_at|date:"d.m.Y H:i"|default:"Esnek" }}</dd><dt>Minimum seviye</dt><dd>{{ task.get_min_level_display }}</dd></dl>
+      {% if task.result_note %}<h3>Teslim notu</h3><p>{{ task.result_note|linebreaksbr }}</p>{% endif %}
+      {% if task.proof_file %}<a class="button secondary" href="{{ task.proof_file.url }}" target="_blank" rel="noopener">Teslim dosyasını aç</a>{% endif %}
+    </div>
+    <aside>
+      {% if task.status == 'open' %}
+        <h3>Göreve başvur</h3>
+        {% if my_application %}<div class="notice">Başvuru durumu: <b>{{ my_application.get_status_display }}</b></div>
+        {% else %}<form method="post" action="{% url 'partners:apply_task' task.pk %}" class="panel-form compact">{% csrf_token %}{{ application_form.as_p }}<button>Başvuruyu gönder</button></form>{% endif %}
+      {% endif %}
+
+      {% if task.assigned_partner and task.assigned_partner.user == user %}
+        <h3>Görev işlemleri</h3>
+        {% if task.status == 'assigned' %}<form method="post" action="{% url 'partners:task_action' task.pk 'start' %}">{% csrf_token %}<button class="button full">Görevi başlat</button></form>{% endif %}
+        {% if task.status == 'assigned' or task.status == 'in_progress' %}<form method="post" enctype="multipart/form-data" action="{% url 'partners:task_action' task.pk 'submit' %}" class="panel-form compact">{% csrf_token %}{{ submission_form.as_p }}<button>Teslim et</button></form>{% endif %}
+      {% endif %}
+
+      {% if user.is_staff %}
+        <h3>Ekip işlemleri</h3>
+        {% if task.status == 'open' %}
+          {% for application in task.applications.all %}
+            {% if application.status == 'pending' %}<form method="post" action="{% url 'partners:task_action' task.pk 'accept_application' %}" class="inline-action">{% csrf_token %}<input type="hidden" name="application_id" value="{{ application.pk }}"><span>{{ application.partner.user.display_name }}</span><button>Kabul et</button></form>{% endif %}
+          {% empty %}<p>Henüz başvuru yok.</p>{% endfor %}
+        {% endif %}
+        {% if task.status == 'review' %}
+          <form method="post" action="{% url 'partners:task_action' task.pk 'complete' %}">{% csrf_token %}<button class="button full">Teslimi onayla</button></form>
+          <form method="post" action="{% url 'partners:task_action' task.pk 'reject' %}">{% csrf_token %}<button class="button secondary full">Düzeltmeye gönder</button></form>
+        {% endif %}
+      {% endif %}
+    </aside>
+  </div>
+</section>
+{% endblock %}

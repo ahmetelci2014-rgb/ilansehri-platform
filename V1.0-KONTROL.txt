@@ -1,0 +1,21 @@
+İLAN ŞEHRİ v1.0 KONTROL KAPSAMI
+
+Yerel statik kontroller:
+- Python compileall ve AST sözdizimi
+- JavaScript node --check
+- Bash sözdizimi
+- CSS parantez dengesi
+- Django şablon blok dengesi
+- Şablon ve Python URL adlarının karşılaştırılması
+- ZIP bütünlük testi
+
+GitHub Actions üzerinde çalışacak kontroller:
+- Bağımlılık kurulumu
+- Migration üretme ve uygulama
+- Kategori ve bakım komutu
+- Django system check
+- Canlı ortam deployment check
+- collectstatic
+- Tüm Django otomatik testleri
+
+Not: Bu çalışma ortamında Django paketi kurulu olmadığı için gerçek Django çalışma testleri yerelde koşturulamaz; kesin sonuç GitHub Actions'ta alınır.

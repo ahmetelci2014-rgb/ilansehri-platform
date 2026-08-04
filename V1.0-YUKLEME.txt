@@ -1,0 +1,18 @@
+İLAN ŞEHRİ v1.0 YÜKLEME
+
+1. Güncelleme ZIP'ini ayıklayın.
+2. İçindeki tüm dosya ve klasörleri yerel ilansehri-platform klasörüne kopyalayın.
+3. Windows sorarsa "Hedefteki dosyaları değiştir" seçin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.0 tamamlanmış MVP
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+
+   git pull origin main
+   pkill -f "python manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+7. Port 8000 önizlemesini açıp Ctrl+F5 yapın.
+
+Demo içerik istenirse yalnız Codespaces/geliştirmede:
+   python manage.py seed_demo --with-admin

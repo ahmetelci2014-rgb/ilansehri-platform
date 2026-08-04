@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from datetime import timedelta
+
+import uuid
+
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -15,6 +22,7 @@ class Category(models.Model):
         related_name="children",
         on_delete=models.CASCADE,
     )
+    icon = models.CharField(max_length=40, blank=True)
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=0)
 
@@ -56,6 +64,7 @@ class Listing(models.Model):
         PAUSED = "paused", "Duraklatıldı"
         COMPLETED = "completed", "Sonuçlandı"
         REJECTED = "rejected", "Reddedildi"
+        EXPIRED = "expired", "Süresi doldu"
 
     class FuelType(models.TextChoices):
         GASOLINE = "gasoline", "Benzin"
@@ -84,6 +93,13 @@ class Listing(models.Model):
         REMOTE = "remote", "Uzaktan"
         INTERNSHIP = "internship", "Staj"
 
+    class DeliveryType(models.TextChoices):
+        HANDOVER = "handover", "Elden teslim"
+        SHIPPING = "shipping", "Kargo"
+        ON_SITE = "on_site", "Yerinde hizmet / teslim"
+        DIGITAL = "digital", "Dijital teslim"
+        NEGOTIABLE = "negotiable", "Görüşülür"
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="listings",
@@ -104,27 +120,23 @@ class Listing(models.Model):
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=210, unique=True, blank=True)
     description = models.TextField()
-    price = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
+    price = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     price_on_request = models.BooleanField(default=False)
+    is_negotiable = models.BooleanField(default=False)
+    delivery_type = models.CharField(
+        max_length=20,
+        choices=DeliveryType.choices,
+        blank=True,
+        default="",
+    )
     condition = models.CharField(max_length=50, blank=True)
 
-    # Kategoriye özel yapılandırılmış alanlar
     brand = models.CharField(max_length=100, blank=True, default="")
     model_name = models.CharField(max_length=100, blank=True, default="")
     model_year = models.PositiveSmallIntegerField(null=True, blank=True)
     mileage = models.PositiveIntegerField(null=True, blank=True)
     fuel_type = models.CharField(max_length=20, choices=FuelType.choices, blank=True, default="")
-    transmission = models.CharField(
-        max_length=20,
-        choices=Transmission.choices,
-        blank=True,
-        default="",
-    )
+    transmission = models.CharField(max_length=20, choices=Transmission.choices, blank=True, default="")
     room_count = models.CharField(max_length=30, blank=True, default="")
     area_m2 = models.PositiveIntegerField(null=True, blank=True)
     building_age = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -138,23 +150,9 @@ class Listing(models.Model):
     city = models.CharField(max_length=80)
     district = models.CharField(max_length=80)
     neighborhood = models.CharField(max_length=120, blank=True)
-    latitude = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True,
-    )
-    longitude = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True,
-    )
-    status = models.CharField(
-        max_length=16,
-        choices=Status.choices,
-        default=Status.REVIEW,
-    )
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.REVIEW)
     review_note = models.TextField(blank=True, default="")
     moderated_at = models.DateTimeField(null=True, blank=True)
     moderated_by = models.ForeignKey(
@@ -166,7 +164,10 @@ class Listing(models.Model):
     )
     is_featured = models.BooleanField(default=False)
     view_count = models.PositiveIntegerField(default=0)
+    favorite_count = models.PositiveIntegerField(default=0)
     published_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    renewal_count = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -188,12 +189,24 @@ class Listing(models.Model):
                 candidate = f"{base}-{counter}"
                 counter += 1
             self.slug = candidate
-        if self.status == self.Status.PUBLISHED and self.published_at is None:
-            self.published_at = timezone.now()
+        if self.status == self.Status.PUBLISHED:
+            if self.published_at is None:
+                self.published_at = timezone.now()
+            if self.expires_at is None:
+                self.expires_at = timezone.now() + timedelta(days=60)
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse("listings:detail", kwargs={"slug": self.slug})
+
+    @property
+    def cover_image(self):
+        prefetched = list(self.images.all())
+        return next((image for image in prefetched if image.is_cover), prefetched[0] if prefetched else None)
+
+    @property
+    def location_text(self) -> str:
+        return " / ".join(item for item in (self.city, self.district, self.neighborhood) if item)
 
     @property
     def detail_items(self):
@@ -235,6 +248,8 @@ class Listing(models.Model):
                 items.append(("Çalışma şekli", self.get_job_type_display()))
             if self.experience_level:
                 items.append(("Deneyim", self.experience_level))
+        if self.delivery_type:
+            items.append(("Teslim / hizmet", self.get_delivery_type_display()))
         return items
 
     def __str__(self) -> str:
@@ -242,18 +257,18 @@ class Listing(models.Model):
 
 
 class ListingImage(models.Model):
-    listing = models.ForeignKey(
-        Listing,
-        related_name="images",
-        on_delete=models.CASCADE,
-    )
+    listing = models.ForeignKey(Listing, related_name="images", on_delete=models.CASCADE)
     image = models.ImageField(upload_to="listings/%Y/%m/")
     alt_text = models.CharField(max_length=180, blank=True)
     sort_order = models.PositiveIntegerField(default=0)
     is_cover = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("sort_order", "id")
+
+    def __str__(self) -> str:
+        return f"{self.listing} · görsel {self.pk}"
 
 
 class Offer(models.Model):
@@ -263,121 +278,145 @@ class Offer(models.Model):
         REJECTED = "rejected", "Reddedildi"
         WITHDRAWN = "withdrawn", "Geri çekildi"
 
-    listing = models.ForeignKey(
-        Listing,
-        related_name="offers",
-        on_delete=models.CASCADE,
-    )
-    sender = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="offers",
-        on_delete=models.CASCADE,
-    )
-    amount = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        null=True,
-        blank=True,
-    )
+    listing = models.ForeignKey(Listing, related_name="offers", on_delete=models.CASCADE)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="offers", on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     message = models.TextField(max_length=1200)
-    status = models.CharField(
-        max_length=12,
-        choices=Status.choices,
-        default=Status.PENDING,
-    )
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
+    responded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=["listing", "status", "-created_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.listing} · {self.sender}"
+
+
+class Transaction(models.Model):
+    class Status(models.TextChoices):
+        AGREED = "agreed", "Anlaşma sağlandı"
+        DELIVERY = "delivery", "Teslim / hizmet aşamasında"
+        COMPLETED = "completed", "Tamamlandı"
+        CANCELLED = "cancelled", "İptal edildi"
+        DISPUTED = "disputed", "Uyuşmazlık bildirildi"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    listing = models.ForeignKey(Listing, related_name="transactions", on_delete=models.PROTECT)
+    offer = models.OneToOneField(Offer, related_name="transaction", on_delete=models.PROTECT)
+    buyer = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="purchases", on_delete=models.PROTECT)
+    seller = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="sales", on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.AGREED)
+    buyer_confirmed = models.BooleanField(default=False)
+    seller_confirmed = models.BooleanField(default=False)
+    dispute_reason = models.TextField(max_length=1500, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ("-created_at",)
 
+    def get_absolute_url(self):
+        return reverse("listings:transaction_detail", kwargs={"public_id": self.public_id})
 
-class Favorite(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="favorite_items",
-        on_delete=models.CASCADE,
-    )
-    listing = models.ForeignKey(
-        Listing,
-        related_name="favorited_by",
-        on_delete=models.CASCADE,
-    )
+    def is_participant(self, user) -> bool:
+        return user.pk in {self.buyer_id, self.seller_id}
+
+    def __str__(self) -> str:
+        return f"{self.listing} · {self.get_status_display()}"
+
+
+class Review(models.Model):
+    transaction = models.ForeignKey(Transaction, related_name="reviews", on_delete=models.CASCADE)
+    reviewer = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="written_reviews", on_delete=models.CASCADE)
+    reviewed_user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="received_reviews", on_delete=models.CASCADE)
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(max_length=1000, blank=True)
+    is_visible = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("-created_at",)
         constraints = [
-            models.UniqueConstraint(
-                fields=("user", "listing"),
-                name="unique_user_listing_favorite",
-            )
+            models.UniqueConstraint(fields=("transaction", "reviewer"), name="unique_transaction_reviewer")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.reviewed_user} · {self.rating}/5"
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="favorite_items", on_delete=models.CASCADE)
+    listing = models.ForeignKey(Listing, related_name="favorited_by", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(fields=("user", "listing"), name="unique_user_listing_favorite")
         ]
 
     def __str__(self) -> str:
         return f"{self.user} · {self.listing}"
 
 
+class SavedSearch(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="saved_searches", on_delete=models.CASCADE)
+    name = models.CharField(max_length=120)
+    query_params = models.JSONField(default=dict)
+    alert_enabled = models.BooleanField(default=True)
+    last_notified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.name}"
+
+
 class Conversation(models.Model):
-    listing = models.ForeignKey(
-        Listing,
-        related_name="conversations",
-        on_delete=models.CASCADE,
-    )
-    buyer = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="buying_conversations",
-        on_delete=models.CASCADE,
-    )
-    seller = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="selling_conversations",
-        on_delete=models.CASCADE,
-    )
+    listing = models.ForeignKey(Listing, related_name="conversations", on_delete=models.CASCADE)
+    buyer = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="buying_conversations", on_delete=models.CASCADE)
+    seller = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="selling_conversations", on_delete=models.CASCADE)
+    buyer_archived = models.BooleanField(default=False)
+    seller_archived = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ("-updated_at",)
         constraints = [
-            models.UniqueConstraint(
-                fields=("listing", "buyer"),
-                name="unique_listing_buyer_conversation",
-            )
+            models.UniqueConstraint(fields=("listing", "buyer"), name="unique_listing_buyer_conversation")
         ]
 
     def other_participant(self, user):
-        return self.seller if user == self.buyer else self.buyer
+        return self.seller if user.pk == self.buyer_id else self.buyer
 
     def __str__(self) -> str:
         return f"{self.listing} · {self.buyer} / {self.seller}"
 
 
 class Message(models.Model):
-    conversation = models.ForeignKey(
-        Conversation,
-        related_name="messages",
-        on_delete=models.CASCADE,
-    )
-    sender = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="sent_listing_messages",
-        on_delete=models.CASCADE,
-    )
+    conversation = models.ForeignKey(Conversation, related_name="messages", on_delete=models.CASCADE)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="sent_listing_messages", on_delete=models.CASCADE)
     body = models.TextField(max_length=1600)
+    attachment = models.ImageField(upload_to="messages/%Y/%m/", blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("created_at",)
-        indexes = [
-            models.Index(fields=["conversation", "is_read", "created_at"]),
-        ]
+        indexes = [models.Index(fields=["conversation", "is_read", "created_at"])]
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        Conversation.objects.filter(pk=self.conversation_id).update(
-            updated_at=timezone.now()
-        )
+        Conversation.objects.filter(pk=self.conversation_id).update(updated_at=timezone.now())
 
     def __str__(self) -> str:
         return f"{self.sender}: {self.body[:40]}"
@@ -387,14 +426,15 @@ class Notification(models.Model):
     class Type(models.TextChoices):
         MESSAGE = "message", "Mesaj"
         OFFER = "offer", "Teklif"
+        TRANSACTION = "transaction", "İşlem"
+        REVIEW = "review", "Puan / yorum"
         LISTING_STATUS = "listing_status", "İlan durumu"
+        MANAGED = "managed", "Tam yönetim"
+        TASK = "task", "Görev"
+        VERIFICATION = "verification", "Doğrulama"
         SYSTEM = "system", "Sistem"
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="notifications",
-        on_delete=models.CASCADE,
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="notifications", on_delete=models.CASCADE)
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="triggered_notifications",
@@ -405,7 +445,7 @@ class Notification(models.Model):
     listing = models.ForeignKey(
         Listing,
         related_name="notifications",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
@@ -439,23 +479,11 @@ class ListingReport(models.Model):
         RESOLVED = "resolved", "Çözüldü"
         DISMISSED = "dismissed", "İşlem gerektirmiyor"
 
-    listing = models.ForeignKey(
-        Listing,
-        related_name="reports",
-        on_delete=models.CASCADE,
-    )
-    reporter = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="listing_reports",
-        on_delete=models.CASCADE,
-    )
+    listing = models.ForeignKey(Listing, related_name="reports", on_delete=models.CASCADE)
+    reporter = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="listing_reports", on_delete=models.CASCADE)
     reason = models.CharField(max_length=24, choices=Reason.choices)
     details = models.TextField(max_length=1200, blank=True)
-    status = models.CharField(
-        max_length=16,
-        choices=Status.choices,
-        default=Status.OPEN,
-    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.OPEN)
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="reviewed_listing_reports",
@@ -469,10 +497,7 @@ class ListingReport(models.Model):
     class Meta:
         ordering = ("-created_at",)
         constraints = [
-            models.UniqueConstraint(
-                fields=("listing", "reporter"),
-                name="unique_listing_reporter",
-            )
+            models.UniqueConstraint(fields=("listing", "reporter"), name="unique_listing_reporter")
         ]
 
     def __str__(self) -> str:

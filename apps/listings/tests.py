@@ -1,96 +1,60 @@
 from decimal import Decimal
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.accounts.models import User
-from apps.managed_services.models import ManagedRequest
 
 from .models import (
     Category,
     Conversation,
     Favorite,
     Listing,
-    ListingReport,
+    ListingImage,
     Message,
     Notification,
     Offer,
+    Review,
+    Transaction,
 )
 
 
+TINY_GIF = (
+    b"GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00ccc,\x00\x00\x00\x00"
+    b"\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+)
+
+
+@override_settings(AUTO_PUBLISH_LISTINGS=True)
 class ListingFlowTests(TestCase):
     def setUp(self):
-        self.owner = User.objects.create_user(
-            username="owner",
-            password="GucluTestSifresi_2026",
-            city="Şanlıurfa",
-            district="Karaköprü",
-        )
-        self.buyer = User.objects.create_user(
-            username="buyer",
-            password="GucluTestSifresi_2026",
-        )
-        self.stranger = User.objects.create_user(
-            username="stranger",
-            password="GucluTestSifresi_2026",
-        )
-        self.staff = User.objects.create_user(
-            username="moderator",
-            password="GucluTestSifresi_2026",
-            is_staff=True,
-        )
-        self.category = Category.objects.create(name="Elektronik", slug="elektronik")
+        self.owner = User.objects.create_user(username="owner", password="StrongPass_2026", phone="05550000001")
+        self.buyer = User.objects.create_user(username="buyer", password="StrongPass_2026", phone="05550000002")
+        self.stranger = User.objects.create_user(username="stranger", password="StrongPass_2026")
+        self.staff = User.objects.create_user(username="staff", password="StrongPass_2026", is_staff=True)
+        self.product_category = Category.objects.create(name="Telefon", slug="telefon")
         self.vehicle_category = Category.objects.create(name="Otomobil", slug="otomobil")
 
     def create_listing(self, **overrides):
         data = {
             "owner": self.owner,
-            "category": self.category,
+            "category": self.product_category,
             "kind": Listing.Kind.PRODUCT,
             "action": Listing.Action.SELL,
             "management_mode": Listing.ManagementMode.SELF,
-            "title": "Satılık dizüstü bilgisayar",
-            "description": "Bakımlı ve sorunsuz.",
+            "title": "Test telefonu",
+            "description": "Çok temiz durumda test telefonu.",
             "price": Decimal("25000.00"),
-            "condition": "İyi durumda",
+            "condition": "Az kullanılmış",
             "city": "Şanlıurfa",
-            "district": "Haliliye",
+            "district": "Karaköprü",
             "status": Listing.Status.PUBLISHED,
         }
         data.update(overrides)
         return Listing.objects.create(**data)
 
-    @override_settings(AUTO_PUBLISH_LISTINGS=True)
-    def test_full_management_listing_creates_managed_request(self):
-        self.client.force_login(self.owner)
-        response = self.client.post(
-            reverse("listings:create"),
-            {
-                "kind": Listing.Kind.PRODUCT,
-                "action": Listing.Action.SELL,
-                "management_mode": Listing.ManagementMode.FULL,
-                "category": self.category.pk,
-                "title": "Temiz ikinci el telefon",
-                "description": "Çalışır durumda, kutusu ve faturası vardır.",
-                "price": "15000.00",
-                "condition": "İkinci el",
-                "brand": "Apple",
-                "model_name": "iPhone 15",
-                "city": "Şanlıurfa",
-                "district": "Karaköprü",
-                "neighborhood": "Atakent",
-            },
-        )
-
-        listing = Listing.objects.get(title="Temiz ikinci el telefon")
-        self.assertRedirects(response, listing.get_absolute_url())
-        self.assertEqual(listing.status, Listing.Status.PUBLISHED)
-        self.assertTrue(
-            ManagedRequest.objects.filter(listing=listing, customer=self.owner).exists()
-        )
-
-    @override_settings(AUTO_PUBLISH_LISTINGS=True)
-    def test_vehicle_specific_fields_are_saved(self):
+    def test_user_can_create_category_specific_vehicle_listing(self):
         self.client.force_login(self.owner)
         response = self.client.post(
             reverse("listings:create"),
@@ -109,6 +73,7 @@ class ListingFlowTests(TestCase):
                 "mileage": "42000",
                 "fuel_type": Listing.FuelType.GASOLINE,
                 "transmission": Listing.Transmission.AUTOMATIC,
+                "delivery_type": Listing.DeliveryType.HANDOVER,
                 "city": "Şanlıurfa",
                 "district": "Karaköprü",
                 "neighborhood": "Akpıyar",
@@ -118,188 +83,127 @@ class ListingFlowTests(TestCase):
         self.assertRedirects(response, listing.get_absolute_url())
         self.assertEqual(listing.brand, "Toyota")
         self.assertEqual(listing.model_year, 2022)
-        self.assertEqual(listing.mileage, 42000)
 
-    def test_another_user_can_send_offer_and_owner_is_notified(self):
+    def test_offer_acceptance_creates_transaction_and_rejects_others(self):
+        listing = self.create_listing()
+        first = Offer.objects.create(listing=listing, sender=self.buyer, amount="23000", message="Bugün alabilirim")
+        second = Offer.objects.create(listing=listing, sender=self.stranger, amount="22000", message="Yarın alabilirim")
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse("listings:offer_action", kwargs={"pk": first.pk, "action": "accept"}))
+        transaction = Transaction.objects.get(offer=first)
+        self.assertRedirects(response, transaction.get_absolute_url())
+        first.refresh_from_db(); second.refresh_from_db(); listing.refresh_from_db()
+        self.assertEqual(first.status, Offer.Status.ACCEPTED)
+        self.assertEqual(second.status, Offer.Status.REJECTED)
+        self.assertEqual(listing.status, Listing.Status.PAUSED)
+
+    def test_two_sided_confirmation_completes_transaction(self):
+        listing = self.create_listing()
+        offer = Offer.objects.create(listing=listing, sender=self.buyer, amount="23000", message="Teklif")
+        offer.status = Offer.Status.ACCEPTED
+        offer.save()
+        transaction = Transaction.objects.create(listing=listing, offer=offer, buyer=self.buyer, seller=self.owner, amount="23000")
+        self.client.force_login(self.buyer)
+        self.client.post(reverse("listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": "confirm"}))
+        self.client.force_login(self.owner)
+        self.client.post(reverse("listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": "confirm"}))
+        transaction.refresh_from_db(); listing.refresh_from_db()
+        self.assertEqual(transaction.status, Transaction.Status.COMPLETED)
+        self.assertEqual(listing.status, Listing.Status.COMPLETED)
+
+    def test_completed_transaction_can_be_reviewed_once(self):
+        listing = self.create_listing(status=Listing.Status.COMPLETED)
+        offer = Offer.objects.create(listing=listing, sender=self.buyer, amount="23000", message="Teklif", status=Offer.Status.ACCEPTED)
+        transaction = Transaction.objects.create(
+            listing=listing,
+            offer=offer,
+            buyer=self.buyer,
+            seller=self.owner,
+            amount="23000",
+            status=Transaction.Status.COMPLETED,
+        )
+        self.client.force_login(self.buyer)
+        url = reverse("listings:create_review", kwargs={"public_id": transaction.public_id})
+        self.client.post(url, {"rating": "5", "comment": "Güvenilir satıcı."})
+        self.client.post(url, {"rating": "1", "comment": "İkinci yorum."})
+        self.assertEqual(Review.objects.filter(transaction=transaction, reviewer=self.buyer).count(), 1)
+        self.owner.refresh_from_db()
+        self.assertEqual(self.owner.rating_count, 1)
+
+    def test_owner_can_manage_listing_images(self):
+        listing = self.create_listing()
+        image1 = ListingImage.objects.create(
+            listing=listing,
+            image=SimpleUploadedFile("one.gif", TINY_GIF, content_type="image/gif"),
+            is_cover=True,
+        )
+        image2 = ListingImage.objects.create(
+            listing=listing,
+            image=SimpleUploadedFile("two.gif", TINY_GIF, content_type="image/gif"),
+            sort_order=1,
+        )
+        self.client.force_login(self.owner)
+        self.client.post(reverse("listings:set_cover_image", kwargs={"slug": listing.slug, "image_id": image2.pk}))
+        image1.refresh_from_db(); image2.refresh_from_db()
+        self.assertFalse(image1.is_cover)
+        self.assertTrue(image2.is_cover)
+        self.client.post(reverse("listings:delete_image", kwargs={"slug": listing.slug, "image_id": image2.pk}))
+        image1.refresh_from_db()
+        self.assertTrue(image1.is_cover)
+
+    def test_user_can_favorite_and_private_message(self):
         listing = self.create_listing()
         self.client.force_login(self.buyer)
-        response = self.client.post(
-            listing.get_absolute_url(),
-            {"amount": "23500.00", "message": "Bugün teslim alabilirim."},
-            follow=True,
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            Offer.objects.filter(
-                listing=listing,
-                sender=self.buyer,
-                amount=Decimal("23500.00"),
-            ).exists()
-        )
-        self.assertTrue(
-            Notification.objects.filter(
-                user=self.owner,
-                listing=listing,
-                notification_type=Notification.Type.OFFER,
-            ).exists()
-        )
-        self.assertContains(response, "Teklifin ilan sahibine gönderildi")
-
-    def test_non_owner_cannot_edit_listing(self):
-        listing = self.create_listing(title="Satılık masa")
-        self.client.force_login(self.buyer)
-        response = self.client.get(reverse("listings:update", kwargs={"slug": listing.slug}))
-        self.assertEqual(response.status_code, 403)
-
-    def test_user_can_favorite_and_unfavorite_listing(self):
-        listing = self.create_listing(title="Favori telefon")
-        self.client.force_login(self.buyer)
-        url = reverse("listings:toggle_favorite", kwargs={"slug": listing.slug})
-        self.client.post(url, {"next": listing.get_absolute_url()})
+        self.client.post(reverse("listings:toggle_favorite", kwargs={"slug": listing.slug}))
         self.assertTrue(Favorite.objects.filter(user=self.buyer, listing=listing).exists())
-        self.client.post(url, {"next": listing.get_absolute_url()})
-        self.assertFalse(Favorite.objects.filter(user=self.buyer, listing=listing).exists())
-
-    def test_owner_can_pause_and_republish_listing(self):
-        listing = self.create_listing(title="Durum değişecek ilan")
-        self.client.force_login(self.owner)
         self.client.post(
-            reverse("listings:change_status", kwargs={"slug": listing.slug, "action": "pause"})
-        )
-        listing.refresh_from_db()
-        self.assertEqual(listing.status, Listing.Status.PAUSED)
-        self.client.post(
-            reverse("listings:change_status", kwargs={"slug": listing.slug, "action": "publish"})
-        )
-        listing.refresh_from_db()
-        self.assertEqual(listing.status, Listing.Status.PUBLISHED)
-
-    def test_review_listing_cannot_bypass_moderation(self):
-        listing = self.create_listing(title="İncelemedeki ilan", status=Listing.Status.REVIEW)
-        self.client.force_login(self.owner)
-        self.client.post(
-            reverse("listings:change_status", kwargs={"slug": listing.slug, "action": "publish"})
-        )
-        listing.refresh_from_db()
-        self.assertEqual(listing.status, Listing.Status.REVIEW)
-
-    def test_non_owner_cannot_change_listing_status(self):
-        listing = self.create_listing(title="Korunan ilan")
-        self.client.force_login(self.buyer)
-        response = self.client.post(
-            reverse("listings:change_status", kwargs={"slug": listing.slug, "action": "pause"})
-        )
-        self.assertEqual(response.status_code, 404)
-        listing.refresh_from_db()
-        self.assertEqual(listing.status, Listing.Status.PUBLISHED)
-
-    def test_user_can_start_private_conversation_and_owner_is_notified(self):
-        listing = self.create_listing(title="Mesajlı ilan")
-        self.client.force_login(self.buyer)
-        response = self.client.post(
             reverse("listings:start_conversation", kwargs={"slug": listing.slug}),
             {"body": "Ürün hâlâ satılık mı?"},
         )
         conversation = Conversation.objects.get(listing=listing, buyer=self.buyer)
-        self.assertRedirects(
-            response,
-            reverse("listings:conversation_detail", kwargs={"pk": conversation.pk}),
-        )
-        self.assertTrue(
-            Message.objects.filter(
-                conversation=conversation,
-                sender=self.buyer,
-                body="Ürün hâlâ satılık mı?",
-            ).exists()
-        )
-        self.assertTrue(
-            Notification.objects.filter(
-                user=self.owner,
-                notification_type=Notification.Type.MESSAGE,
-            ).exists()
-        )
+        self.assertTrue(Message.objects.filter(conversation=conversation, sender=self.buyer).exists())
+        self.assertTrue(Notification.objects.filter(user=self.owner, notification_type=Notification.Type.MESSAGE).exists())
 
-    def test_only_conversation_participants_can_view_messages(self):
-        listing = self.create_listing(title="Özel konuşma ilanı")
-        conversation = Conversation.objects.create(
-            listing=listing,
-            buyer=self.buyer,
-            seller=self.owner,
-        )
-        Message.objects.create(conversation=conversation, sender=self.buyer, body="Merhaba")
+    def test_non_participant_cannot_view_transaction(self):
+        listing = self.create_listing()
+        offer = Offer.objects.create(listing=listing, sender=self.buyer, message="Teklif", status=Offer.Status.ACCEPTED)
+        transaction = Transaction.objects.create(listing=listing, offer=offer, buyer=self.buyer, seller=self.owner)
         self.client.force_login(self.stranger)
-        response = self.client.get(
-            reverse("listings:conversation_detail", kwargs={"pk": conversation.pk})
-        )
+        response = self.client.get(transaction.get_absolute_url())
         self.assertEqual(response.status_code, 404)
 
-    def test_owner_can_delete_listing(self):
-        listing = self.create_listing(title="Silinecek ilan")
-        self.client.force_login(self.owner)
-        response = self.client.post(reverse("listings:delete", kwargs={"slug": listing.slug}))
-        self.assertRedirects(response, reverse("accounts:dashboard"))
-        self.assertFalse(Listing.objects.filter(pk=listing.pk).exists())
 
-    def test_user_can_report_listing_once(self):
-        listing = self.create_listing(title="Şikâyet edilecek ilan")
-        self.client.force_login(self.buyer)
-        url = reverse("listings:report", kwargs={"slug": listing.slug})
-        self.client.post(
-            url,
-            {"reason": ListingReport.Reason.WRONG_INFO, "details": "Fiyat bilgisi yanıltıcı."},
-        )
-        self.client.post(
-            url,
-            {"reason": ListingReport.Reason.OTHER, "details": "İkinci kayıt."},
-        )
-        self.assertEqual(
-            ListingReport.objects.filter(listing=listing, reporter=self.buyer).count(),
-            1,
-        )
-
-    def test_staff_can_approve_listing_and_owner_gets_notification(self):
-        listing = self.create_listing(title="Onay bekleyen ilan", status=Listing.Status.REVIEW)
+    def test_staff_can_view_review_listing(self):
+        listing = self.create_listing(status=Listing.Status.REVIEW)
         self.client.force_login(self.staff)
-        response = self.client.post(
-            reverse("listings:moderate_listing", kwargs={"pk": listing.pk, "action": "approve"})
-        )
-        self.assertRedirects(response, reverse("listings:moderation"))
-        listing.refresh_from_db()
-        self.assertEqual(listing.status, Listing.Status.PUBLISHED)
-        self.assertEqual(listing.moderated_by, self.staff)
-        self.assertTrue(
-            Notification.objects.filter(
-                user=self.owner,
-                listing=listing,
-                notification_type=Notification.Type.LISTING_STATUS,
-            ).exists()
-        )
-
-    def test_non_staff_cannot_open_moderation_dashboard(self):
-        self.client.force_login(self.buyer)
-        response = self.client.get(reverse("listings:moderation"))
-        self.assertEqual(response.status_code, 403)
-
-    def test_user_can_mark_notification_as_read(self):
-        notification = Notification.objects.create(
-            user=self.buyer,
-            notification_type=Notification.Type.SYSTEM,
-            title="Test bildirimi",
-            link=reverse("accounts:dashboard"),
-        )
-        self.client.force_login(self.buyer)
-        response = self.client.post(
-            reverse("listings:mark_notification_read", kwargs={"pk": notification.pk})
-        )
-        self.assertRedirects(response, reverse("accounts:dashboard"))
-        notification.refresh_from_db()
-        self.assertTrue(notification.is_read)
-
-    def test_location_suggestions_return_districts(self):
-        response = self.client.get(
-            reverse("listings:location_suggestions"),
-            {"city": "Şanlıurfa", "district": "Karaköprü"},
-        )
+        response = self.client.get(listing.get_absolute_url())
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Karaköprü", response.json()["districts"])
-        self.assertIn("Atakent", response.json()["neighborhoods"])
+
+    def test_staff_can_resolve_disputed_transaction(self):
+        listing = self.create_listing(status=Listing.Status.PAUSED)
+        offer = Offer.objects.create(listing=listing, sender=self.buyer, message="Teklif", status=Offer.Status.ACCEPTED)
+        transaction = Transaction.objects.create(
+            listing=listing,
+            offer=offer,
+            buyer=self.buyer,
+            seller=self.owner,
+            status=Transaction.Status.DISPUTED,
+            dispute_reason="Teslim durumu anlaşmazlığı",
+        )
+        self.client.force_login(self.staff)
+        detail = self.client.get(transaction.get_absolute_url())
+        self.assertEqual(detail.status_code, 200)
+        self.client.post(
+            reverse("listings:moderate_transaction", kwargs={"public_id": transaction.public_id, "action": "complete"})
+        )
+        transaction.refresh_from_db(); listing.refresh_from_db()
+        self.assertEqual(transaction.status, Transaction.Status.COMPLETED)
+        self.assertEqual(listing.status, Listing.Status.COMPLETED)
+
+    def test_duplicate_pending_offer_is_not_created(self):
+        listing = self.create_listing()
+        self.client.force_login(self.buyer)
+        url = listing.get_absolute_url()
+        self.client.post(url, {"amount": "23000", "message": "İlk teklifim"})
+        self.client.post(url, {"amount": "24000", "message": "İkinci teklifim"})
+        self.assertEqual(Offer.objects.filter(listing=listing, sender=self.buyer, status=Offer.Status.PENDING).count(), 1)

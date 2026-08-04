@@ -1,8 +1,18 @@
+from __future__ import annotations
+
 from django import forms
 from django.utils import timezone
 
 from .locations import CITY_CHOICES
-from .models import Listing, ListingReport, Message, Offer
+from .models import (
+    Listing,
+    ListingReport,
+    Message,
+    Offer,
+    Review,
+    SavedSearch,
+    Transaction,
+)
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -34,7 +44,7 @@ class ListingForm(forms.ModelForm):
     images = MultipleFileField(
         required=False,
         label="İlan fotoğrafları",
-        help_text="En fazla 10 fotoğraf yükleyebilirsin. İlk fotoğraf kapak olur.",
+        help_text="Toplam en fazla 10 fotoğraf. İlk yeni fotoğraf, kapak yoksa kapak olur.",
     )
     city = forms.ChoiceField(
         choices=(("", "Şehir seçin"), *CITY_CHOICES),
@@ -76,6 +86,8 @@ class ListingForm(forms.ModelForm):
             "description",
             "price",
             "price_on_request",
+            "is_negotiable",
+            "delivery_type",
             "condition",
             "brand",
             "model_name",
@@ -102,6 +114,8 @@ class ListingForm(forms.ModelForm):
             "management_mode": "İlanı kim yönetecek?",
             "condition": "Ürün / araç durumu",
             "price_on_request": "Fiyat yerine teklif almak istiyorum",
+            "is_negotiable": "Pazarlık payı var",
+            "delivery_type": "Teslim / hizmet şekli",
             "category": "Kategori",
             "price": "Fiyat",
             "brand": "Marka",
@@ -127,15 +141,9 @@ class ListingForm(forms.ModelForm):
                     "placeholder": "Tüm önemli ayrıntıları, teslim koşullarını ve kullanım durumunu açıkça yaz...",
                 }
             ),
-            "title": forms.TextInput(
-                attrs={"placeholder": "Örn. 2022 model düşük kilometre otomobil"}
-            ),
-            "price": forms.NumberInput(
-                attrs={"min": "0", "step": "0.01", "placeholder": "0,00"}
-            ),
-            "condition": forms.TextInput(
-                attrs={"placeholder": "Örn. Sıfır, az kullanılmış, hasarsız"}
-            ),
+            "title": forms.TextInput(attrs={"placeholder": "Kısa, anlaşılır ve açıklayıcı başlık"}),
+            "price": forms.NumberInput(attrs={"min": "0", "step": "0.01", "placeholder": "0,00"}),
+            "condition": forms.TextInput(attrs={"placeholder": "Örn. Sıfır, az kullanılmış, hasarsız"}),
             "brand": forms.TextInput(attrs={"placeholder": "Örn. Toyota, Apple"}),
             "model_name": forms.TextInput(attrs={"placeholder": "Örn. Corolla, iPhone 15"}),
             "model_year": forms.NumberInput(attrs={"min": "1900", "max": "2100"}),
@@ -154,17 +162,18 @@ class ListingForm(forms.ModelForm):
         current_city = getattr(self.instance, "city", "")
         if current_city and current_city not in dict(self.fields["city"].choices):
             self.fields["city"].choices = (*self.fields["city"].choices, (current_city, current_city))
-        self.fields["category"].queryset = self.fields["category"].queryset.filter(
-            is_active=True
-        )
+        self.fields["category"].queryset = self.fields["category"].queryset.filter(is_active=True)
 
     def clean_images(self):
         images = self.cleaned_data.get("images", [])
-        if len(images) > 10:
-            raise forms.ValidationError("Bir ilana en fazla 10 fotoğraf yüklenebilir.")
+        existing_count = self.instance.images.count() if self.instance.pk else 0
+        if existing_count + len(images) > 10:
+            raise forms.ValidationError("Bir ilana toplam en fazla 10 fotoğraf yüklenebilir.")
         for image in images:
             if image.size > 8 * 1024 * 1024:
                 raise forms.ValidationError("Her fotoğraf en fazla 8 MB olabilir.")
+            if not getattr(image, "content_type", "").startswith("image/"):
+                raise forms.ValidationError("Yalnızca görsel dosyaları yüklenebilir.")
         return images
 
     def clean(self):
@@ -173,24 +182,12 @@ class ListingForm(forms.ModelForm):
         action = cleaned.get("action")
 
         allowed_actions = {
-            Listing.Kind.PRODUCT: {
-                Listing.Action.SELL, Listing.Action.RENT, Listing.Action.SWAP, Listing.Action.WANTED
-            },
-            Listing.Kind.VEHICLE: {
-                Listing.Action.SELL, Listing.Action.RENT, Listing.Action.SWAP, Listing.Action.WANTED
-            },
-            Listing.Kind.REAL_ESTATE: {
-                Listing.Action.SELL, Listing.Action.RENT, Listing.Action.WANTED
-            },
-            Listing.Kind.SERVICE: {
-                Listing.Action.SERVICE_OFFER, Listing.Action.SERVICE_REQUEST
-            },
-            Listing.Kind.NEED: {
-                Listing.Action.WANTED, Listing.Action.SERVICE_REQUEST
-            },
-            Listing.Kind.JOB: {
-                Listing.Action.JOB_OFFER, Listing.Action.JOB_REQUEST
-            },
+            Listing.Kind.PRODUCT: {Listing.Action.SELL, Listing.Action.RENT, Listing.Action.SWAP, Listing.Action.WANTED},
+            Listing.Kind.VEHICLE: {Listing.Action.SELL, Listing.Action.RENT, Listing.Action.SWAP, Listing.Action.WANTED},
+            Listing.Kind.REAL_ESTATE: {Listing.Action.SELL, Listing.Action.RENT, Listing.Action.WANTED},
+            Listing.Kind.SERVICE: {Listing.Action.SERVICE_OFFER, Listing.Action.SERVICE_REQUEST},
+            Listing.Kind.NEED: {Listing.Action.WANTED, Listing.Action.SERVICE_REQUEST},
+            Listing.Kind.JOB: {Listing.Action.JOB_OFFER, Listing.Action.JOB_REQUEST},
         }
         if kind and action and action not in allowed_actions.get(kind, set()):
             self.add_error("action", "Seçilen ilan türü için uygun bir işlem seç.")
@@ -200,11 +197,7 @@ class ListingForm(forms.ModelForm):
             Listing.Action.SERVICE_REQUEST,
             Listing.Action.JOB_REQUEST,
         }
-        if (
-            action not in price_optional_actions
-            and not cleaned.get("price_on_request")
-            and cleaned.get("price") is None
-        ):
+        if action not in price_optional_actions and not cleaned.get("price_on_request") and cleaned.get("price") is None:
             self.add_error("price", "Fiyat gir veya teklif almak istediğini işaretle.")
 
         if kind == Listing.Kind.PRODUCT and not cleaned.get("condition"):
@@ -241,23 +234,22 @@ class OfferForm(forms.ModelForm):
         fields = ("amount", "message")
         labels = {"amount": "Teklif tutarı", "message": "Teklif notun"}
         widgets = {
-            "message": forms.Textarea(
-                attrs={
-                    "rows": 4,
-                    "placeholder": "Teklif koşullarını ve teslim planını yaz...",
-                }
-            ),
-            "amount": forms.NumberInput(
-                attrs={"min": "0", "step": "0.01", "placeholder": "TL"}
-            ),
+            "message": forms.Textarea(attrs={"rows": 4, "placeholder": "Teklif koşullarını ve teslim planını yaz..."}),
+            "amount": forms.NumberInput(attrs={"min": "0", "step": "0.01", "placeholder": "TL"}),
         }
+
+    def clean_message(self):
+        message = self.cleaned_data["message"].strip()
+        if len(message) < 5:
+            raise forms.ValidationError("Teklif notu en az 5 karakter olmalıdır.")
+        return message
 
 
 class MessageForm(forms.ModelForm):
     class Meta:
         model = Message
-        fields = ("body",)
-        labels = {"body": "Mesajın"}
+        fields = ("body", "attachment")
+        labels = {"body": "Mesajın", "attachment": "Görsel ekle (isteğe bağlı)"}
         widgets = {
             "body": forms.Textarea(
                 attrs={
@@ -265,7 +257,8 @@ class MessageForm(forms.ModelForm):
                     "placeholder": "İlan hakkında merak ettiğini yaz...",
                     "maxlength": "1600",
                 }
-            )
+            ),
+            "attachment": forms.ClearableFileInput(attrs={"accept": "image/*"}),
         }
 
     def clean_body(self):
@@ -273,6 +266,14 @@ class MessageForm(forms.ModelForm):
         if len(body) < 2:
             raise forms.ValidationError("Mesaj en az 2 karakter olmalıdır.")
         return body
+
+    def clean_attachment(self):
+        attachment = self.cleaned_data.get("attachment")
+        if attachment and attachment.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("Mesaj görseli en fazla 5 MB olabilir.")
+        if attachment and not getattr(attachment, "content_type", "").startswith("image/"):
+            raise forms.ValidationError("Mesaja yalnızca görsel dosyası eklenebilir.")
+        return attachment
 
 
 class ListingReportForm(forms.ModelForm):
@@ -282,9 +283,40 @@ class ListingReportForm(forms.ModelForm):
         labels = {"reason": "Şikâyet nedeni", "details": "Açıklama"}
         widgets = {
             "details": forms.Textarea(
-                attrs={
-                    "rows": 4,
-                    "placeholder": "İnceleme ekibimizin bilmesi gereken ayrıntıları yaz...",
-                }
+                attrs={"rows": 4, "placeholder": "İnceleme ekibimizin bilmesi gereken ayrıntıları yaz..."}
             )
         }
+
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ("rating", "comment")
+        labels = {"rating": "Puanın", "comment": "Deneyimini paylaş"}
+        widgets = {
+            "rating": forms.RadioSelect(choices=[(value, f"{value} yıldız") for value in range(5, 0, -1)]),
+            "comment": forms.Textarea(attrs={"rows": 5, "placeholder": "İletişim, doğruluk ve teslim deneyimini anlat..."}),
+        }
+
+
+class TransactionDisputeForm(forms.ModelForm):
+    class Meta:
+        model = Transaction
+        fields = ("dispute_reason",)
+        labels = {"dispute_reason": "Uyuşmazlık nedeni"}
+        widgets = {
+            "dispute_reason": forms.Textarea(attrs={"rows": 6, "placeholder": "Sorunu ve çözüm beklentini ayrıntılı yaz..."})
+        }
+
+    def clean_dispute_reason(self):
+        reason = self.cleaned_data["dispute_reason"].strip()
+        if len(reason) < 20:
+            raise forms.ValidationError("Uyuşmazlık açıklaması en az 20 karakter olmalıdır.")
+        return reason
+
+
+class SavedSearchForm(forms.ModelForm):
+    class Meta:
+        model = SavedSearch
+        fields = ("name", "alert_enabled")
+        labels = {"name": "Arama adı", "alert_enabled": "Yeni uygun ilanlarda bildirim gönder"}

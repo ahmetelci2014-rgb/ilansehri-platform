@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block title %}Tam Yönetim Tercihleri — İlan Şehri{% endblock %}{% block content %}<section class="form-page"><span class="section-label">TAM YÖNETİM</span><h1>Hizmet tercihlerini düzenle</h1><form method="post" class="panel-form">{% csrf_token %}{{ form.as_p }}<button class="button full">Kaydet</button></form></section>{% endblock %}

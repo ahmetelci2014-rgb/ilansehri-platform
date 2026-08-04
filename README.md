@@ -1,60 +1,56 @@
-# İlan Şehri — Django Başlangıç Sürümü
+# İlan Şehri v1.0 — Tamamlanmış MVP
 
-İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını tek yerel platformda birleştiren, kullanıcının ilanını kendisinin yönetebildiği veya İlan Şehri Tam Yönetim hizmetine bırakabildiği yeni nesil pazar yeri projesidir.
+İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını tek platformda buluşturan; kullanıcının ilanını kendisinin yönetebildiği veya **İlan Şehri Tam Yönetim** hizmetine bırakabildiği güven odaklı yerel pazar yeridir.
 
-## Sürüm 0.4 — Profesyonel arayüz ve pazar yeri deneyimi
+## V1.0'da çalışan ana modüller
 
-- Ücretsiz kullanıcı kaydı ve otomatik giriş
-- Kullanıcı hesabım paneli
-- Çoklu ilan fotoğrafı yükleme
-- İlan oluşturma ve ilan sahibi tarafından düzenleme
-- Gelişmiş ilan filtreleri
-- İlan detayından teklif gönderme
-- “İlan Şehri yönetsin” seçiminde otomatik Tam Yönetim kaydı
-- Geliştirme ortamında otomatik yayın seçeneği
+- Üyelik, profil, telefon/e-posta doğrulama ve güven puanı
+- Ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanları
+- Kategoriye özel alanlar ve Türkiye şehir/ilçe/mahalle seçimi
+- En fazla 10 fotoğraf, kapak seçimi, silme ve sürükleyerek sıralama
+- Gelişmiş arama, filtreleme, favoriler ve kayıtlı aramalar
+- Özel mesajlaşma, görsel eki, engelleme ve bildirim merkezi
+- Teklif gönderme, kabul, ret, geri çekme ve tekrar teklif koruması
+- Alıcı–satıcı güvenli işlem kaydı, çift taraflı teslim onayı ve uyuşmazlık
+- Tamamlanan işlem sonrası puan ve yorum
+- İlan moderasyonu, şikâyet ve uyuşmazlık yönetimi
+- Tam Yönetim müşteri ve operasyon panelleri
+- Görev ortağı başvurusu, ekip onayı, görev pazarı, teslim ve kazanç kaydı
+- PWA/çevrimdışı sayfa, Docker, PostgreSQL, WhiteNoise ve Gunicorn hazırlığı
+- GitHub Actions üzerinde migration, güvenlik, statik dosya ve otomatik test kontrolleri
 
-- GitHub Codespaces ile hosting almadan tarayıcıda önizleme
-- Port 8000 otomatik açılış ve önizleme
-- Üyelik, ilan, tam yönetim, teklif ve yetki testleri
-- GitHub Actions üzerinde migration ve tam test çalıştırma
+## Codespaces ile çalıştırma
 
-- Profesyonel ana sayfa, marka başlığı ve mobil alt menü
-- Premium ilan kartları ve gelişmiş kategori deneyimi
-- Adım adım ilan oluşturma ve fotoğraf önizleme
-- Gelişmiş ilan detay, teklif ve güvenli işlem ekranı
-- Yenilenmiş kullanıcı paneli, giriş ve üyelik ekranları
+```bash
+git pull origin main
+pkill -f "python manage.py runserver" || true
+bash scripts/start_codespace.sh
+```
 
-## Bu ilk sürümde bulunan çekirdek
+Komut migrationları üretir, veritabanını günceller, kategorileri ve statik dosyaları hazırlar, sistemi port `8000` üzerinde başlatır.
 
-- Özel kullanıcı modeli: bireysel, kurumsal, hizmet veren ve görev ortağı
-- Ürün, araç, emlak, hizmet, ihtiyaç ve iş ilan türleri
-- Satılık, kiralık, takas, arıyorum ve hizmet seçenekleri
-- `Kendim yöneteceğim / İlan Şehri yönetsin` seçimi
-- Kategori, şehir, ilçe ve mahalle alanları
-- Teklif veri modeli
-- Tam yönetim başvuru modeli
-- Görev ortağı seviyeleri ve ücretli görev modeli
-- Yönetim paneli
-- Mobil uyumlu başlangıç arayüzü
-- PostgreSQL ve Docker hazırlığı
-- GitHub Actions kontrolü
+### Demo verileri
 
+Yalnız geliştirme ortamında:
 
-## GitHub Codespaces ile önizleme
+```bash
+python manage.py seed_demo --with-admin
+```
 
-1. GitHub deposunda **Code** butonuna basın.
-2. **Codespaces** sekmesini açın.
-3. **Create codespace on main** seçeneğine basın.
-4. Kurulum tamamlanınca port 8000 otomatik açılır ve İlan Şehri önizlemesi görünür.
-5. Önizleme açılmazsa terminalde `bash scripts/start_codespace.sh` çalıştırın.
+Demo hesaplar:
 
-İlk kurulum; bağımlılıkları kurar, migrationları oluşturur, veritabanını hazırlar ve başlangıç kategorilerini ekler.
+- `demo_satici` / `Demo1234!`
+- `demo_alici` / `Demo1234!`
+- `demo_partner` / `Demo1234!`
+- `demo_admin` / `DemoAdmin1234!`
+
+Bu bilinen şifrelerle oluşturulan hesaplar canlı ortamda kullanılmamalıdır.
 
 ## Yerel kurulum
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
 python manage.py makemigrations accounts listings managed_services partners
@@ -64,22 +60,30 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Ardından `http://127.0.0.1:8000` ve yönetim için `http://127.0.0.1:8000/admin` adresini açın.
-
-## Docker ile
+## Docker
 
 ```bash
 docker compose up --build
 ```
 
-## Önemli
+## Düzenli bakım
 
-Bu depo ilk çalışan mimari iskelettir. Sonraki sürümlerde sırayla kayıt ekranları, çoklu fotoğraf yönetimi, konum/mesafe arama, mesajlaşma, teklif ekranları, tam yönetim operasyon paneli, görev pazarı, doğrulama, ödeme ve yapay zekâlı ilan oluşturma eklenecektir.
+Aşağıdaki komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler ve kayıtlı arama bildirimlerini üretir:
 
-## v0.6 özellikleri
+```bash
+python manage.py marketplace_maintenance
+```
 
-- Türkiye şehir seçimi ve konuma bağlı ilçe/mahalle önerileri
-- Kategoriye özel yapılandırılmış ilan alanları
-- Gelişmiş arama ve filtreleme
-- Teklif, mesaj ve ilan durumu bildirimleri
-- Kullanıcı şikâyetleri ve personel moderasyon paneli
+Canlı sunucuda bu komutun saatlik veya günlük zamanlayıcıya bağlanması gerekir.
+
+## Canlıya geçişte zorunlu dış ayarlar
+
+- Güçlü `DJANGO_SECRET_KEY`
+- PostgreSQL `DATABASE_URL`
+- Alan adı ve `CSRF_TRUSTED_ORIGINS`
+- SMTP e-posta hesabı
+- Telefon doğrulaması için `SMS_WEBHOOK_URL` ve isteğe bağlı `SMS_WEBHOOK_TOKEN`
+- Kullanıcı görselleri için kalıcı disk veya nesne depolama
+- Gerçek şirket/veri sorumlusu bilgileriyle yasal metinlerin hukukçu kontrolü
+
+Ödeme aracılığı v1.0'da aktif değildir. Güvenli işlem ekranı, teklif ve teslim sürecini kayıt altına alır; para transferi tarafların sorumluluğundadır.

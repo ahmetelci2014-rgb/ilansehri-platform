@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Kazanç Ağı Yönetimi — İlan Şehri{% endblock %}
+{% block content %}
+<section class="account-page shell">
+  <div class="account-heading"><div><span class="section-label">EKİP PANELİ</span><h1>Kazanç Ağı yönetimi</h1><p>Başvuruları, görev atamalarını ve teslimleri yönet.</p></div></div>
+
+  <h2>Görev ortağı başvuruları</h2>
+  <div class="data-list">
+    {% for profile in pending_profiles %}
+      <div>
+        <div><b>{{ profile.user.display_name }}</b><span>{{ profile.about|truncatechars:120 }}</span><small>{{ profile.service_cities|join:", " }} · {{ profile.skills|join:", " }}</small></div>
+        <div class="inline-action-group">
+          <form method="post" action="{% url 'partners:profile_action' profile.pk 'approve' %}">{% csrf_token %}<button class="button small" type="submit">Onayla</button></form>
+          <form method="post" action="{% url 'partners:profile_action' profile.pk 'reject' %}">{% csrf_token %}<button class="button secondary small" type="submit">Reddet</button></form>
+        </div>
+      </div>
+    {% empty %}<div>Bekleyen profil yok.</div>{% endfor %}
+  </div>
+
+  <h2>Görev başvuruları</h2>
+  <div class="data-list">
+    {% for application in task_applications %}
+      <a href="{% url 'partners:task_detail' application.task.pk %}"><div><b>{{ application.task.title }}</b><span>{{ application.partner.user.display_name }} · {{ application.note|truncatechars:80 }}</span></div><strong>İncele</strong></a>
+    {% empty %}<div>Bekleyen görev başvurusu yok.</div>{% endfor %}
+  </div>
+
+  <h2>Kontrol bekleyen görevler</h2>
+  <div class="data-list">
+    {% for task in review_tasks %}
+      <a href="{% url 'partners:task_detail' task.pk %}"><div><b>{{ task.title }}</b><span>{{ task.assigned_partner.user.display_name }}</span></div><strong>Teslimi kontrol et</strong></a>
+    {% empty %}<div>Kontrol bekleyen görev yok.</div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

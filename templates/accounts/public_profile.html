@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}{{ profile_user.display_name }} — İlan Şehri{% endblock %}
+{% block content %}
+<section class="profile-hero"><div class="shell profile-hero-grid">
+  <div class="public-avatar">{% if profile_user.avatar %}<img src="{{ profile_user.avatar.url }}" alt="{{ profile_user.display_name }}">{% else %}<span>{{ profile_user.display_name|first|upper }}</span>{% endif %}</div>
+  <div><span class="badge">{{ profile_user.get_user_type_display }}</span><h1>{{ profile_user.display_name }}</h1><p>{{ profile_user.bio|default:"Bu kullanıcı henüz tanıtım yazısı eklemedi." }}</p><div class="profile-badges"><span>★ {{ profile_user.average_rating }} ({{ profile_user.rating_count }})</span><span>✓ {{ profile_user.get_verification_level_display }}</span><span>🤝 {{ profile_user.completed_transactions }} tamamlanan işlem</span><span>📍 {{ profile_user.city|default:"Konum belirtilmedi" }}</span></div></div>
+  {% if user.is_authenticated and user != profile_user %}<form method="post" action="{% url 'accounts:toggle_block' profile_user.pk %}">{% csrf_token %}<button class="button secondary">{% if is_blocked %}Engeli kaldır{% else %}Kullanıcıyı engelle{% endif %}</button></form>{% endif %}
+</div></section>
+<section class="section shell"><div class="section-heading"><div><span class="section-label">İLANLAR</span><h2>Yayındaki ilanları</h2></div></div><div class="listing-grid premium-grid">{% for listing in published_listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}<div class="empty">Yayında ilan bulunmuyor.</div>{% endfor %}</div></section>
+<section class="section soft"><div class="shell"><div class="section-heading"><div><span class="section-label">DEĞERLENDİRMELER</span><h2>İşlem yorumları</h2></div></div><div class="review-list">{% for review in reviews %}<article><div><strong>{{ review.reviewer.display_name }}</strong><span>{% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}</span></div><p>{{ review.comment|default:"Yorum yazılmadı." }}</p><small>{{ review.transaction.listing.title }} · {{ review.created_at|date:"d.m.Y" }}</small></article>{% empty %}<div class="empty">Henüz değerlendirme yok.</div>{% endfor %}</div></div></section>
+{% endblock %}

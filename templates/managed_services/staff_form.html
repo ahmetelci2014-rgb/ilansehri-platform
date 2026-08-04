@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block title %}Operasyonu Güncelle — İlan Şehri{% endblock %}{% block content %}<section class="form-page"><span class="section-label">EKİP PANELİ</span><h1>{{ object.listing.title }}</h1><form method="post" class="panel-form">{% csrf_token %}{{ form.as_p }}<button class="button full">Operasyonu kaydet</button></form></section>{% endblock %}

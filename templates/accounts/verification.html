@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Doğrulama Merkezi — İlan Şehri{% endblock %}
+{% block content %}
+<section class="account-page shell"><div class="account-heading"><div><span class="section-label">GÜVEN MERKEZİ</span><h1>Hesabını doğrula</h1><p>Doğrulanmış hesaplar daha görünür ve güvenilir olur.</p></div><div class="trust-score"><strong>{{ user.trust_score }}</strong><span>/100 güven puanı</span></div></div>
+<div class="verification-grid">
+  <article class="verify-card {% if user.is_email_verified %}done{% endif %}"><span>✉️</span><h3>E-posta</h3><p>{{ user.email|default:"E-posta eklenmedi" }}</p><b>{% if user.is_email_verified %}Doğrulandı{% else %}Bekliyor{% endif %}</b></article>
+  <article class="verify-card {% if user.is_phone_verified %}done{% endif %}"><span>📱</span><h3>Telefon</h3><p>{{ user.phone|default:"Telefon eklenmedi" }}</p><b>{% if user.is_phone_verified %}Doğrulandı{% else %}Bekliyor{% endif %}</b></article>
+  <article class="verify-card"><span>🪪</span><h3>Kimlik / işletme</h3><p>Yetkili ekip tarafından belge kontrolü</p><b>{{ user.get_verification_level_display }}</b></article>
+</div>
+<div class="two-cards verification-actions"><article><h3>Kod gönder</h3><form method="post" action="{% url 'accounts:verification_start' %}" class="panel-form compact">{% csrf_token %}{{ start_form.as_p }}<button>Doğrulama kodu gönder</button></form></article><article><h3>Kodu onayla</h3><form method="post" action="{% url 'accounts:verification_confirm' %}" class="panel-form compact">{% csrf_token %}{{ confirm_form.as_p }}<button>Kodu doğrula</button></form></article></div>
+</section>
+{% endblock %}

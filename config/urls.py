@@ -3,12 +3,18 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+admin.site.site_header = "İlan Şehri Yönetim"
+admin.site.site_title = "İlan Şehri"
+admin.site.index_title = "Operasyon ve Güven Merkezi"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("hesap/", include("django.contrib.auth.urls")),
     path("hesap/", include("apps.accounts.urls")),
-    path("", include("apps.core.urls")),
     path("ilanlar/", include("apps.listings.urls")),
+    path("tam-yonetim/", include("apps.managed_services.urls")),
+    path("kazanc-agi/", include("apps.partners.urls")),
+    path("", include("apps.core.urls")),
 ]
 
 if settings.DEBUG:

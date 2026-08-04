@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.contrib import admin
 from django.utils import timezone
 
@@ -11,6 +12,9 @@ from .models import (
     Message,
     Notification,
     Offer,
+    Review,
+    SavedSearch,
+    Transaction,
 )
 from .services import create_notification
 
@@ -20,24 +24,22 @@ class ListingImageInline(admin.TabularInline):
     extra = 0
 
 
+class OfferInline(admin.TabularInline):
+    model = Offer
+    extra = 0
+    readonly_fields = ("created_at", "updated_at", "responded_at")
+
+
 @admin.action(description="Seçili ilanları onayla ve yayınla")
 def approve_listings(modeladmin, request, queryset):
     for listing in queryset.select_related("owner"):
         listing.status = Listing.Status.PUBLISHED
         listing.published_at = timezone.now()
+        listing.expires_at = timezone.now() + timedelta(days=60)
         listing.moderated_at = timezone.now()
         listing.moderated_by = request.user
         listing.review_note = ""
-        listing.save(
-            update_fields=[
-                "status",
-                "published_at",
-                "moderated_at",
-                "moderated_by",
-                "review_note",
-                "updated_at",
-            ]
-        )
+        listing.save()
         create_notification(
             user=listing.owner,
             actor=request.user,
@@ -55,9 +57,7 @@ def reject_listings(modeladmin, request, queryset):
         listing.status = Listing.Status.REJECTED
         listing.moderated_at = timezone.now()
         listing.moderated_by = request.user
-        listing.save(
-            update_fields=["status", "moderated_at", "moderated_by", "updated_at"]
-        )
+        listing.save()
         create_notification(
             user=listing.owner,
             actor=request.user,
@@ -71,63 +71,42 @@ def reject_listings(modeladmin, request, queryset):
 
 @admin.register(Listing)
 class ListingAdmin(admin.ModelAdmin):
-    list_display = (
-        "title",
-        "kind",
-        "action",
-        "management_mode",
-        "city",
-        "status",
-        "created_at",
-    )
-    list_filter = ("kind", "action", "management_mode", "status", "city")
-    search_fields = (
-        "title",
-        "description",
-        "owner__username",
-        "brand",
-        "model_name",
-    )
+    list_display = ("title", "owner", "kind", "action", "city", "status", "management_mode", "view_count", "created_at")
+    list_filter = ("kind", "action", "management_mode", "status", "city", "is_featured")
+    search_fields = ("title", "description", "owner__username", "brand", "model_name", "city", "district")
     prepopulated_fields = {"slug": ("title",)}
-    readonly_fields = ("created_at", "updated_at", "published_at", "moderated_at")
+    readonly_fields = ("created_at", "updated_at", "published_at", "moderated_at", "view_count", "favorite_count")
     actions = (approve_listings, reject_listings)
-    inlines = [ListingImageInline]
+    inlines = (ListingImageInline, OfferInline)
 
 
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "parent", "is_active", "sort_order")
-    list_editable = ("is_active", "sort_order")
-    prepopulated_fields = {"slug": ("name",)}
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ("public_id", "listing", "buyer", "seller", "amount", "status", "created_at")
+    list_filter = ("status", "buyer_confirmed", "seller_confirmed")
+    search_fields = ("public_id", "listing__title", "buyer__username", "seller__username")
+    readonly_fields = ("public_id", "created_at", "updated_at", "completed_at", "cancelled_at")
 
 
-@admin.register(Conversation)
-class ConversationAdmin(admin.ModelAdmin):
-    list_display = ("listing", "buyer", "seller", "updated_at")
-    search_fields = ("listing__title", "buyer__username", "seller__username")
-
-
-@admin.register(Message)
-class MessageAdmin(admin.ModelAdmin):
-    list_display = ("conversation", "sender", "is_read", "created_at")
-    list_filter = ("is_read", "created_at")
-    search_fields = ("body", "sender__username", "conversation__listing__title")
-
-
-@admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
-    list_display = ("user", "notification_type", "title", "is_read", "created_at")
-    list_filter = ("notification_type", "is_read", "created_at")
-    search_fields = ("user__username", "title", "body")
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ("reviewed_user", "reviewer", "rating", "is_visible", "created_at")
+    list_filter = ("rating", "is_visible")
+    search_fields = ("reviewed_user__username", "reviewer__username", "comment")
 
 
 @admin.register(ListingReport)
 class ListingReportAdmin(admin.ModelAdmin):
     list_display = ("listing", "reporter", "reason", "status", "created_at")
-    list_filter = ("reason", "status", "created_at")
+    list_filter = ("reason", "status")
     search_fields = ("listing__title", "reporter__username", "details")
-    readonly_fields = ("created_at",)
 
 
+admin.site.register(Category)
+admin.site.register(ListingImage)
 admin.site.register(Offer)
 admin.site.register(Favorite)
+admin.site.register(SavedSearch)
+admin.site.register(Conversation)
+admin.site.register(Message)
+admin.site.register(Notification)

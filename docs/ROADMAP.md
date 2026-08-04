@@ -1,91 +1,32 @@
-# İlan Şehri Geliştirme Yol Haritası
+# İlan Şehri Yol Haritası
 
-## Faz 0 — Teknik temel
+## Tamamlandı — v1.0 MVP
 
-- Django proje mimarisi
-- GitHub deposu ve Actions kontrolleri
-- Ortam değişkenleri ve güvenlik ayarları
-- PostgreSQL/Docker hazırlığı
-- Yönetim paneli
+- Teknik temel, GitHub Actions, Docker ve PostgreSQL hazırlığı
+- Üyelik, profil, doğrulama ve güven puanı
+- Kategoriye özel ilanlar, konum, fotoğraf ve gelişmiş arama
+- Favoriler, kayıtlı aramalar, mesajlaşma ve bildirimler
+- Teklif, güvenli işlem takibi, uyuşmazlık, puan ve yorum
+- İlan moderasyonu ve şikâyet yönetimi
+- Tam Yönetim operasyon paneli
+- Kazanç Ağı görev ortağı ve görev yönetimi
+- PWA, yasal sayfalar ve canlı sunucu hazırlığı
 
-## Faz 1 — Çekirdek pazar yeri
+## Canlı lansman öncesi dış bağımlılıklar
 
-- Üyelik ve profil ekranları
-- Kategori sistemi
-- Ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanları
-- Satılık, kiralık, takaslık, arıyorum seçenekleri
-- Çoklu fotoğraf, kapak seçme ve sıralama
-- Arama, filtreleme, favoriler ve görüntülenme
-- İl, ilçe, mahalle ve yakınlık
+- Alan adı, VPS/uygulama sunucusu ve PostgreSQL
+- Kalıcı medya depolama ve yedekleme
+- SMTP ve SMS sağlayıcısı
+- Gerçek şirket ve veri sorumlusu bilgileri
+- Hukukçu tarafından kullanım koşulları/KVKK kontrolü
+- Uygulama güvenlik ve yük testi
 
-## Faz 2 — İletişim ve teklif
+## Lansman sonrası büyüme
 
-- Platform içi mesajlaşma
-- Yapılandırılmış teklif oluşturma
-- Teklif karşılaştırma
-- Bildirim merkezi
-- Randevu takvimi
-
-## Faz 3 — Yapay zekâlı ilan asistanı
-
-- Fotoğraftan kategori ve özellik önerisi
-- Başlık ve açıklama oluşturma
-- Eksik bilgi/fotoğraf kontrolü
-- Fiyat aralığı desteği
-- Sesli ihtiyaç anlatımını ilana dönüştürme
-- Kullanıcı onayından sonra yayın
-
-## Faz 4 — Tam yönetim
-
-- Hizmet paketi seçimi
-- Operasyon dosyası
-- Mesaj, teklif ve randevu yönetimi
-- Süreç aşamaları ve müşteri raporu
-- Şeffaf ücret ve tasarruf sayacı
-
-## Faz 5 — Kazanç ağı
-
-- Görev ortağı başvurusu
-- Kimlik ve belge inceleme
-- Görev pazarı
-- Görev kabulü, kanıt ve onay
-- Sabit kazanç ve başarı ödülü
-- Puan, seviye ve yaptırım sistemi
-
-## Faz 6 — Güven ve ödeme
-
-- Güvenli ödeme entegrasyonu
-- İade ve uyuşmazlık akışı
-- Kurumsal hesaplar
-- Yetkili çözüm ortakları
-- Ekspertiz, nakliye ve kargo entegrasyonları
-
-## Faz 7 — Mobil ve ölçekleme
-
-- PWA
-- Mobil API
-- Android/iOS uygulaması
-- Redis, Celery, CDN ve nesne depolama
-- Gelişmiş yakınlık araması ve PostGIS
-
-### Tamamlandı — v0.5
-- İlan yaşam döngüsü: duraklat, yayınla, sonuçlandır, sil
-- Favoriler
-- Kayıtlı özel mesajlaşma
-- Mesaj ve favori merkezleri
-
-
-## v0.6 tamamlandı
-
-- Konum önerileri
-- Kategoriye özel ilan alanları
-- Bildirim merkezi
-- Şikâyet ve moderasyon
-
-## Sonraki odak: v0.7
-
-- Fotoğraf sıralama ve kapak seçimi
-- Teklif kabul / red akışı
-- Kullanıcı doğrulama adımları
-- E-posta ve uygulama içi bildirim tercihleri
-- Harita ve mesafe filtresi
+- Lisanslı ödeme/emanet entegrasyonu
+- Harita, gerçek mesafe ve PostGIS
+- Redis/Celery ile gerçek zamanlı görevler
+- WebSocket mesajlaşma
+- Yapay zekâlı fotoğraf/sesli ilan asistanı
+- Android/iOS uygulamaları
+- Kurumsal mağaza ve ücretli vitrin paketleri

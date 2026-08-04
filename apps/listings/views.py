@@ -1,32 +1,40 @@
+from __future__ import annotations
+
+from datetime import timedelta
+
 from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db import transaction as db_transaction
 from django.db.models import Count, F, Q
 from django.db.models.functions import Coalesce
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    TemplateView,
-    UpdateView,
-)
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 from django.views.generic.edit import FormMixin
 
+from apps.accounts.models import UserBlock
 from apps.managed_services.models import ManagedRequest
 
-from .forms import ListingForm, ListingReportForm, MessageForm, OfferForm
+from .forms import (
+    ListingForm,
+    ListingReportForm,
+    MessageForm,
+    OfferForm,
+    ReviewForm,
+    SavedSearchForm,
+    TransactionDisputeForm,
+)
 from .locations import CITY_CHOICES, get_districts, get_neighborhoods
 from .models import (
+    Category,
     Conversation,
     Favorite,
     Listing,
@@ -34,8 +42,18 @@ from .models import (
     ListingReport,
     Message,
     Notification,
+    Offer,
+    Review,
+    SavedSearch,
+    Transaction,
 )
-from .services import create_notification
+from .services import (
+    accept_offer,
+    create_notification,
+    finalize_transaction,
+    refresh_user_rating,
+    reject_offer,
+)
 
 
 def _safe_int(value):
@@ -52,6 +70,40 @@ def _safe_decimal(value):
         return None
 
 
+def _safe_next_url(request, fallback):
+    candidate = request.POST.get("next") or request.GET.get("next")
+    if candidate and url_has_allowed_host_and_scheme(candidate, allowed_hosts={request.get_host()}):
+        return candidate
+    return fallback
+
+
+def _save_images(listing, images):
+    current_count = listing.images.count()
+    has_cover = listing.images.filter(is_cover=True).exists()
+    for index, image in enumerate(images, start=current_count):
+        ListingImage.objects.create(
+            listing=listing,
+            image=image,
+            alt_text=listing.title,
+            sort_order=index,
+            is_cover=not has_cover and index == current_count,
+        )
+
+
+def _blocked_between(user_a, user_b) -> bool:
+    if not user_a.is_authenticated:
+        return False
+    return UserBlock.objects.filter(
+        Q(blocker=user_a, blocked=user_b) | Q(blocker=user_b, blocked=user_a)
+    ).exists()
+
+
+def _active_listing_q():
+    return Q(status=Listing.Status.PUBLISHED) & (
+        Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
+    )
+
+
 class ListingListView(ListView):
     model = Listing
     template_name = "listings/list.html"
@@ -60,7 +112,7 @@ class ListingListView(ListView):
 
     def get_queryset(self):
         qs = (
-            Listing.objects.filter(status=Listing.Status.PUBLISHED)
+            Listing.objects.filter(_active_listing_q())
             .select_related("owner", "category")
             .prefetch_related("images")
         )
@@ -73,6 +125,7 @@ class ListingListView(ListView):
         brand = params.get("brand", "").strip()
         model_name = params.get("model", "").strip()
         room_count = params.get("room_count", "").strip()
+        sort = params.get("sort", "newest")
 
         if q:
             qs = qs.filter(
@@ -95,106 +148,147 @@ class ListingListView(ListView):
         if model_name:
             qs = qs.filter(model_name__icontains=model_name)
         if room_count:
-            qs = qs.filter(room_count__iexact=room_count)
+            qs = qs.filter(room_count=room_count)
+        if params.get("managed") == "1":
+            qs = qs.filter(management_mode=Listing.ManagementMode.FULL)
+        if params.get("verified") == "1":
+            qs = qs.filter(owner__is_phone_verified=True)
 
-        filters = {
-            "price__gte": _safe_decimal(params.get("min_price")),
-            "price__lte": _safe_decimal(params.get("max_price")),
-            "model_year__gte": _safe_int(params.get("min_year")),
-            "model_year__lte": _safe_int(params.get("max_year")),
-            "mileage__lte": _safe_int(params.get("max_mileage")),
-            "area_m2__gte": _safe_int(params.get("min_area")),
-            "area_m2__lte": _safe_int(params.get("max_area")),
-        }
-        qs = qs.filter(**{key: value for key, value in filters.items() if value is not None})
-        return qs
+        min_price = _safe_decimal(params.get("min_price"))
+        max_price = _safe_decimal(params.get("max_price"))
+        min_year = _safe_int(params.get("min_year"))
+        max_year = _safe_int(params.get("max_year"))
+        max_mileage = _safe_int(params.get("max_mileage"))
+        min_area = _safe_int(params.get("min_area"))
+        max_area = _safe_int(params.get("max_area"))
+        if min_price is not None:
+            qs = qs.filter(price__gte=min_price)
+        if max_price is not None:
+            qs = qs.filter(price__lte=max_price)
+        if min_year:
+            qs = qs.filter(model_year__gte=min_year)
+        if max_year:
+            qs = qs.filter(model_year__lte=max_year)
+        if max_mileage is not None:
+            qs = qs.filter(mileage__lte=max_mileage)
+        if min_area:
+            qs = qs.filter(area_m2__gte=min_area)
+        if max_area:
+            qs = qs.filter(area_m2__lte=max_area)
+
+        ordering = {
+            "newest": ("-is_featured", "-published_at", "-created_at"),
+            "price_asc": ("price", "-is_featured"),
+            "price_desc": ("-price", "-is_featured"),
+            "popular": ("-view_count", "-favorite_count", "-created_at"),
+        }.get(sort, ("-is_featured", "-published_at", "-created_at"))
+        return qs.order_by(*ordering)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["city_choices"] = CITY_CHOICES
-        context["kind_choices"] = Listing.Kind.choices
-        context["action_choices"] = Listing.Action.choices
-        query_params = self.request.GET.copy()
-        query_params.pop("page", None)
-        context["query_string"] = query_params.urlencode()
+        context.update(
+            {
+                "kind_choices": Listing.Kind.choices,
+                "action_choices": Listing.Action.choices,
+                "city_choices": CITY_CHOICES,
+                "category_choices": Category.objects.filter(is_active=True),
+                "active_filters": self.request.GET,
+                "saved_search_form": SavedSearchForm(),
+            }
+        )
         return context
 
 
 class ListingDetailView(FormMixin, DetailView):
+    model = Listing
     template_name = "listings/detail.html"
     context_object_name = "listing"
     form_class = OfferForm
 
     def get_queryset(self):
-        qs = Listing.objects.select_related("owner", "category", "moderated_by").prefetch_related(
-            "images"
-        )
+        qs = Listing.objects.select_related("owner", "category").prefetch_related("images")
         user = self.request.user
+        if user.is_authenticated and user.is_staff:
+            return qs
         if user.is_authenticated:
-            if user.is_staff:
-                return qs
-            return qs.filter(Q(status=Listing.Status.PUBLISHED) | Q(owner=user))
-        return qs.filter(status=Listing.Status.PUBLISHED)
-
-    def get_success_url(self):
-        return reverse("listings:detail", kwargs={"slug": self.object.slug})
+            return qs.filter(_active_listing_q() | Q(owner=user))
+        return qs.filter(_active_listing_q())
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
-        if self.request.method == "GET" and obj.status == Listing.Status.PUBLISHED:
+        is_active_public = obj.status == Listing.Status.PUBLISHED and (
+            obj.expires_at is None or obj.expires_at > timezone.now()
+        )
+        if not is_active_public:
+            if obj.status == Listing.Status.PUBLISHED and obj.expires_at and obj.expires_at <= timezone.now():
+                Listing.objects.filter(pk=obj.pk).update(status=Listing.Status.EXPIRED, updated_at=timezone.now())
+                obj.status = Listing.Status.EXPIRED
+            if not self.request.user.is_authenticated or not (self.request.user == obj.owner or self.request.user.is_staff):
+                raise Http404
+        session_key = f"viewed_listing_{obj.pk}"
+        if not self.request.session.get(session_key):
             Listing.objects.filter(pk=obj.pk).update(view_count=F("view_count") + 1)
+            self.request.session[session_key] = True
             obj.view_count += 1
         return obj
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        context["can_offer"] = (
-            user.is_authenticated
-            and user != self.object.owner
-            and self.object.status == Listing.Status.PUBLISHED
-        )
+        context["is_favorite"] = user.is_authenticated and Favorite.objects.filter(user=user, listing=self.object).exists()
         context["message_form"] = MessageForm()
         context["report_form"] = ListingReportForm()
-        context["can_report"] = context["can_offer"]
-        context["is_favorite"] = (
-            user.is_authenticated
-            and Favorite.objects.filter(user=user, listing=self.object).exists()
+        context["owner_reviews"] = self.object.owner.received_reviews.filter(is_visible=True).select_related("reviewer")[:6]
+        context["blocked_between"] = user.is_authenticated and _blocked_between(user, self.object.owner)
+        context["owner_pending_offers"] = (
+            self.object.offers.filter(status=Offer.Status.PENDING).select_related("sender")
+            if user.is_authenticated and user == self.object.owner
+            else Offer.objects.none()
         )
         return context
 
     def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            messages.info(request, "Teklif vermek için giriş yapmalısın.")
-            return redirect(f"/hesap/login/?next={request.path}")
         self.object = self.get_object()
+        if not request.user.is_authenticated:
+            return redirect(f"{reverse('login')}?next={self.object.get_absolute_url()}")
         if self.object.status != Listing.Status.PUBLISHED:
-            messages.warning(request, "Bu ilan şu anda teklif almıyor.")
-            return redirect(self.get_success_url())
-        if self.object.owner == request.user:
+            messages.warning(request, "Yalnız yayındaki ilanlara teklif verilebilir.")
+            return redirect(self.object.get_absolute_url())
+        if request.user == self.object.owner:
             messages.warning(request, "Kendi ilanına teklif veremezsin.")
-            return redirect(self.get_success_url())
+            return redirect(self.object.get_absolute_url())
+        if self.object.offers.filter(sender=request.user, status=Offer.Status.PENDING).exists():
+            messages.info(request, "Bu ilan için bekleyen bir teklifin zaten var.")
+            return redirect(self.object.get_absolute_url())
+        if _blocked_between(request.user, self.object.owner):
+            messages.error(request, "Bu kullanıcıyla iletişim veya teklif işlemi yapılamıyor.")
+            return redirect(self.object.get_absolute_url())
         form = self.get_form()
         if form.is_valid():
-            return self.form_valid(form)
-        return self.form_invalid(form)
+            offer = form.save(commit=False)
+            offer.listing = self.object
+            offer.sender = request.user
+            offer.save()
+            create_notification(
+                user=self.object.owner,
+                actor=request.user,
+                listing=self.object,
+                notification_type=Notification.Type.OFFER,
+                title="İlanına yeni teklif geldi",
+                body=f"{request.user.display_name} bir teklif gönderdi.",
+                link=reverse("accounts:dashboard") + "#teklifler",
+            )
+            messages.success(request, "Teklifin ilan sahibine gönderildi.")
+            return redirect(self.object.get_absolute_url())
+        return self.render_to_response(self.get_context_data(form=form))
 
-    def form_valid(self, form):
-        offer = form.save(commit=False)
-        offer.listing = self.object
-        offer.sender = self.request.user
-        offer.save()
-        create_notification(
-            user=self.object.owner,
-            actor=self.request.user,
-            listing=self.object,
-            notification_type=Notification.Type.OFFER,
-            title="İlanına yeni teklif geldi",
-            body=f"{self.request.user} · {self.object.title}",
-            link=self.object.get_absolute_url(),
-        )
-        messages.success(self.request, "Teklifin ilan sahibine gönderildi.")
-        return redirect(self.get_success_url())
+
+class OwnerListingMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def get_queryset(self):
+        return Listing.objects.filter(owner=self.request.user)
+
+    def test_func(self):
+        return self.get_object().owner_id == self.request.user.pk
 
 
 class ListingCreateView(LoginRequiredMixin, CreateView):
@@ -206,95 +300,47 @@ class ListingCreateView(LoginRequiredMixin, CreateView):
         form.instance.owner = self.request.user
         form.instance.status = (
             Listing.Status.PUBLISHED
-            if getattr(settings, "AUTO_PUBLISH_LISTINGS", False)
+            if settings.AUTO_PUBLISH_LISTINGS or self.request.user.is_staff
             else Listing.Status.REVIEW
         )
         response = super().form_valid(form)
-        self._save_images(form)
+        _save_images(self.object, form.cleaned_data.get("images", []))
         if self.object.management_mode == Listing.ManagementMode.FULL:
             ManagedRequest.objects.get_or_create(
                 listing=self.object,
-                defaults={
-                    "customer": self.request.user,
-                    "package": ManagedRequest.Package.FULL,
-                    "requested_services": [
-                        "ilan_hazirlama",
-                        "mesaj_yonetimi",
-                        "teklif_toplama",
-                        "randevu_koordinasyonu",
-                    ],
-                },
+                defaults={"customer": self.request.user},
             )
-            messages.success(
-                self.request,
-                "İlanın oluşturuldu ve Tam Yönetim ekibine iletildi.",
-            )
-        elif self.object.status == Listing.Status.REVIEW:
-            messages.success(
-                self.request,
-                "İlanın oluşturuldu ve güvenlik incelemesine gönderildi.",
-            )
+        if self.object.status == Listing.Status.REVIEW:
+            messages.success(self.request, "İlanın kaydedildi ve güvenlik incelemesine gönderildi.")
         else:
-            messages.success(self.request, "İlanın başarıyla yayınlandı.")
+            messages.success(self.request, "İlanın yayınlandı.")
         return response
 
-    def _save_images(self, form):
-        for index, image in enumerate(form.cleaned_data.get("images", [])):
-            ListingImage.objects.create(
-                listing=self.object,
-                image=image,
-                is_cover=index == 0,
-                sort_order=index,
-                alt_text=self.object.title,
-            )
 
-
-class ListingUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class ListingUpdateView(OwnerListingMixin, UpdateView):
     model = Listing
     form_class = ListingForm
     template_name = "listings/form.html"
 
-    def test_func(self):
-        return self.get_object().owner == self.request.user
-
     def form_valid(self, form):
-        if (
-            self.object.status == Listing.Status.PUBLISHED
-            and not getattr(settings, "AUTO_PUBLISH_LISTINGS", False)
-            and not self.request.user.is_staff
-        ):
+        if not self.request.user.is_staff:
             form.instance.status = Listing.Status.REVIEW
             form.instance.review_note = ""
         response = super().form_valid(form)
-        start_index = self.object.images.count()
-        for index, image in enumerate(
-            form.cleaned_data.get("images", []),
-            start=start_index,
-        ):
-            ListingImage.objects.create(
-                listing=self.object,
-                image=image,
-                is_cover=not self.object.images.exists(),
-                sort_order=index,
-                alt_text=self.object.title,
-            )
-        if self.object.status == Listing.Status.REVIEW:
-            messages.success(self.request, "Değişiklikler kaydedildi ve yeniden incelemeye gönderildi.")
-        else:
-            messages.success(self.request, "İlan bilgileri güncellendi.")
+        _save_images(self.object, form.cleaned_data.get("images", []))
+        if self.object.management_mode == Listing.ManagementMode.FULL:
+            ManagedRequest.objects.get_or_create(listing=self.object, defaults={"customer": self.request.user})
+        messages.success(self.request, "İlan değişiklikleri kaydedildi.")
         return response
 
 
-class ListingDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class ListingDeleteView(OwnerListingMixin, DeleteView):
     model = Listing
     template_name = "listings/confirm_delete.html"
     success_url = reverse_lazy("accounts:dashboard")
 
-    def test_func(self):
-        return self.get_object().owner == self.request.user
-
     def form_valid(self, form):
-        messages.success(self.request, "İlan kalıcı olarak silindi.")
+        messages.success(self.request, "İlan silindi.")
         return super().form_valid(form)
 
 
@@ -303,99 +349,332 @@ class ListingDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 def change_listing_status(request, slug, action):
     listing = get_object_or_404(Listing, slug=slug, owner=request.user)
     allowed = {
-        "pause": ({Listing.Status.PUBLISHED}, Listing.Status.PAUSED, "İlan duraklatıldı."),
-        "publish": ({Listing.Status.PAUSED}, Listing.Status.PUBLISHED, "İlan yeniden yayına alındı."),
-        "complete": (
-            {Listing.Status.PUBLISHED, Listing.Status.PAUSED},
-            Listing.Status.COMPLETED,
-            "İlan sonuçlandı olarak işaretlendi.",
-        ),
+        "pause": (Listing.Status.PAUSED, "İlan duraklatıldı."),
+        "complete": (Listing.Status.COMPLETED, "İlan sonuçlandı olarak işaretlendi."),
+        "draft": (Listing.Status.DRAFT, "İlan taslağa alındı."),
     }
-    transition = allowed.get(action)
-    if not transition or listing.status not in transition[0]:
-        messages.error(request, "Bu ilan için geçersiz durum işlemi.")
-        return redirect("accounts:dashboard")
-
-    listing.status = transition[1]
-    update_fields = ["status", "updated_at"]
-    if listing.status == Listing.Status.PUBLISHED:
+    if action == "publish":
+        if listing.status in {Listing.Status.REVIEW, Listing.Status.REJECTED} and not request.user.is_staff:
+            messages.warning(request, "Bu ilan önce moderasyon incelemesinden geçmelidir.")
+            return redirect("accounts:dashboard")
+        listing.status = Listing.Status.PUBLISHED
         listing.published_at = timezone.now()
-        update_fields.append("published_at")
-    listing.save(update_fields=update_fields)
-    messages.success(request, transition[2])
+        listing.expires_at = timezone.now() + timedelta(days=60)
+        listing.renewal_count += 1
+        listing.save(update_fields=["status", "published_at", "expires_at", "renewal_count", "updated_at"])
+        messages.success(request, "İlan yeniden yayınlandı.")
+        return redirect("accounts:dashboard")
+    if action not in allowed:
+        messages.error(request, "Geçersiz işlem.")
+        return redirect("accounts:dashboard")
+    listing.status, message = allowed[action]
+    listing.save(update_fields=["status", "updated_at"])
+    messages.success(request, message)
     return redirect("accounts:dashboard")
 
 
 @login_required
 @require_POST
 def toggle_favorite(request, slug):
-    listing = get_object_or_404(Listing, slug=slug, status=Listing.Status.PUBLISHED)
-    if listing.owner == request.user:
-        messages.info(request, "Kendi ilanını favorilere eklemene gerek yok.")
+    listing = get_object_or_404(Listing, _active_listing_q(), slug=slug)
+    favorite, created = Favorite.objects.get_or_create(user=request.user, listing=listing)
+    if created:
+        Listing.objects.filter(pk=listing.pk).update(favorite_count=F("favorite_count") + 1)
+        messages.success(request, "İlan favorilerine eklendi.")
     else:
-        favorite, created = Favorite.objects.get_or_create(user=request.user, listing=listing)
-        if created:
-            messages.success(request, "İlan favorilerine eklendi.")
-        else:
-            favorite.delete()
-            messages.info(request, "İlan favorilerinden çıkarıldı.")
-
-    next_url = request.POST.get("next", "")
-    if not url_has_allowed_host_and_scheme(
-        next_url,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
-        next_url = listing.get_absolute_url()
-    return redirect(next_url)
+        favorite.delete()
+        Listing.objects.filter(pk=listing.pk, favorite_count__gt=0).update(favorite_count=F("favorite_count") - 1)
+        messages.info(request, "İlan favorilerinden çıkarıldı.")
+    return redirect(_safe_next_url(request, listing.get_absolute_url()))
 
 
 class FavoriteListView(LoginRequiredMixin, ListView):
     template_name = "listings/favorites.html"
-    context_object_name = "favorites"
+    context_object_name = "favorite_items"
     paginate_by = 24
 
     def get_queryset(self):
-        return (
-            Favorite.objects.filter(
-                user=self.request.user,
-                listing__status=Listing.Status.PUBLISHED,
-            )
-            .select_related("listing", "listing__owner", "listing__category")
-            .prefetch_related("listing__images")
+        return Favorite.objects.filter(user=self.request.user, listing__status=Listing.Status.PUBLISHED).filter(Q(listing__expires_at__isnull=True) | Q(listing__expires_at__gt=timezone.now())).select_related(
+            "listing", "listing__category", "listing__owner"
+        ).prefetch_related("listing__images")
+
+
+@login_required
+@require_POST
+def set_cover_image(request, slug, image_id):
+    listing = get_object_or_404(Listing, slug=slug, owner=request.user)
+    image = get_object_or_404(ListingImage, pk=image_id, listing=listing)
+    with db_transaction.atomic():
+        listing.images.update(is_cover=False)
+        image.is_cover = True
+        image.sort_order = 0
+        image.save(update_fields=["is_cover", "sort_order"])
+    messages.success(request, "Kapak fotoğrafı güncellendi.")
+    return redirect("listings:update", slug=listing.slug)
+
+
+@login_required
+@require_POST
+def delete_listing_image(request, slug, image_id):
+    listing = get_object_or_404(Listing, slug=slug, owner=request.user)
+    image = get_object_or_404(ListingImage, pk=image_id, listing=listing)
+    was_cover = image.is_cover
+    image.delete()
+    if was_cover:
+        next_image = listing.images.first()
+        if next_image:
+            next_image.is_cover = True
+            next_image.save(update_fields=["is_cover"])
+    messages.success(request, "Fotoğraf silindi.")
+    return redirect("listings:update", slug=listing.slug)
+
+
+@login_required
+@require_POST
+def reorder_listing_images(request, slug):
+    listing = get_object_or_404(Listing, slug=slug, owner=request.user)
+    raw_ids = request.POST.get("image_order", "")
+    try:
+        ids = [int(value) for value in raw_ids.split(",") if value.strip()]
+    except ValueError:
+        messages.error(request, "Fotoğraf sırası geçersiz.")
+        return redirect("listings:update", slug=listing.slug)
+    valid_ids = set(listing.images.values_list("id", flat=True))
+    if set(ids) != valid_ids:
+        messages.error(request, "Fotoğraf sırası eksik veya geçersiz.")
+        return redirect("listings:update", slug=listing.slug)
+    for index, image_id in enumerate(ids):
+        ListingImage.objects.filter(pk=image_id, listing=listing).update(sort_order=index)
+    messages.success(request, "Fotoğraf sırası kaydedildi.")
+    return redirect("listings:update", slug=listing.slug)
+
+
+@login_required
+@require_POST
+def offer_action(request, pk, action):
+    offer = get_object_or_404(Offer.objects.select_related("listing", "sender", "listing__owner"), pk=pk)
+    try:
+        if action == "accept":
+            transaction = accept_offer(offer=offer, actor=request.user)
+            messages.success(request, "Teklif kabul edildi ve güvenli işlem kaydı açıldı.")
+            return redirect(transaction.get_absolute_url())
+        if action == "reject":
+            reject_offer(offer=offer, actor=request.user)
+            messages.success(request, "Teklif reddedildi.")
+        elif action == "withdraw":
+            if offer.sender_id != request.user.pk or offer.status != Offer.Status.PENDING:
+                raise PermissionError
+            offer.status = Offer.Status.WITHDRAWN
+            offer.responded_at = timezone.now()
+            offer.save(update_fields=["status", "responded_at", "updated_at"])
+            messages.success(request, "Teklifin geri çekildi.")
+        else:
+            messages.error(request, "Geçersiz teklif işlemi.")
+    except PermissionError:
+        raise Http404
+    except ValueError as exc:
+        messages.error(request, str(exc))
+    return redirect("accounts:dashboard")
+
+
+class TransactionDetailView(LoginRequiredMixin, DetailView):
+    model = Transaction
+    template_name = "listings/transaction_detail.html"
+    context_object_name = "transaction"
+    slug_field = "public_id"
+    slug_url_kwarg = "public_id"
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Transaction.objects.select_related("listing", "offer", "buyer", "seller").prefetch_related("reviews")
+        if user.is_staff:
+            return qs
+        return qs.filter(Q(buyer=user) | Q(seller=user))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        is_participant = self.object.is_participant(self.request.user)
+        context["is_participant"] = is_participant
+        context["review_form"] = ReviewForm() if is_participant else None
+        context["dispute_form"] = TransactionDisputeForm(instance=self.object) if is_participant else None
+        context["my_review"] = self.object.reviews.filter(reviewer=self.request.user).first() if is_participant else None
+        context["other_user"] = (
+            self.object.seller if self.request.user.pk == self.object.buyer_id else self.object.buyer
+        ) if is_participant else None
+        return context
+
+
+@login_required
+@require_POST
+def transaction_action(request, public_id, action):
+    transaction = get_object_or_404(
+        Transaction.objects.select_related("buyer", "seller", "listing"),
+        public_id=public_id,
+    )
+    if not transaction.is_participant(request.user):
+        raise Http404
+    if transaction.status in {Transaction.Status.COMPLETED, Transaction.Status.CANCELLED}:
+        messages.warning(request, "Bu işlem kapanmış durumda.")
+        return redirect(transaction.get_absolute_url())
+
+    if action == "delivery":
+        transaction.status = Transaction.Status.DELIVERY
+        transaction.save(update_fields=["status", "updated_at"])
+        messages.success(request, "İşlem teslim / hizmet aşamasına geçirildi.")
+    elif action == "confirm":
+        if request.user.pk == transaction.buyer_id:
+            transaction.buyer_confirmed = True
+            fields = ["buyer_confirmed", "updated_at"]
+        else:
+            transaction.seller_confirmed = True
+            fields = ["seller_confirmed", "updated_at"]
+        transaction.save(update_fields=fields)
+        finalize_transaction(transaction)
+        messages.success(request, "Tamamlama onayın kaydedildi.")
+    elif action == "cancel":
+        if transaction.status != Transaction.Status.AGREED:
+            messages.error(request, "Teslim aşamasındaki işlem tek taraflı iptal edilemez; uyuşmazlık bildir.")
+        else:
+            transaction.status = Transaction.Status.CANCELLED
+            transaction.cancelled_at = timezone.now()
+            transaction.save(update_fields=["status", "cancelled_at", "updated_at"])
+            Listing.objects.filter(pk=transaction.listing_id).update(status=Listing.Status.PAUSED)
+            messages.success(request, "İşlem iptal edildi.")
+    elif action == "dispute":
+        form = TransactionDisputeForm(request.POST, instance=transaction)
+        if form.is_valid():
+            transaction = form.save(commit=False)
+            transaction.status = Transaction.Status.DISPUTED
+            transaction.save(update_fields=["status", "dispute_reason", "updated_at"])
+            for staff_user in transaction.seller.__class__.objects.filter(is_staff=True, is_active=True)[:20]:
+                create_notification(
+                    user=staff_user,
+                    actor=request.user,
+                    listing=transaction.listing,
+                    notification_type=Notification.Type.SYSTEM,
+                    title="Yeni işlem uyuşmazlığı",
+                    body=f"{transaction.listing.title} işlemi için inceleme istendi.",
+                    link=transaction.get_absolute_url(),
+                )
+            messages.warning(request, "Uyuşmazlık kaydı açıldı. Destek ekibi inceleyecek.")
+        else:
+            messages.error(request, "Uyuşmazlık açıklamasını kontrol et.")
+    else:
+        messages.error(request, "Geçersiz işlem.")
+    return redirect(transaction.get_absolute_url())
+
+
+@login_required
+@require_POST
+def moderate_transaction(request, public_id, action):
+    if not request.user.is_staff:
+        raise Http404
+    transaction = get_object_or_404(
+        Transaction.objects.select_related("buyer", "seller", "listing"),
+        public_id=public_id,
+        status=Transaction.Status.DISPUTED,
+    )
+    if action == "complete":
+        transaction.buyer_confirmed = True
+        transaction.seller_confirmed = True
+        transaction.save(update_fields=["buyer_confirmed", "seller_confirmed", "updated_at"])
+        finalize_transaction(transaction)
+        title = "Uyuşmazlık tamamlandı olarak çözüldü"
+        body = "Destek ekibi işlem kaydını tamamlandı olarak kapattı."
+        messages.success(request, "Uyuşmazlık tamamlandı olarak kapatıldı.")
+    elif action == "cancel":
+        transaction.status = Transaction.Status.CANCELLED
+        transaction.cancelled_at = timezone.now()
+        transaction.save(update_fields=["status", "cancelled_at", "updated_at"])
+        Listing.objects.filter(pk=transaction.listing_id).update(
+            status=Listing.Status.PAUSED,
+            updated_at=timezone.now(),
         )
+        title = "Uyuşmazlık iptal ile sonuçlandı"
+        body = "Destek ekibi işlem kaydını iptal ederek ilanı duraklattı."
+        messages.success(request, "Uyuşmazlık iptal ile kapatıldı.")
+    else:
+        messages.error(request, "Geçersiz moderasyon işlemi.")
+        return redirect(transaction.get_absolute_url())
+    for recipient in (transaction.buyer, transaction.seller):
+        create_notification(
+            user=recipient,
+            actor=request.user,
+            listing=transaction.listing,
+            notification_type=Notification.Type.SYSTEM,
+            title=title,
+            body=body,
+            link=transaction.get_absolute_url(),
+        )
+    return redirect(transaction.get_absolute_url())
+
+
+@login_required
+@require_POST
+def create_review(request, public_id):
+    transaction = get_object_or_404(Transaction.objects.select_related("buyer", "seller", "listing"), public_id=public_id)
+    if not transaction.is_participant(request.user) or transaction.status != Transaction.Status.COMPLETED:
+        raise Http404
+    if Review.objects.filter(transaction=transaction, reviewer=request.user).exists():
+        messages.warning(request, "Bu işlem için daha önce değerlendirme yaptın.")
+        return redirect(transaction.get_absolute_url())
+    form = ReviewForm(request.POST)
+    if form.is_valid():
+        review = form.save(commit=False)
+        review.transaction = transaction
+        review.reviewer = request.user
+        review.reviewed_user = transaction.seller if request.user.pk == transaction.buyer_id else transaction.buyer
+        review.save()
+        refresh_user_rating(review.reviewed_user)
+        create_notification(
+            user=review.reviewed_user,
+            actor=request.user,
+            listing=transaction.listing,
+            notification_type=Notification.Type.REVIEW,
+            title="Yeni değerlendirmen var",
+            body=f"{request.user.display_name} işleminizi {review.rating}/5 puanladı.",
+            link=reverse("accounts:public_profile", kwargs={"username": review.reviewed_user.username}),
+        )
+        messages.success(request, "Değerlendirmen yayınlandı.")
+    else:
+        messages.error(request, "Puan ve yorum alanlarını kontrol et.")
+    return redirect(transaction.get_absolute_url())
 
 
 @login_required
 @require_POST
 def start_conversation(request, slug):
-    listing = get_object_or_404(Listing, slug=slug, status=Listing.Status.PUBLISHED)
+    listing = get_object_or_404(Listing, _active_listing_q(), slug=slug)
     if listing.owner == request.user:
         messages.warning(request, "Kendi ilanına mesaj gönderemezsin.")
         return redirect(listing.get_absolute_url())
-
-    form = MessageForm(request.POST)
+    if _blocked_between(request.user, listing.owner):
+        messages.error(request, "Bu kullanıcıyla mesajlaşma kullanılamıyor.")
+        return redirect(listing.get_absolute_url())
+    form = MessageForm(request.POST, request.FILES)
     if not form.is_valid():
         messages.error(request, "Mesajını kontrol edip yeniden gönder.")
         return redirect(listing.get_absolute_url())
-
     conversation, _ = Conversation.objects.get_or_create(
         listing=listing,
         buyer=request.user,
         defaults={"seller": listing.owner},
     )
-    Message.objects.create(
-        conversation=conversation,
-        sender=request.user,
-        body=form.cleaned_data["body"],
-    )
+    if conversation.buyer_archived or conversation.seller_archived:
+        conversation.buyer_archived = False
+        conversation.seller_archived = False
+        conversation.save(update_fields=["buyer_archived", "seller_archived", "updated_at"])
+    message = form.save(commit=False)
+    message.conversation = conversation
+    message.sender = request.user
+    message.save()
     create_notification(
         user=listing.owner,
         actor=request.user,
         listing=listing,
         notification_type=Notification.Type.MESSAGE,
         title="İlanın hakkında yeni mesaj",
-        body=f"{request.user}: {form.cleaned_data['body'][:100]}",
+        body=f"{request.user.display_name}: {message.body[:100]}",
         link=reverse("listings:conversation_detail", kwargs={"pk": conversation.pk}),
     )
     messages.success(request, "Mesajın ilan sahibine gönderildi.")
@@ -410,15 +689,12 @@ class ConversationListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         return (
-            Conversation.objects.filter(Q(buyer=user) | Q(seller=user))
+            Conversation.objects.filter(Q(buyer=user, buyer_archived=False) | Q(seller=user, seller_archived=False))
             .select_related("listing", "buyer", "seller")
             .prefetch_related("messages")
             .annotate(
                 unread_count=Coalesce(
-                    Count(
-                        "messages",
-                        filter=Q(messages__is_read=False) & ~Q(messages__sender=user),
-                    ),
+                    Count("messages", filter=Q(messages__is_read=False) & ~Q(messages__sender=user)),
                     0,
                 )
             )
@@ -434,11 +710,9 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
 
     def get_queryset(self):
         user = self.request.user
-        return (
-            Conversation.objects.filter(Q(buyer=user) | Q(seller=user))
-            .select_related("listing", "buyer", "seller")
-            .prefetch_related("messages__sender")
-        )
+        return Conversation.objects.filter(Q(buyer=user) | Q(seller=user)).select_related(
+            "listing", "buyer", "seller"
+        ).prefetch_related("messages__sender")
 
     def get_success_url(self):
         return reverse("listings:conversation_detail", kwargs={"pk": self.object.pk})
@@ -446,38 +720,55 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["other_user"] = self.object.other_participant(self.request.user)
+        context["blocked_between"] = _blocked_between(self.request.user, context["other_user"])
         return context
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
-        self.object.messages.filter(is_read=False).exclude(sender=request.user).update(
-            is_read=True
-        )
+        self.object.messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
         return response
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        other_user = self.object.other_participant(request.user)
+        if _blocked_between(request.user, other_user):
+            messages.error(request, "Engellenen kullanıcıyla mesaj gönderilemez.")
+            return redirect(self.get_success_url())
         form = self.get_form()
         if form.is_valid():
-            return self.form_valid(form)
+            if self.object.buyer_archived or self.object.seller_archived:
+                self.object.buyer_archived = False
+                self.object.seller_archived = False
+                self.object.save(update_fields=["buyer_archived", "seller_archived", "updated_at"])
+            message = form.save(commit=False)
+            message.conversation = self.object
+            message.sender = request.user
+            message.save()
+            create_notification(
+                user=other_user,
+                actor=request.user,
+                listing=self.object.listing,
+                notification_type=Notification.Type.MESSAGE,
+                title="Yeni mesajın var",
+                body=f"{request.user.display_name}: {message.body[:100]}",
+                link=self.get_success_url(),
+            )
+            return redirect(self.get_success_url())
         return self.form_invalid(form)
 
-    def form_valid(self, form):
-        message = form.save(commit=False)
-        message.conversation = self.object
-        message.sender = self.request.user
-        message.save()
-        recipient = self.object.other_participant(self.request.user)
-        create_notification(
-            user=recipient,
-            actor=self.request.user,
-            listing=self.object.listing,
-            notification_type=Notification.Type.MESSAGE,
-            title="Yeni mesajın var",
-            body=f"{self.request.user}: {message.body[:100]}",
-            link=self.get_success_url(),
-        )
-        return redirect(self.get_success_url())
+
+@login_required
+@require_POST
+def archive_conversation(request, pk):
+    conversation = get_object_or_404(Conversation, Q(buyer=request.user) | Q(seller=request.user), pk=pk)
+    if request.user.pk == conversation.buyer_id:
+        conversation.buyer_archived = True
+        conversation.save(update_fields=["buyer_archived"])
+    else:
+        conversation.seller_archived = True
+        conversation.save(update_fields=["seller_archived"])
+    messages.success(request, "Konuşma arşivlendi.")
+    return redirect("listings:conversation_list")
 
 
 class NotificationListView(LoginRequiredMixin, ListView):
@@ -487,9 +778,7 @@ class NotificationListView(LoginRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user).select_related(
-            "actor", "listing"
-        )
+        return Notification.objects.filter(user=self.request.user).select_related("actor", "listing")
 
 
 @login_required
@@ -498,8 +787,10 @@ def mark_notification_read(request, pk):
     notification = get_object_or_404(Notification, pk=pk, user=request.user)
     notification.is_read = True
     notification.save(update_fields=["is_read"])
-    next_url = notification.link or reverse("listings:notifications")
-    return redirect(next_url)
+    target = notification.link or reverse("listings:notifications")
+    if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
+        target = reverse("listings:notifications")
+    return redirect(target)
 
 
 @login_required
@@ -512,22 +803,48 @@ def mark_all_notifications_read(request):
 
 @login_required
 @require_POST
+def save_search(request):
+    form = SavedSearchForm(request.POST)
+    if form.is_valid():
+        saved = form.save(commit=False)
+        saved.user = request.user
+        saved.query_params = {
+            key: value
+            for key, value in request.POST.items()
+            if key not in {"csrfmiddlewaretoken", "name", "alert_enabled", "next", "page", "sort"} and value
+        }
+        saved.save()
+        messages.success(request, "Araman kaydedildi.")
+    else:
+        messages.error(request, "Arama kaydedilemedi.")
+    return redirect(_safe_next_url(request, reverse("listings:list")))
+
+
+@login_required
+@require_POST
+def delete_saved_search(request, pk):
+    get_object_or_404(SavedSearch, pk=pk, user=request.user).delete()
+    messages.success(request, "Kayıtlı arama silindi.")
+    return redirect("accounts:dashboard")
+
+
+@login_required
+@require_POST
 def report_listing(request, slug):
-    listing = get_object_or_404(Listing, slug=slug, status=Listing.Status.PUBLISHED)
+    listing = get_object_or_404(Listing, _active_listing_q(), slug=slug)
     if listing.owner == request.user:
         messages.warning(request, "Kendi ilanını şikâyet edemezsin.")
         return redirect(listing.get_absolute_url())
     if ListingReport.objects.filter(listing=listing, reporter=request.user).exists():
-        messages.info(request, "Bu ilan için daha önce bildirim oluşturdun.")
+        messages.info(request, "Bu ilan için daha önce şikâyet kaydı oluşturdun.")
         return redirect(listing.get_absolute_url())
-
     form = ListingReportForm(request.POST)
     if form.is_valid():
         report = form.save(commit=False)
         report.listing = listing
         report.reporter = request.user
         report.save()
-        messages.success(request, "Bildirimin güvenlik ekibine iletildi.")
+        messages.success(request, "Şikâyetin inceleme ekibine gönderildi.")
     else:
         messages.error(request, "Şikâyet bilgilerini kontrol et.")
     return redirect(listing.get_absolute_url())
@@ -541,17 +858,15 @@ class ModerationDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["pending_listings"] = (
-            Listing.objects.filter(status=Listing.Status.REVIEW)
-            .select_related("owner", "category")
-            .prefetch_related("images")[:50]
-        )
-        context["open_reports"] = (
-            ListingReport.objects.filter(
-                status__in=[ListingReport.Status.OPEN, ListingReport.Status.REVIEWING]
-            )
-            .select_related("listing", "reporter")[:50]
-        )
+        context["pending_listings"] = Listing.objects.filter(status=Listing.Status.REVIEW).select_related(
+            "owner", "category"
+        ).prefetch_related("images")[:100]
+        context["open_reports"] = ListingReport.objects.filter(
+            status__in=[ListingReport.Status.OPEN, ListingReport.Status.REVIEWING]
+        ).select_related("listing", "reporter")[:100]
+        context["disputes"] = Transaction.objects.filter(status=Transaction.Status.DISPUTED).select_related(
+            "listing", "buyer", "seller"
+        )[:100]
         return context
 
 
@@ -563,6 +878,7 @@ def moderate_listing(request, pk, action):
     if action == "approve":
         listing.status = Listing.Status.PUBLISHED
         listing.published_at = timezone.now()
+        listing.expires_at = timezone.now() + timedelta(days=60)
         title = "İlanın onaylandı"
         body = "İlanın güvenlik incelemesinden geçti ve yayına alındı."
     elif action == "reject":
@@ -572,20 +888,10 @@ def moderate_listing(request, pk, action):
     else:
         messages.error(request, "Geçersiz moderasyon işlemi.")
         return redirect("listings:moderation")
-
     listing.review_note = note
     listing.moderated_by = request.user
     listing.moderated_at = timezone.now()
-    listing.save(
-        update_fields=[
-            "status",
-            "published_at",
-            "review_note",
-            "moderated_by",
-            "moderated_at",
-            "updated_at",
-        ]
-    )
+    listing.save()
     create_notification(
         user=listing.owner,
         actor=request.user,

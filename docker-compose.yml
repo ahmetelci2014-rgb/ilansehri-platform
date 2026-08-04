@@ -7,19 +7,25 @@ services:
       POSTGRES_PASSWORD: ilansehri_dev
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ilansehri"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   web:
     build: .
-    command: sh -c "python manage.py makemigrations accounts listings managed_services partners && python manage.py migrate && python manage.py seed_categories && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
-    volumes:
-      - .:/app
+    command: bash scripts/bootstrap_production.sh
     ports:
       - "8000:8000"
     environment:
-      DJANGO_SECRET_KEY: development-only
+      DJANGO_SECRET_KEY: development-only-change-me
       DJANGO_DEBUG: "True"
       DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost
       DATABASE_URL: postgres://ilansehri:ilansehri_dev@db:5432/ilansehri
+      SECURE_SSL_REDIRECT: "False"
+      VERIFICATION_DEBUG_CODE: "True"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 volumes:
   postgres_data:
