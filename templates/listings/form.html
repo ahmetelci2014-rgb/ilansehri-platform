@@ -1,49 +1,106 @@
 {% extends 'base.html' %}
 {% block title %}{% if object %}İlanı Düzenle{% else %}Yeni İlan Ver{% endif %} | İlan Şehri{% endblock %}
 {% block content %}
-<section class="create-hero"><div class="shell"><div class="breadcrumbs light-breadcrumb"><a href="{% url 'core:home' %}">Ana Sayfa</a><span>›</span><span>{% if object %}İlanı Düzenle{% else %}İlan Ver{% endif %}</span></div><span class="section-label light-label">{% if object %}İLANINI GÜNCELLE{% else %}ÜCRETSİZ İLAN VER{% endif %}</span><h1>{% if object %}İlanını güncelle{% else %}Şehrine birkaç dakikada ulaş{% endif %}</h1><p>Net bilgiler ve iyi fotoğraflar daha hızlı sonuç getirir.</p></div></section>
+<section class="create-hero">
+  <div class="shell">
+    <div class="breadcrumbs light-breadcrumb"><a href="{% url 'core:home' %}">Ana Sayfa</a><span>›</span><span>{% if object %}İlanı Düzenle{% else %}İlan Ver{% endif %}</span></div>
+    <span class="section-label light-label">{% if object %}İLANINI GÜNCELLE{% else %}ÜCRETSİZ İLAN VER{% endif %}</span>
+    <h1>{% if object %}İlanını güçlendir{% else %}Doğru bilgilerle daha hızlı sonuca ulaş{% endif %}</h1>
+    <p>İlan türüne göre özel alanları doldur; alıcılar aradığını daha kolay bulsun.</p>
+  </div>
+</section>
 
 <section class="section create-section">
   <div class="shell create-layout">
     <aside class="create-sidebar">
-      <div class="progress-card"><h3>İlan oluşturma</h3><div class="progress-step active"><span>1</span><div><strong>Temel bilgiler</strong><small>Tür, kategori ve başlık</small></div></div><div class="progress-step active"><span>2</span><div><strong>Detaylar</strong><small>Açıklama, fiyat ve konum</small></div></div><div class="progress-step active"><span>3</span><div><strong>Fotoğraflar</strong><small>En fazla 10 görsel</small></div></div><div class="progress-step active"><span>4</span><div><strong>Yönetim seçimi</strong><small>Kendin veya İlan Şehri</small></div></div></div>
-      <div class="sidebar-tip"><span>💡</span><div><strong>Daha hızlı sonuç için</strong><p>Başlığı kısa tut, açıklamada tüm detayları yaz ve aydınlık fotoğraflar kullan.</p></div></div>
-      <div class="sidebar-safe"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V7Z"/><path d="m9 12 2 2 4-4"/></svg><div><strong>Bilgilerin güvende</strong><small>İletişim bilgilerin herkese açık gösterilmez.</small></div></div>
+      <div class="progress-card">
+        <h3>İlan oluşturma</h3>
+        <div class="progress-step active"><span>1</span><div><strong>Temel bilgiler</strong><small>Tür, kategori ve başlık</small></div></div>
+        <div class="progress-step active"><span>2</span><div><strong>Özel detaylar</strong><small>İlan türüne uygun alanlar</small></div></div>
+        <div class="progress-step active"><span>3</span><div><strong>Konum ve fotoğraf</strong><small>Şehir, ilçe ve görseller</small></div></div>
+        <div class="progress-step active"><span>4</span><div><strong>Yönetim seçimi</strong><small>Kendin veya İlan Şehri</small></div></div>
+      </div>
+      <div class="sidebar-tip"><span>💡</span><div><strong>Aramalarda öne çık</strong><p>Marka, model, metrekare ve çalışma şekli gibi alanlar filtrelerde kullanılacaktır.</p></div></div>
+      <div class="sidebar-safe"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V7Z"/><path d="m9 12 2 2 4-4"/></svg><div><strong>Güvenlik incelemesi</strong><small>Yeni ve önemli ölçüde değiştirilen ilanlar yayın öncesi kontrol edilir.</small></div></div>
     </aside>
 
-    <form method="post" enctype="multipart/form-data" class="create-form" novalidate>
+    <form method="post" enctype="multipart/form-data" class="create-form" novalidate data-listing-form data-location-url="{% url 'listings:location_suggestions' %}">
       {% csrf_token %}
       {% if form.non_field_errors %}<div class="form-alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
 
-      <section class="form-card"><div class="form-card-head"><span class="form-card-number">01</span><div><h2>Ne ilanı veriyorsun?</h2><p>Doğru kategori, doğru kişilere ulaşmanı sağlar.</p></div></div><div class="form-grid">
-        <div class="field"><label for="{{ form.kind.id_for_label }}">{{ form.kind.label }}</label>{{ form.kind }}{% for error in form.kind.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-        <div class="field"><label for="{{ form.action.id_for_label }}">{{ form.action.label }}</label>{{ form.action }}{% for error in form.action.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-        <div class="field field-wide"><label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>{{ form.category }}{% for error in form.category.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-      </div></section>
-
-      <section class="form-card"><div class="form-card-head"><span class="form-card-number">02</span><div><h2>İlan detayları</h2><p>İnsanların karar vermesini kolaylaştıracak net bilgiler ekle.</p></div></div><div class="form-grid">
-        <div class="field field-wide"><label for="{{ form.title.id_for_label }}">İlan başlığı</label>{{ form.title }}<small>En önemli özelliği başlıkta belirt.</small>{% for error in form.title.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-        <div class="field field-wide"><label for="{{ form.description.id_for_label }}">Açıklama</label>{{ form.description }}<small>Durum, özellik, teslim ve varsa kusurları açıkça yaz.</small>{% for error in form.description.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-        <div class="field"><label for="{{ form.condition.id_for_label }}">{{ form.condition.label }}</label>{{ form.condition }}{% for error in form.condition.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-        <div class="field price-field"><label for="{{ form.price.id_for_label }}">{{ form.price.label }}</label><div class="input-suffix">{{ form.price }}<span>TL</span></div>{% for error in form.price.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-        <label class="check-card field-wide" for="{{ form.price_on_request.id_for_label }}">{{ form.price_on_request }}<span class="custom-check"></span><span><strong>Fiyat yerine teklif almak istiyorum</strong><small>İlgilenen kişiler sana fiyat teklifi gönderebilir.</small></span></label>
-      </div></section>
-
-      <section class="form-card"><div class="form-card-head"><span class="form-card-number">03</span><div><h2>Konum</h2><p>Yakınındaki kişilerin ilanını daha kolay bulmasını sağla.</p></div></div><div class="form-grid">
-        <div class="field"><label for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>{{ form.city }}{% for error in form.city.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-        <div class="field"><label for="{{ form.district.id_for_label }}">{{ form.district.label }}</label>{{ form.district }}{% for error in form.district.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-        <div class="field field-wide"><label for="{{ form.neighborhood.id_for_label }}">{{ form.neighborhood.label }}</label>{{ form.neighborhood }}{% for error in form.neighborhood.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>
-      </div></section>
-
-      <section class="form-card"><div class="form-card-head"><span class="form-card-number">04</span><div><h2>Fotoğraflar</h2><p>Aydınlık ve farklı açılardan çekilmiş görseller güveni artırır.</p></div></div>
-        {% if object and object.images.exists %}<div class="existing-images">{% for item in object.images.all %}<img src="{{ item.image.url }}" alt="{{ item.alt_text|default:object.title }}">{% endfor %}</div>{% endif %}
-        <label class="upload-zone" for="{{ form.images.id_for_label }}"><span class="upload-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h3l2-3h6l2 3h3v13H4Z"/><circle cx="12" cy="13" r="4"/></svg></span><strong>Fotoğrafları seç veya buraya sürükle</strong><small>JPG, PNG veya WEBP · En fazla 10 fotoğraf · Her biri en fazla 8 MB</small><span class="upload-button">Dosya Seç</span>{{ form.images }}</label>
-        <div class="image-preview-grid" data-image-preview></div>{% for error in form.images.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      <section class="form-card">
+        <div class="form-card-head"><span class="form-card-number">01</span><div><h2>Temel bilgiler</h2><p>İlanın ne olduğunu ve ne yapmak istediğini seç.</p></div></div>
+        <div class="form-grid">
+          <div class="field"><label for="{{ form.kind.id_for_label }}">{{ form.kind.label }}</label>{{ form.kind }}{% for error in form.kind.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.action.id_for_label }}">{{ form.action.label }}</label>{{ form.action }}{% for error in form.action.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field field-wide"><label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>{{ form.category }}{% for error in form.category.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field field-wide"><label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>{{ form.title }}{% for error in form.title.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field field-wide"><label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>{{ form.description }}{% for error in form.description.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+        </div>
       </section>
 
-      <section class="form-card management-card"><div class="form-card-head"><span class="form-card-number">05</span><div><h2>İlanı kim yönetecek?</h2><p>Sana uygun çalışma şeklini seç.</p></div></div><div class="management-explainer"><div><span>🙋</span><strong>Kendim yöneteceğim</strong><small>Mesajları ve teklifleri kendin takip et. Doğrudan işlemlerde komisyon ödeme.</small></div><div class="managed-option"><span>✨</span><strong>İlan Şehri yönetsin</strong><small>İlan, mesaj, teklif ve randevu sürecini profesyonel ekibe bırak.</small><b>Önerilen</b></div></div><div class="field management-select"><label for="{{ form.management_mode.id_for_label }}">Seçimin</label>{{ form.management_mode }}{% for error in form.management_mode.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div></section>
+      <section class="form-card category-detail-card">
+        <div class="form-card-head"><span class="form-card-number">02</span><div><h2>Kategoriye özel detaylar</h2><p>Seçtiğin ilan türüne uygun alanlar otomatik gösterilir.</p></div></div>
+        <div class="kind-empty-state" data-kind-empty><span>✨</span><div><strong>Önce ilan türünü seç</strong><p>Ürün, araç, emlak, hizmet veya iş seçimine göre ilgili alanlar burada açılacak.</p></div></div>
 
-      <div class="submit-bar"><div><strong>İlanın yayınlanmaya hazır mı?</strong><span>Kaydetmeden önce bilgilerini son kez kontrol et.</span></div><button class="button button-lg" type="submit">{% if object %}Değişiklikleri Kaydet{% else %}İlanı Yayınla{% endif %} <span>→</span></button></div>
+        <div class="form-grid kind-group" data-kind-group="product,vehicle">
+          <div class="field"><label for="{{ form.brand.id_for_label }}">{{ form.brand.label }}</label>{{ form.brand }}{% for error in form.brand.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.model_name.id_for_label }}">{{ form.model_name.label }}</label>{{ form.model_name }}{% for error in form.model_name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field field-wide"><label for="{{ form.condition.id_for_label }}">{{ form.condition.label }}</label>{{ form.condition }}{% for error in form.condition.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+        </div>
+
+        <div class="form-grid kind-group" data-kind-group="vehicle">
+          <div class="field"><label for="{{ form.model_year.id_for_label }}">{{ form.model_year.label }}</label>{{ form.model_year }}{% for error in form.model_year.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.mileage.id_for_label }}">{{ form.mileage.label }}</label>{{ form.mileage }}{% for error in form.mileage.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.fuel_type.id_for_label }}">{{ form.fuel_type.label }}</label>{{ form.fuel_type }}{% for error in form.fuel_type.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.transmission.id_for_label }}">{{ form.transmission.label }}</label>{{ form.transmission }}{% for error in form.transmission.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+        </div>
+
+        <div class="form-grid kind-group" data-kind-group="real_estate">
+          <div class="field"><label for="{{ form.room_count.id_for_label }}">{{ form.room_count.label }}</label>{{ form.room_count }}{% for error in form.room_count.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.area_m2.id_for_label }}">{{ form.area_m2.label }}</label>{{ form.area_m2 }}{% for error in form.area_m2.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.building_age.id_for_label }}">{{ form.building_age.label }}</label>{{ form.building_age }}{% for error in form.building_age.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.floor_location.id_for_label }}">{{ form.floor_location.label }}</label>{{ form.floor_location }}{% for error in form.floor_location.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field field-wide"><label for="{{ form.heating_type.id_for_label }}">{{ form.heating_type.label }}</label>{{ form.heating_type }}{% for error in form.heating_type.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+        </div>
+
+        <div class="form-grid kind-group" data-kind-group="service">
+          <div class="field"><label for="{{ form.service_area.id_for_label }}">{{ form.service_area.label }}</label>{{ form.service_area }}{% for error in form.service_area.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.fee_type.id_for_label }}">{{ form.fee_type.label }}</label>{{ form.fee_type }}{% for error in form.fee_type.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+        </div>
+
+        <div class="form-grid kind-group" data-kind-group="job">
+          <div class="field"><label for="{{ form.job_type.id_for_label }}">{{ form.job_type.label }}</label>{{ form.job_type }}{% for error in form.job_type.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.experience_level.id_for_label }}">{{ form.experience_level.label }}</label>{{ form.experience_level }}{% for error in form.experience_level.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+        </div>
+      </section>
+
+      <section class="form-card">
+        <div class="form-card-head"><span class="form-card-number">03</span><div><h2>Fiyat ve konum</h2><p>Alıcıların bütçe ve bölge filtrelerinde seni bulmasını sağla.</p></div></div>
+        <div class="form-grid">
+          <div class="field"><label for="{{ form.price.id_for_label }}">{{ form.price.label }}</label>{{ form.price }}{% for error in form.price.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field checkbox-field"><label for="{{ form.price_on_request.id_for_label }}">{{ form.price_on_request }} <span>{{ form.price_on_request.label }}</span></label>{% for error in form.price_on_request.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>{{ form.city }}{% for error in form.city.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field"><label for="{{ form.district.id_for_label }}">{{ form.district.label }}</label>{{ form.district }}<datalist id="district-options"></datalist>{% for error in form.district.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+          <div class="field field-wide"><label for="{{ form.neighborhood.id_for_label }}">{{ form.neighborhood.label }}</label>{{ form.neighborhood }}<datalist id="neighborhood-options"></datalist><small>Katalogda görünmeyen ilçe veya mahalleyi doğrudan yazabilirsin.</small>{% for error in form.neighborhood.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+        </div>
+      </section>
+
+      <section class="form-card">
+        <div class="form-card-head"><span class="form-card-number">04</span><div><h2>Fotoğraflar</h2><p>İlk fotoğraf kapak görseli olarak kullanılır.</p></div></div>
+        <div class="upload-zone"><span class="upload-icon">📷</span><div><strong>Fotoğraflarını seç</strong><small>{{ form.images.help_text }}</small></div>{{ form.images }}</div>
+        {% for error in form.images.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+        <div class="image-preview-grid" data-image-preview></div>
+        {% if object and object.images.exists %}<div class="existing-images"><h3>Mevcut fotoğraflar</h3><div>{% for image in object.images.all %}<img src="{{ image.image.url }}" alt="{{ image.alt_text|default:object.title }}">{% endfor %}</div></div>{% endif %}
+      </section>
+
+      <section class="form-card management-choice-card">
+        <div class="form-card-head"><span class="form-card-number">05</span><div><h2>İlanı kim yönetecek?</h2><p>Kendin ücretsiz yönet veya operasyonu ekibimize bırak.</p></div></div>
+        <div class="field management-select"><label for="{{ form.management_mode.id_for_label }}">{{ form.management_mode.label }}</label>{{ form.management_mode }}{% for error in form.management_mode.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</div>
+        <div class="management-explainer"><article><span>👤</span><div><strong>Kendim yöneteceğim</strong><p>Mesajları, teklifleri ve randevuları doğrudan sen yönetirsin.</p></div></article><article class="managed-option"><span>✨</span><div><strong>İlan Şehri yönetsin</strong><p>İlan hazırlama, alıcı filtreleme ve süreç takibini ekibimiz üstlenir.</p></div></article></div>
+      </section>
+
+      <div class="form-submit-bar"><div><strong>{% if object %}Değişiklikleri kaydet{% else %}İlanı incelemeye gönder{% endif %}</strong><small>Bilgilerin yayın öncesi güvenlik kontrolünden geçebilir.</small></div><button class="button button-lg" type="submit">{% if object %}İlanı Güncelle{% else %}İlanı Oluştur{% endif %} <span>→</span></button></div>
     </form>
   </div>
 </section>
