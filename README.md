@@ -1,4 +1,6 @@
-# İlan Şehri v1.12.2.1 — Gemini ile Fotoğrafla Başlayan Yapay Zekâ İlan Akışı
+# İlan Şehri
+
+> Güncel sürüm: **v1.12.2.2** — GitHub Actions statik dosya test düzeltmesi. v1.12.2 — Fotoğrafla Başlayan Yapay Zekâ İlan Akışı
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -67,7 +69,7 @@ Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler 
 - Alan adı ve `CSRF_TRUSTED_ORIGINS`
 - SMTP e-posta hesabı
 - Telefon doğrulaması için SMS servisi
-- Yapay zekâ görsel analizi için Google AI Studio üzerinden Gemini API anahtarı
+- Yapay zekâ görsel analizi için OpenAI API anahtarı ve API hesabı
 - Kullanıcı görselleri için kalıcı disk veya nesne depolama
 - Gerçek şirket bilgileriyle hukukçu tarafından kontrol edilmiş yasal metinler
 
@@ -127,24 +129,16 @@ python manage.py send_notification_digests
 
 Ayrıntılar: `docs/NOTIFICATION_MODERATION.md`
 
-## v1.12.2.1 Gemini Görsel Analizi
+## v1.12.2 Fotoğrafla Başlayan Yapay Zekâ İlan Akışı
 
-- AI hızlı başlangıç alanı ilan formunun en üstündedir.
-- Kullanıcı önce 1–8 fotoğraf seçer; Gemini başlık, açıklama, kategori, durum, marka, model, renk, etiket ve teknik özellik önerir.
-- Birincil sağlayıcı Google Gemini Interactions API olarak değiştirildi.
-- Kararlı varsayılan model `gemini-3.6-flash` olarak ayarlandı; model yönetim panelinden değiştirilebilir.
-- Gemini görsel girdileri base64 olarak, şemalı JSON çıktı isteğiyle gönderilir.
-- Görseller gerçek dosya türü, boyut, EXIF temizleme ve güvenli yeniden kodlama kontrollerinden geçer.
+- AI hızlı başlangıç alanı ilan formunun en üstüne taşındı.
+- Kullanıcı önce 1–8 fotoğraf seçer; AI başlık, açıklama, kategori, durum, marka, model, renk, etiket ve teknik özellik önerir.
+- Görsel yükleme alanı sürükle-bırak, mobil önizleme, tek tek silme ve kapak adayı göstergesiyle yeniden tasarlandı.
+- OpenAI Responses API tabanlı gerçek görsel sağlayıcısı eklendi.
+- Görseller analizden önce moderasyon, gerçek dosya türü, boyut, EXIF temizleme ve güvenli yeniden kodlama kontrollerinden geçer.
 - Katı JSON şeması doğrulanmadan hiçbir AI alanı forma aktarılmaz.
 - Düşük güvenli bilgiler soru olarak gösterilir; fiyat AI tarafından doldurulmaz.
-- OpenAI sağlayıcısı yalnız yedek seçenek olarak korunur.
 - Mevcut manuel beş adımlı ilan verme akışı, taslaklar ve moderasyon korunur.
-
-Gemini kurulumu:
-
-```bash
-python manage.py activate_gemini_ai --enable
-```
 
 Kurulum ve güvenlik: `docs/AI_LISTING_V1122.md`
 

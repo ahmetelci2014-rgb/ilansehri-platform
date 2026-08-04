@@ -44,4 +44,8 @@ jobs:
       - name: Statik dosyaları doğrula
         run: python manage.py collectstatic --noinput
       - name: Otomatik testler
-        run: python manage.py test
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings_test
+        run: |
+          mkdir -p staticfiles
+          python manage.py test

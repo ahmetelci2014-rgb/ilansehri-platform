@@ -1,15 +1,10 @@
-# İlan Şehri v1.12.2.1 — Gemini Görsel Analizi
+# v1.12.2.2 — GitHub Actions statik dosya testi düzeltmesi
 
-- Birincil yapay zekâ sağlayıcısı Google Gemini olarak değiştirildi.
-- `gemini-3.6-flash` kararlı varsayılan görsel analiz modeli yapıldı.
-- Gemini Interactions API için satır içi base64 görsel girişi ve JSON Schema çıktısı eklendi.
-- `GEMINI_API_KEY`, `GEMINI_API_BASE`, `GEMINI_API_REVISION` ve `GEMINI_MODEL` ortam değişkenleri eklendi.
-- Gemini API bağlantı testi ve güvenli hata mesajları eklendi.
-- Güvenlik/politika nedeniyle engellenen Gemini yanıtları ilan formuna uygulanmaz.
-- Toplam satır içi istek boyutu için 18 MB koruması eklendi.
-- `activate_gemini_ai` yönetim komutu eklendi.
-- OpenAI sağlayıcısı yedek seçenek olarak korunur.
-- PWA önbelleği `ilansehri-v11221` olarak yenilendi.
+- Otomatik testler için ayrı `config.settings_test` ayarı eklendi.
+- Testler artık manifest gerektirmeyen `StaticFilesStorage` kullanıyor.
+- GitHub Actions test adımı açıkça `config.settings_test` ile çalışıyor.
+- Testten önce `staticfiles` klasörü oluşturularak WhiteNoise uyarısı kaldırıldı.
+- Canlı ortamın `CompressedManifestStaticFilesStorage` ayarı değiştirilmedi.
 
 # İlan Şehri v1.12.2 — Fotoğrafla Başlayan Gerçek AI İlan Akışı
 

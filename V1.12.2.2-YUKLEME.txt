@@ -1,0 +1,18 @@
+İLAN ŞEHRİ v1.12.2.2 — GITHUB ACTIONS STATİK DOSYA TEST DÜZELTMESİ
+
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform klasörüne kopyalayın.
+3. Mevcut dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.12.2.2 Actions statik düzeltmesi
+5. Commit to main ve Push origin.
+6. GitHub Actions yeniden çalışacak.
+
+Düzeltme:
+- Otomatik testler ayrı config.settings_test ayarıyla çalışır.
+- Test sırasında manifest gerektirmeyen StaticFilesStorage kullanılır.
+- Canlı ortamın WhiteNoise CompressedManifestStaticFilesStorage ayarı korunur.
+- Testten önce staticfiles klasörü oluşturulur.
+
+Yeni migration yoktur.
+Gemini ve ilan verme koduna dokunulmamıştır.

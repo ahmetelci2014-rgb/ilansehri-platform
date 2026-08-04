@@ -1,0 +1,27 @@
+{
+  "version": "v1.12.2.2",
+  "name": "GitHub Actions Statik Dosya Test Düzeltmesi",
+  "base_version": "v1.12.2.1",
+  "changed_file_count": 5,
+  "changed_files": [
+    ".github/workflows/tests.yml",
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "config/settings_test.py"
+  ],
+  "fixes": [
+    "Testler için ayrı config.settings_test modülü",
+    "Manifest gerektirmeyen StaticFilesStorage",
+    "GitHub Actions test adımında açık settings modülü",
+    "WhiteNoise staticfiles klasörü uyarısının kaldırılması",
+    "Canlı ortam statik dosya ayarının korunması"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "python_ast": "passed",
+    "workflow_content_check": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "will run on GitHub Actions after upload"
+  }
+}
