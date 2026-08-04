@@ -8,10 +8,10 @@ if [ ! -f .env ]; then
   cp .env.example .env
 fi
 
-python manage.py makemigrations accounts listings managed_services partners --noinput
+python manage.py makemigrations accounts listings managed_services partners support_center --noinput
 python manage.py migrate --noinput
 python manage.py seed_categories
 python manage.py collectstatic --noinput
 python manage.py check
 
-echo "İlan Şehri v1.9 Codespaces kurulumu tamamlandı."
+echo "İlan Şehri v1.10 Codespaces kurulumu tamamlandı."

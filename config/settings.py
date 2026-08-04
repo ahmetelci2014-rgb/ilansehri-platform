@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.listings",
     "apps.managed_services",
     "apps.partners",
+    "apps.support_center",
 ]
 
 MIDDLEWARE = [

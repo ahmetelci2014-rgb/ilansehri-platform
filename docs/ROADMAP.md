@@ -11,6 +11,7 @@
 - Tam Yönetim operasyon paneli
 - Kazanç Ağı görev ortağı ve görev yönetimi
 - PWA, yasal sayfalar ve canlı sunucu hazırlığı
+- Yardım Merkezi, kullanıcı destek talepleri ve personel destek operasyonu
 
 ## Canlı lansman öncesi dış bağımlılıklar
 

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Destek Talebi Oluştur — İlan Şehri{% endblock %}
+{% block robots_meta %}noindex,nofollow{% endblock %}
+{% block content %}
+<section class="support-page-head"><div class="shell"><div><span>YENİ DESTEK TALEBİ</span><h1>Sorunu ayrıntılarıyla anlat</h1><p>Doğru kategori ve ilgili ilan/işlem seçimi daha hızlı çözüm sağlar.</p></div><a class="button secondary" href="{% url 'support_center:help_center' %}">Yardım Merkezi</a></div></section>
+<section class="shell support-form-layout">
+  <form method="post" class="support-form-card">{% csrf_token %}{{ form.non_field_errors }}<div class="support-form-grid"><div class="field">{{ form.category.label_tag }}{{ form.category }}{{ form.category.errors }}</div><div class="field field-wide">{{ form.subject.label_tag }}{{ form.subject }}{{ form.subject.errors }}<small>Kısa ve açıklayıcı bir başlık yaz.</small></div><div class="field field-wide">{{ form.description.label_tag }}{{ form.description }}{{ form.description.errors }}</div><div class="field">{{ form.related_listing.label_tag }}{{ form.related_listing }}{{ form.related_listing.errors }}</div><div class="field">{{ form.related_transaction.label_tag }}{{ form.related_transaction }}{{ form.related_transaction.errors }}</div></div><div class="support-form-submit"><div><b>Kişisel ve ödeme bilgisi paylaşma</b><p>Şifre, doğrulama kodu veya kart bilgisi yazma.</p></div><button class="button button-lg" type="submit">Talebi gönder</button></div></form>
+  <aside class="support-form-aside"><span>✅</span><h2>Daha hızlı çözüm için</h2><ul><li>Hata mesajını aynen yaz.</li><li>Hangi sayfada olduğunu belirt.</li><li>Denediğin adımları sıralı anlat.</li><li>İlgili ilanı veya işlemi seç.</li></ul><a href="{% url 'support_center:ticket_list' %}">Mevcut taleplerimi aç →</a></aside>
+</section>
+{% endblock %}

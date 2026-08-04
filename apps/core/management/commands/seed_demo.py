@@ -6,6 +6,7 @@ from apps.accounts.models import User, UserFollow
 from apps.listings.models import Category, Listing, ListingPriceHistory, Notification, Offer, OfferEvent
 from apps.managed_services.models import ManagedActivity, ManagedRequest
 from apps.partners.models import PartnerProfile, Task
+from apps.support_center.models import SupportReply, SupportTicket
 
 
 class Command(BaseCommand):
@@ -230,7 +231,31 @@ class Command(BaseCommand):
             title="Demo teklif bildirimi",
             defaults={"actor": buyer, "body": offer.message, "link": "/hesap/hesabim/#teklifler"},
         )
-        message = "Demo kullanıcılar, ilanlar, tam yönetim ve görev verileri hazırlandı."
+
+        demo_ticket, _ = SupportTicket.objects.get_or_create(
+            user=buyer,
+            subject="Teklif kabul edilince ne yapmalıyım?",
+            defaults={
+                "category": SupportTicket.Category.TRANSACTION,
+                "priority": SupportTicket.Priority.NORMAL,
+                "status": SupportTicket.Status.WAITING_USER if options["with_admin"] else SupportTicket.Status.OPEN,
+                "description": "Gönderdiğim teklif kabul edilirse teslim ve işlem adımlarını nereden takip edeceğimi öğrenmek istiyorum.",
+                "related_listing": phone_listing,
+            },
+        )
+        if options["with_admin"]:
+            demo_ticket.assigned_to = admin
+            demo_ticket.status = SupportTicket.Status.WAITING_USER
+            demo_ticket.save(update_fields=["assigned_to", "status", "updated_at"])
+            SupportReply.objects.get_or_create(
+                ticket=demo_ticket,
+                author=admin,
+                is_internal_note=False,
+                defaults={
+                    "message": "Teklif kabul edildiğinde Teklif Merkezi'nde işlem kaydı oluşur. Teslim adımlarını bu kayıt üzerinden takip edebilirsin."
+                },
+            )
+        message = "Demo kullanıcılar, ilanlar, destek talepleri, tam yönetim ve görev verileri hazırlandı."
         if options["with_admin"]:
             message += " Demo yönetici: demo_admin / DemoAdmin1234!"
         self.stdout.write(self.style.SUCCESS(message))

@@ -13,6 +13,7 @@
 - Büyük fotoğraf galerisi, benzer ilanlar, satıcı vitrini ve kullanıcı değerlendirmeleri
 - Üyelik, profil, telefon/e-posta doğrulama, güven puanı, engelleme ve şikâyet
 - İlan moderasyonu, uyuşmazlık merkezi ve profesyonel yönetim paneli
+- Yardım Merkezi, hesap içi destek talepleri, personel destek kuyruğu ve işlem günlüğü
 - Tam Yönetim operasyonları ve İlan Şehri Kazanç Ağı görev sistemi
 - PWA, Docker, PostgreSQL, WhiteNoise ve Gunicorn canlı sunucu hazırlığı
 - GitHub Actions migration, güvenlik, statik dosya ve otomatik test kontrolleri
@@ -95,3 +96,14 @@ Bu sürüm sitemap, robots, sosyal paylaşım meta verileri, ilan kalite puanı,
 - Şifre doğrulamalı hesap kapatma talebi ve talebi iptal etme
 - Hesabım ekranında taslak sayısı ve hızlı taslak erişimi
 - PWA özel sayfa önbellek güvenliği ve v1.9 önbellek sürümü
+
+## v1.10 Destek ve Operasyon Merkezi
+
+Yeni Yardım Merkezi ve hesap içi destek sistemi şu yollarla kullanılabilir:
+
+- Yardım Merkezi: `/yardim/`
+- Yeni destek talebi: `/yardim/talep/yeni/`
+- Kullanıcının talepleri: `/yardim/taleplerim/`
+- Personel destek kuyruğu: `/yardim/ekip/`
+
+Destek talepleri kullanıcı hesabına bağlıdır. Kullanıcı yalnız kendi taleplerini görebilir. Personel yanıtları uygulama içi bildirim üretir; ekip içi notlar kullanıcıya gösterilmez. Destek işlemleri `StaffActionLog` kayıtlarında izlenir.

@@ -1,0 +1,31 @@
+İLAN ŞEHRİ v1.10 — YARDIM VE DESTEK OPERASYONU
+
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Hedefteki dosyaları değiştirin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.10 destek operasyonu
+5. Commit to main ve Push origin.
+6. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Port 8000'i açın.
+8. Ctrl + Shift + R ile önbelleksiz yenileyin.
+
+YENİ EKRANLAR
+- Yardım Merkezi: /yardim/
+- Yeni destek talebi: /yardim/talep/yeni/
+- Destek taleplerim: /yardim/taleplerim/
+- Personel destek kuyruğu: /yardim/ekip/
+
+DEMO
+python manage.py seed_demo --with-admin
+komutu örnek bir kullanıcı destek talebi de oluşturur.
+
+ÖNEMLİ
+- Bu sürüm SupportTicket, SupportReply ve StaffActionLog modellerini ekler.
+- scripts/start_codespace.sh migrationları otomatik üretip uygular.
+- Ekip içi notlar kullanıcı ekranında gösterilmez.
+- Tam Django çalışma testleri GitHub Actions üzerinde kesinleşir.

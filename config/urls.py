@@ -18,6 +18,7 @@ urlpatterns = [
     path("ilanlar/", include("apps.listings.urls")),
     path("tam-yonetim/", include("apps.managed_services.urls")),
     path("kazanc-agi/", include("apps.partners.urls")),
+    path("yardim/", include("apps.support_center.urls")),
     path("", include("apps.core.urls")),
 ]
 

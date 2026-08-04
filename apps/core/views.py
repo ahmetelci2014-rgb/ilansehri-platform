@@ -14,6 +14,7 @@ from apps.accounts.models import AccountClosureRequest, User, UserFollow
 from apps.listings.models import Favorite, Listing, ListingPriceHistory, ListingReport, Offer, Review, Transaction
 from apps.managed_services.models import ManagedRequest
 from apps.partners.models import PartnerProfile, Task
+from apps.support_center.models import StaffActionLog, SupportTicket
 
 
 def _active_listing_q():
@@ -193,6 +194,9 @@ class StaffDashboardView(UserPassesTestMixin, TemplateView):
                     "closure_requests": AccountClosureRequest.objects.filter(
                         status=AccountClosureRequest.Status.PENDING
                     ).count(),
+                    "open_support_tickets": SupportTicket.objects.exclude(
+                        status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
+                    ).count(),
                 },
                 "day_rows": day_rows,
                 "pending_listing_rows": Listing.objects.filter(status=Listing.Status.REVIEW)
@@ -218,6 +222,10 @@ class StaffDashboardView(UserPassesTestMixin, TemplateView):
                 "closure_rows": AccountClosureRequest.objects.filter(
                     status=AccountClosureRequest.Status.PENDING
                 ).select_related("user")[:8],
+                "support_ticket_rows": SupportTicket.objects.exclude(
+                    status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
+                ).select_related("user", "assigned_to").order_by("-priority", "updated_at")[:8],
+                "staff_action_rows": StaffActionLog.objects.select_related("actor")[:10],
             }
         )
         return context
@@ -228,7 +236,7 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.9"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.10"})
 
 
 def robots_txt(request):
@@ -239,6 +247,9 @@ def robots_txt(request):
         "Disallow: /admin/",
         "Disallow: /yonetim/",
         "Disallow: /hesap/",
+        "Disallow: /yardim/talep/",
+        "Disallow: /yardim/taleplerim/",
+        "Disallow: /yardim/ekip/",
         "Disallow: /ilanlar/taslaklarim/",
         "Disallow: /ilanlar/mesajlar/",
         "Disallow: /ilanlar/bildirimler/",
@@ -270,6 +281,7 @@ def manifest(request):
                 {"name": "İlanları keşfet", "url": "/ilanlar/"},
                 {"name": "Mesajlar", "url": "/ilanlar/mesajlar/"},
                 {"name": "Karşılaştır", "url": "/ilanlar/karsilastir/"},
+                {"name": "Yardım Merkezi", "url": "/yardim/"},
             ],
         }
     )
@@ -277,9 +289,9 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v19";
-const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
-const PRIVATE_PREFIXES = ["/hesap/", "/ilanlar/taslaklarim/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
+const CACHE = "ilansehri-v110";
+const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
+const PRIVATE_PREFIXES = ["/hesap/", "/yardim/talep/", "/yardim/taleplerim/", "/yardim/ekip/", "/ilanlar/taslaklarim/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener("fetch", event => {

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Yardım Merkezi — İlan Şehri{% endblock %}
+{% block meta_description %}İlan, hesap, mesaj, teklif ve işlem konularında yardım al.{% endblock %}
+{% block content %}
+<section class="support-hero">
+  <div class="shell support-hero-grid">
+    <div>
+      <span class="support-kicker">İLAN ŞEHRİ YARDIM MERKEZİ</span>
+      <h1>Sorunun cevabını bul,<br>gerekirse ekibimize ulaş.</h1>
+      <p>Hesap, ilan, mesaj, teklif, işlem, Tam Yönetim ve Kazanç Ağı konularında adım adım destek.</p>
+      <form class="support-search" method="get"><span>⌕</span><input name="q" value="{{ query }}" placeholder="Örneğin: ilanım neden incelemede?"><button>Ara</button></form>
+      <div class="support-hero-actions">
+        {% if user.is_authenticated %}
+          <a class="button" href="{% url 'support_center:ticket_create' %}">＋ Destek talebi oluştur</a>
+          <a class="button secondary" href="{% url 'support_center:ticket_list' %}">Taleplerim{% if open_ticket_count %} · {{ open_ticket_count }} açık{% endif %}</a>
+        {% else %}
+          <a class="button" href="{% url 'login' %}?next={% url 'support_center:ticket_create' %}">Giriş yap ve destek al</a>
+        {% endif %}
+      </div>
+    </div>
+    <aside class="support-hero-card">
+      <span>🛡️</span><h2>Önce güvenlik</h2><p>İlan Şehri çalışanları mesaj veya telefonla senden şifre, doğrulama kodu ya da kart bilgisi istemez.</p><a href="{% url 'core:trust' %}">Güven Merkezi'ni aç →</a>
+    </aside>
+  </div>
+</section>
+
+<section class="shell support-content">
+  {% if query and not faq_groups %}<div class="support-empty"><span>⌕</span><h2>“{{ query }}” için hazır cevap bulunamadı</h2><p>Yeni bir destek talebi açarak durumu ekibimize iletebilirsin.</p>{% if user.is_authenticated %}<a class="button" href="{% url 'support_center:ticket_create' %}">Destek talebi oluştur</a>{% endif %}</div>{% endif %}
+  <div class="support-faq-grid">
+    {% for group in faq_groups %}<section class="support-faq-group"><div class="support-faq-head"><span>{{ group.icon }}</span><h2>{{ group.title }}</h2></div>{% for question,answer in group.items %}<details><summary>{{ question }}<i>＋</i></summary><p>{{ answer }}</p></details>{% endfor %}</section>{% endfor %}
+  </div>
+
+  {% if recent_tickets %}<section class="support-recent"><div class="support-section-head"><div><span>SON TALEPLERİN</span><h2>Kaldığın yerden devam et</h2></div><a href="{% url 'support_center:ticket_list' %}">Tüm talepler →</a></div><div class="support-ticket-mini-grid">{% for ticket in recent_tickets %}<a href="{{ ticket.get_absolute_url }}"><span class="ticket-status status-{{ ticket.status }}">{{ ticket.get_status_display }}</span><h3>{{ ticket.subject }}</h3><p>#{{ ticket.public_id|stringformat:'s'|slice:':8' }} · {{ ticket.updated_at|timesince }} önce</p></a>{% endfor %}</div></section>{% endif %}
+
+  <section class="support-contact-strip"><div><span>💬</span><div><h2>Hazır cevap yeterli olmadı mı?</h2><p>Talep aç; tüm yazışmalar hesabında kayıtlı kalsın.</p></div></div>{% if user.is_authenticated %}<a href="{% url 'support_center:ticket_create' %}">Destek talebi oluştur</a>{% else %}<a href="{% url 'login' %}">Giriş yap</a>{% endif %}</section>
+</section>
+{% endblock %}

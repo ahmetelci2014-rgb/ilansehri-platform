@@ -30,6 +30,7 @@ from apps.listings.models import (
     Transaction,
 )
 from apps.listings.services import assess_listing_quality, create_notification
+from apps.support_center.models import SupportTicket
 
 from .delivery import send_phone_verification_code
 from .forms import (
@@ -101,6 +102,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["unread_notification_count"] = Notification.objects.filter(user=user, is_read=False).count()
         context["listing_drafts"] = user.listing_drafts.select_related("source_listing")[:5]
         context["draft_count"] = user.listing_drafts.count()
+        context["open_support_ticket_count"] = user.support_tickets.exclude(
+            status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
+        ).count()
+        context["recent_support_tickets"] = user.support_tickets.all()[:4]
         profile_steps = [
             {
                 "label": "Ad ve soyadını ekle",
