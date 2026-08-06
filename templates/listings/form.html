@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% load ai_listing_tags %}
-{% ai_listing_config as ai_config %}
 {% block title %}{% if object %}İlanı Düzenle{% else %}Ücretsiz İlan Ver{% endif %} — İlan Şehri{% endblock %}
 {% block content %}
+{% ai_listing_config as ai_config %}
 <section class="v16-wizard-page">
   <header class="v16-wizard-intro">
     <span class="section-label">{% if object %}İLAN YÖNETİMİ{% else %}ÜCRETSİZ İLAN VER{% endif %}</span>

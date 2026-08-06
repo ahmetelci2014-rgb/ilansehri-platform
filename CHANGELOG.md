@@ -1,3 +1,10 @@
+# v1.12.2.4 — AI Şablon Etiketi Düzeltmesi
+
+- `ai_listing_config` etiketi, Django şablon kalıtımında çalışması için `content` bloğunun içine taşındı.
+- Gemini etkin olduğu hâlde HTML'de `data-ai-can-analyze="0"` üretilmesi düzeltildi.
+- Sayfa seviyesinde aktif AI durumunu doğrulayan regresyon testi eklendi.
+- API anahtarı, sağlayıcı veya veritabanı ayarlarında değişiklik yapılmadı.
+
 # v1.12.2.3 — Kümülatif AI Kurulum Onarımı
 
 - v1.12.2 ana paketi atlanarak Gemini fark paketinin yüklenmesi nedeniyle eksik kalan AI ve ilan dosyaları tek güncellemede birleştirildi.

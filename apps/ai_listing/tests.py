@@ -213,11 +213,16 @@ class AIListingCoreTests(TestCase):
         self.assertEqual(response.json()["error_code"], "usage_limit")
 
     def test_photo_first_create_page_is_visible(self):
+        self.config.is_enabled = True
+        self.config.provider = AISettings.Provider.MOCK
+        self.config.save()
         self.client.force_login(self.user)
         response = self.client.get(reverse("listings:create"))
         self.assertContains(response, "Fotoğrafı yükle, ilan taslağın hazırlansın")
         self.assertContains(response, "data-ai-drop-zone")
         self.assertContains(response, "Yapay Zekâ ile İlan Hazırla")
+        self.assertContains(response, 'data-ai-can-analyze="1"')
+        self.assertContains(response, "1–8 fotoğraf seç")
 
     @patch.dict("os.environ", {"OPENAI_API_KEY": "test-key", "AI_LISTING_MODEL": "gpt-5-mini"}, clear=False)
     def test_openai_provider_uses_moderation_images_and_strict_schema(self):

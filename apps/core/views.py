@@ -249,7 +249,7 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.12.2"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.12.2.4"})
 
 
 def robots_txt(request):

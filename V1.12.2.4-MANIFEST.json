@@ -1,0 +1,26 @@
+{
+  "version": "v1.12.2.4",
+  "name": "AI Şablon Etiketi Düzeltmesi",
+  "base_version": "v1.12.2.3",
+  "root_cause": "ai_listing_config etiketi extends kullanan alt şablonda block dışında çalıştırıldığı için ai_config content bloğunda boş kaldı.",
+  "changed_file_count": 8,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/ai_listing/tests.py",
+    "apps/core/views.py",
+    "scripts/start_codespace.sh",
+    "templates/base.html",
+    "templates/listings/form.html"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "template_tag_position": "passed",
+    "regression_test_added": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload"
+  }
+}

@@ -1,0 +1,26 @@
+İLAN ŞEHRİ v1.12.2.4 — AI ŞABLON ETİKETİ DÜZELTMESİ
+
+Kök neden:
+Gemini ve veritabanı ayarları aktifti; ancak `ai_listing_config` etiketi,
+Django `extends` kullanan şablonda blokların dışında çalıştırıldığı için
+değerler içerik bloğuna taşınmıyordu. Bu nedenle HTML yanlışlıkla
+data-ai-can-analyze="0" üretiyordu.
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. Summary:
+   İlan Şehri v1.12.2.4 AI şablon düzeltmesi
+4. Commit to main ve Push origin.
+5. GitHub Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+6. İlan sayfasında Ctrl + Shift + R yapın.
+
+Bu pakette:
+- Gemini API anahtarı değiştirilmez.
+- AISettings veritabanı kaydı değiştirilmez.
+- Yeni migration yoktur.
+- Yalnız şablon kapsam hatası ve regresyon testi düzeltilir.
