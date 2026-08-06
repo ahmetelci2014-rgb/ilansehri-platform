@@ -21,6 +21,35 @@
     <aside class="chat-side-panel">
       <a class="chat-listing-mini" href="{{ conversation.listing.get_absolute_url }}">{% with cover=conversation.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ conversation.listing.title }}">{% endif %}{% endwith %}<div><b>{{ conversation.listing.title }}</b><span>{% if conversation.listing.price %}{{ conversation.listing.price|floatformat:"0g" }} TL{% else %}Teklif alıyor{% endif %}</span><small>İlanı aç →</small></div></a>
       <div class="chat-user-mini v118-chat-trust"><span>{{ other_user.display_name|first|upper }}</span><div><b>{{ other_user.display_name }}</b><small>★ {{ other_user.average_rating }} · Güven {{ other_user_trust_profile.score }}/100</small><em>{{ other_user_trust_profile.response_label }}</em></div></div>
+      <details class="v120-conversation-box">
+        <summary>📅 Güvenli randevu öner</summary>
+        <p>Ürün inceleme, teslim veya hizmet görüşmesini tarih ve saatle planla. Bu bilgiler yalnız görüşme taraflarına gösterilir.</p>
+        <form method="post" action="{% url 'listings:create_appointment' conversation.pk %}" class="panel-form compact">{% csrf_token %}
+          {{ appointment_form.as_p }}
+          <button class="button full" type="submit">Randevu önerisini gönder</button>
+        </form>
+        <div class="v120-private-note">Güvenlik için ev adresi yerine AVM, işletme veya kamera bulunan ortak bir buluşma noktası tercih et.</div>
+      </details>
+      {% if conversation_appointments %}
+        <div class="v120-chat-appointments">
+          {% for appointment in conversation_appointments %}
+            <article class="v120-chat-appointment">
+              <header><div><b>{{ appointment.starts_at|date:'d.m.Y H:i' }}</b><small>{{ appointment.get_appointment_type_display }} · {{ appointment.get_status_display }}</small></div><span>📅</span></header>
+              {% if appointment.location_text %}<small>{{ appointment.location_text }}</small>{% endif %}
+              <div class="actions">
+                {% if appointment.status == 'pending' and appointment.invitee_id == user.pk %}
+                  <form method="post" action="{% url 'listings:appointment_action' appointment.public_id 'accept' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="button" type="submit">Onayla</button></form>
+                  <form method="post" action="{% url 'listings:appointment_action' appointment.public_id 'decline' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="button secondary" type="submit">Reddet</button></form>
+                {% endif %}
+                {% if appointment.status == 'pending' or appointment.status == 'accepted' %}
+                  <form method="post" action="{% url 'listings:appointment_action' appointment.public_id 'cancel' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v120-cancel" type="submit">İptal</button></form>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+          <a href="{% url 'listings:appointment_list' %}">Tüm randevularımı aç →</a>
+        </div>
+      {% endif %}
       {% if blocked_between %}<div class="notice warning">Bu kullanıcıyla mesajlaşma engellendi.</div>{% else %}<form method="post" enctype="multipart/form-data" class="chat-form" data-message-safety-form>{% csrf_token %}{% include 'listings/_message_form_fields.html' with form=form %}<button class="button full">Mesajı güvenle gönder</button></form>{% endif %}
       <div class="v15-safety-help"><b>Şüpheli bir mesaj mı aldın?</b><p>Ödeme yapma, bağlantı açma ve doğrulama kodu paylaşma. Kullanıcıyı engelleyerek destek ekibine bildirebilirsin.</p><a href="{% url 'support_center:ticket_create' %}">Destek talebi oluştur →</a></div>
       <form method="post" action="{% url 'accounts:toggle_block' other_user.pk %}">{% csrf_token %}<button class="market-secondary-button full">{% if blocked_between %}Engeli kaldır{% else %}Kullanıcıyı engelle{% endif %}</button></form>

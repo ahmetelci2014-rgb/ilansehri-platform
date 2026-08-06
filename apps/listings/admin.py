@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.utils import timezone
 
 from .models import (
+    Appointment,
     Category,
     Conversation,
     Favorite,
@@ -138,6 +139,30 @@ class ReviewAdmin(admin.ModelAdmin):
     list_display = ("reviewed_user", "reviewer", "rating", "is_visible", "published_at", "created_at")
     list_filter = ("rating", "is_visible")
     search_fields = ("reviewed_user__username", "reviewer__username", "comment")
+
+
+@admin.register(Appointment)
+class AppointmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "starts_at",
+        "listing",
+        "appointment_type",
+        "proposer",
+        "invitee",
+        "status",
+        "reminder_sent_at",
+    )
+    list_filter = ("appointment_type", "status", "starts_at")
+    search_fields = (
+        "public_id",
+        "listing__title",
+        "proposer__username",
+        "invitee__username",
+        "city",
+        "district",
+        "place",
+    )
+    readonly_fields = ("public_id", "responded_at", "reminder_sent_at", "created_at", "updated_at")
 
 
 @admin.register(ListingReport)

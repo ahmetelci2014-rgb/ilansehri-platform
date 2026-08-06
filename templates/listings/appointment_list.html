@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Randevularım — İlan Şehri{% endblock %}
+{% block content %}
+<section class="v120-page-head">
+  <div class="shell">
+    <span class="section-label">GÜVENLİ GÖRÜŞME PLANI</span>
+    <h1>Randevularım</h1>
+    <p>Ürün inceleme, teslim ve hizmet görüşmelerini tek yerde yönet. Kesin adresi yalnız işlem tarafları görür.</p>
+  </div>
+</section>
+<section class="shell v120-appointment-page">
+  <nav class="v120-tabs" aria-label="Randevu filtreleri">
+    <a class="{% if mode == 'upcoming' %}active{% endif %}" href="{% url 'listings:appointment_list' %}">Yaklaşanlar</a>
+    <a class="{% if mode == 'pending' %}active{% endif %}" href="{% url 'listings:appointment_list' %}?mode=pending">Yanıt bekleyenler{% if pending_invites %}<b>{{ pending_invites }}</b>{% endif %}</a>
+    <a class="{% if mode == 'past' %}active{% endif %}" href="{% url 'listings:appointment_list' %}?mode=past">Geçmiş</a>
+    <a class="{% if mode == 'all' %}active{% endif %}" href="{% url 'listings:appointment_list' %}?mode=all">Tümü</a>
+  </nav>
+
+  <div class="v120-appointment-grid">
+    {% for appointment in appointments %}
+      <article id="randevu-{{ appointment.public_id }}" class="v120-appointment-card status-{{ appointment.status }}{% if highlight == appointment.public_id|stringformat:'s' %} highlighted{% endif %}">
+        <header>
+          <div class="v120-date-box"><strong>{{ appointment.starts_at|date:'d' }}</strong><span>{{ appointment.starts_at|date:'M' }}</span></div>
+          <div>
+            <span class="v120-status">{{ appointment.get_status_display }}</span>
+            <h2>{{ appointment.listing.title|truncatechars:68 }}</h2>
+            <p>{{ appointment.starts_at|date:'d.m.Y l H:i' }} · {{ appointment.duration_minutes }} dakika</p>
+          </div>
+        </header>
+        <div class="v120-appointment-body">
+          <div><span>Görüşme türü</span><b>{{ appointment.get_appointment_type_display }}</b></div>
+          <div><span>Diğer taraf</span><b>{% if appointment.proposer_id == user.pk %}{{ appointment.invitee.display_name }}{% else %}{{ appointment.proposer.display_name }}{% endif %}</b></div>
+          {% if appointment.location_text %}<div class="wide"><span>Görüşme bilgisi</span><b>{{ appointment.location_text }}</b></div>{% endif %}
+          {% if appointment.note %}<div class="wide"><span>Not</span><p>{{ appointment.note }}</p></div>{% endif %}
+        </div>
+        <footer>
+          <a class="market-secondary-button" href="{% url 'listings:conversation_detail' appointment.conversation_id %}">Mesajlaşmayı aç</a>
+          {% if appointment.status == 'pending' and appointment.invitee_id == user.pk %}
+            <form method="post" action="{% url 'listings:appointment_action' appointment.public_id 'accept' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="button" type="submit">Onayla</button></form>
+            <form method="post" action="{% url 'listings:appointment_action' appointment.public_id 'decline' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="button secondary" type="submit">Reddet</button></form>
+          {% endif %}
+          {% if appointment.status == 'pending' or appointment.status == 'accepted' %}
+            <form method="post" action="{% url 'listings:appointment_action' appointment.public_id 'cancel' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="v120-cancel" type="submit">İptal et</button></form>
+          {% endif %}
+        </footer>
+      </article>
+    {% empty %}
+      <div class="market-empty v120-empty"><span>📅</span><h2>Bu bölümde randevu yok</h2><p>Bir ilan görüşmesinden randevu önerdiğinde burada görünecek.</p><a class="button" href="{% url 'listings:conversation_list' %}">Mesajları aç</a></div>
+    {% endfor %}
+  </div>
+  {% if is_paginated %}<nav class="pagination">{% if page_obj.has_previous %}<a href="?mode={{ mode }}&page={{ page_obj.previous_page_number }}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?mode={{ mode }}&page={{ page_obj.next_page_number }}">Sonraki →</a>{% endif %}</nav>{% endif %}
+</section>
+{% endblock %}

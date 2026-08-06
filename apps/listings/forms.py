@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 import re
 
 from django import forms
@@ -8,6 +9,7 @@ from django.utils import timezone
 from .locations import CITY_CHOICES
 from .message_safety import analyze_message
 from .models import (
+    Appointment,
     Listing,
     ListingReport,
     Message,
@@ -408,6 +410,113 @@ class MessageForm(forms.ModelForm):
                 "safety_confirmed",
                 "Bu mesaj yüksek riskli ifade içeriyor. Güvenlik uyarısını okuyup onay kutusunu işaretle.",
             )
+        return cleaned
+
+
+class AppointmentForm(forms.ModelForm):
+    DURATION_CHOICES = (
+        (15, "15 dakika"),
+        (30, "30 dakika"),
+        (45, "45 dakika"),
+        (60, "1 saat"),
+        (90, "1,5 saat"),
+        (120, "2 saat"),
+    )
+
+    duration_minutes = forms.TypedChoiceField(
+        label="Tahmini süre",
+        choices=DURATION_CHOICES,
+        coerce=int,
+        empty_value=30,
+    )
+
+    class Meta:
+        model = Appointment
+        fields = (
+            "appointment_type",
+            "starts_at",
+            "duration_minutes",
+            "city",
+            "district",
+            "place",
+            "note",
+        )
+        labels = {
+            "appointment_type": "Görüşme türü",
+            "starts_at": "Tarih ve saat",
+            "city": "Şehir",
+            "district": "İlçe",
+            "place": "Buluşma noktası / görüşme bilgisi",
+            "note": "Kısa not",
+        }
+        widgets = {
+            "starts_at": forms.DateTimeInput(
+                attrs={"type": "datetime-local", "step": "900"},
+                format="%Y-%m-%dT%H:%M",
+            ),
+            "city": forms.TextInput(attrs={"autocomplete": "address-level1", "placeholder": "Şehir"}),
+            "district": forms.TextInput(attrs={"autocomplete": "address-level2", "placeholder": "İlçe"}),
+            "place": forms.TextInput(
+                attrs={
+                    "placeholder": "Örn. AVM danışma önü veya görüşme kanalı",
+                    "maxlength": "180",
+                }
+            ),
+            "note": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "placeholder": "Ürün kontrolü, teslim veya görüşme için gerekli kısa bilgiyi yaz...",
+                    "maxlength": "500",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["starts_at"].input_formats = ("%Y-%m-%dT%H:%M",)
+
+    def clean_starts_at(self):
+        starts_at = self.cleaned_data["starts_at"]
+        now = timezone.now()
+        if starts_at < now + timedelta(minutes=30):
+            raise forms.ValidationError("Randevu en az 30 dakika sonrası için oluşturulmalıdır.")
+        if starts_at > now + timedelta(days=90):
+            raise forms.ValidationError("Randevu en fazla 90 gün sonrası için oluşturulabilir.")
+        return starts_at
+
+    def clean(self):
+        cleaned = super().clean()
+        appointment_type = cleaned.get("appointment_type")
+        city = (cleaned.get("city") or "").strip()
+        district = (cleaned.get("district") or "").strip()
+        place = (cleaned.get("place") or "").strip()
+        note = (cleaned.get("note") or "").strip()
+
+        if appointment_type in {Appointment.Type.IN_PERSON, Appointment.Type.DELIVERY}:
+            if not city:
+                self.add_error("city", "Yüz yüze görüşme için şehri yaz.")
+            if not district:
+                self.add_error("district", "Yüz yüze görüşme için ilçeyi yaz.")
+            if len(place) < 5:
+                self.add_error("place", "Güvenli ve anlaşılır bir buluşma noktası yaz.")
+        elif not place:
+            cleaned["place"] = "Platform içinden ayrıntı paylaşılacak"
+
+        private_patterns = re.compile(
+            r"(?:https?://|www\.|(?:\+?90|0)?5\d{9}|[\w.+-]+@[\w-]+(?:\.[\w-]+)+)",
+            re.IGNORECASE,
+        )
+        if private_patterns.search(place):
+            self.add_error(
+                "place",
+                "Görüşme bilgisinde bağlantı, telefon numarası veya e-posta paylaşma; ayrıntıyı platform mesajında konuş.",
+            )
+        if private_patterns.search(note):
+            self.add_error("note", "Not alanında bağlantı, telefon numarası veya e-posta paylaşma.")
+        cleaned["city"] = city
+        cleaned["district"] = district
+        cleaned["place"] = place or cleaned.get("place", "")
+        cleaned["note"] = note
         return cleaned
 
 

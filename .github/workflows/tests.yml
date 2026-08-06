@@ -35,6 +35,7 @@ jobs:
           python manage.py migrate --noinput
           python manage.py ensure_v118_schema
           python manage.py ensure_v119_schema
+          python manage.py ensure_v120_schema
           python manage.py backfill_image_fingerprints --limit 20
       - name: Kategorileri ve bakım komutunu doğrula
         run: |

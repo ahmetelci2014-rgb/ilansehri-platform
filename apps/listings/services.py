@@ -20,6 +20,8 @@ from django.utils import timezone
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from .models import (
+    Appointment,
+    Conversation,
     Favorite,
     Listing,
     ListingPriceHistory,
@@ -243,6 +245,176 @@ def create_offer_event(*, offer, actor, event_type, amount=None, message=""):
         amount=amount,
         message=(message or "")[:1200],
     )
+
+
+def _appointment_conflicts(*, proposer, invitee, starts_at, duration_minutes, exclude_pk=None) -> bool:
+    """Return True when either participant already has an overlapping active appointment."""
+    end_at = starts_at + timedelta(minutes=duration_minutes)
+    window_start = starts_at - timedelta(hours=4)
+    window_end = end_at + timedelta(hours=4)
+    candidates = Appointment.objects.filter(
+        status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+        starts_at__gte=window_start,
+        starts_at__lte=window_end,
+    ).filter(
+        Q(proposer__in=[proposer, invitee]) | Q(invitee__in=[proposer, invitee])
+    )
+    if exclude_pk:
+        candidates = candidates.exclude(pk=exclude_pk)
+    for item in candidates.only("starts_at", "duration_minutes"):
+        item_end = item.starts_at + timedelta(minutes=item.duration_minutes)
+        if item.starts_at < end_at and item_end > starts_at:
+            return True
+    return False
+
+
+@db_transaction.atomic
+def create_appointment(*, conversation: Conversation, proposer, cleaned_data: dict) -> Appointment:
+    locked_conversation = (
+        Conversation.objects.select_for_update()
+        .select_related("listing", "buyer", "seller")
+        .get(pk=conversation.pk)
+    )
+    if proposer.pk not in {locked_conversation.buyer_id, locked_conversation.seller_id}:
+        raise PermissionError("Bu görüşme için randevu oluşturamazsın.")
+    invitee = locked_conversation.other_participant(proposer)
+    starts_at = cleaned_data["starts_at"]
+    duration_minutes = cleaned_data["duration_minutes"]
+    if _appointment_conflicts(
+        proposer=proposer,
+        invitee=invitee,
+        starts_at=starts_at,
+        duration_minutes=duration_minutes,
+    ):
+        raise ValueError("Bu saat aralığında taraflardan birinin başka bir randevusu bulunuyor.")
+
+    appointment = Appointment.objects.create(
+        conversation=locked_conversation,
+        listing=locked_conversation.listing,
+        proposer=proposer,
+        invitee=invitee,
+        appointment_type=cleaned_data["appointment_type"],
+        starts_at=starts_at,
+        duration_minutes=duration_minutes,
+        city=cleaned_data.get("city", ""),
+        district=cleaned_data.get("district", ""),
+        place=cleaned_data.get("place", ""),
+        note=cleaned_data.get("note", ""),
+    )
+    create_notification(
+        user=invitee,
+        actor=proposer,
+        listing=locked_conversation.listing,
+        notification_type=Notification.Type.TRANSACTION,
+        title="Yeni randevu önerisi",
+        body=(
+            f"{proposer.display_name}, {starts_at:%d.%m.%Y %H:%M} için "
+            f"{appointment.get_appointment_type_display().lower()} önerdi."
+        ),
+        link=appointment.get_absolute_url(),
+    )
+    return appointment
+
+
+@db_transaction.atomic
+def respond_appointment(*, appointment: Appointment, actor, action: str) -> Appointment:
+    locked = (
+        Appointment.objects.select_for_update()
+        .select_related("listing", "proposer", "invitee")
+        .get(pk=appointment.pk)
+    )
+    if not locked.is_participant(actor):
+        raise PermissionError("Bu randevuya erişemezsin.")
+    now = timezone.now()
+
+    if action in {"accept", "decline"}:
+        if actor.pk != locked.invitee_id:
+            raise PermissionError("Randevuya yalnız davet edilen kullanıcı yanıt verebilir.")
+        if locked.status != Appointment.Status.PENDING:
+            raise ValueError("Bu randevu önerisi artık yanıt beklemiyor.")
+        if locked.starts_at <= now:
+            raise ValueError("Geçmiş tarihli randevu onaylanamaz.")
+        if action == "accept" and _appointment_conflicts(
+            proposer=locked.proposer,
+            invitee=locked.invitee,
+            starts_at=locked.starts_at,
+            duration_minutes=locked.duration_minutes,
+            exclude_pk=locked.pk,
+        ):
+            raise ValueError("Bu saat aralığında taraflardan birinin başka bir randevusu bulunuyor.")
+        locked.status = (
+            Appointment.Status.ACCEPTED if action == "accept" else Appointment.Status.DECLINED
+        )
+        locked.responded_at = now
+        locked.save(update_fields=["status", "responded_at", "updated_at"])
+        recipient = locked.proposer
+        title = "Randevu onaylandı" if action == "accept" else "Randevu reddedildi"
+        body = (
+            f"{actor.display_name}, {locked.starts_at:%d.%m.%Y %H:%M} tarihli randevu önerisine "
+            f"{'onay verdi' if action == 'accept' else 'olumsuz yanıt verdi'}."
+        )
+    elif action == "cancel":
+        if locked.status not in {Appointment.Status.PENDING, Appointment.Status.ACCEPTED}:
+            raise ValueError("Bu randevu iptal edilemez.")
+        if locked.starts_at <= now:
+            raise ValueError("Başlangıç zamanı geçen randevu iptal edilemez.")
+        locked.status = Appointment.Status.CANCELLED
+        locked.responded_at = now
+        locked.save(update_fields=["status", "responded_at", "updated_at"])
+        recipient = locked.other_participant(actor)
+        title = "Randevu iptal edildi"
+        body = f"{actor.display_name}, {locked.starts_at:%d.%m.%Y %H:%M} tarihli randevuyu iptal etti."
+    else:
+        raise ValueError("Geçersiz randevu işlemi.")
+
+    create_notification(
+        user=recipient,
+        actor=actor,
+        listing=locked.listing,
+        notification_type=Notification.Type.TRANSACTION,
+        title=title,
+        body=body,
+        link=locked.get_absolute_url(),
+    )
+    return locked
+
+
+@db_transaction.atomic
+def send_appointment_reminders(*, now=None) -> int:
+    """Send a single reminder for accepted appointments within the next 24 hours."""
+    now = now or timezone.now()
+    lower = now
+    upper = now + timedelta(hours=24)
+    queryset = (
+        Appointment.objects.select_for_update()
+        .filter(
+            status=Appointment.Status.ACCEPTED,
+            reminder_sent_at__isnull=True,
+            starts_at__gte=lower,
+            starts_at__lte=upper,
+        )
+        .select_related("listing", "proposer", "invitee")
+    )
+    sent = 0
+    for appointment in queryset:
+        for recipient in (appointment.proposer, appointment.invitee):
+            other = appointment.other_participant(recipient)
+            create_notification(
+                user=recipient,
+                actor=other,
+                listing=appointment.listing,
+                notification_type=Notification.Type.TRANSACTION,
+                title="Yaklaşan randevun",
+                body=(
+                    f"{appointment.listing.title}: {appointment.starts_at:%d.%m.%Y %H:%M} · "
+                    f"{appointment.get_appointment_type_display()}"
+                ),
+                link=appointment.get_absolute_url(),
+            )
+        appointment.reminder_sent_at = now
+        appointment.save(update_fields=["reminder_sent_at", "updated_at"])
+        sent += 1
+    return sent
 
 
 def notify_followers_new_listing(listing: Listing) -> int:

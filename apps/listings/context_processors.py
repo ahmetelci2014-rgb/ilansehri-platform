@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from .matching import blocked_owner_ids
-from .models import Favorite, ListingMatch, Message, Notification, Offer
+from .models import Appointment, Favorite, ListingMatch, Message, Notification, Offer
 
 
 def notification_counts(request):
@@ -14,6 +14,7 @@ def notification_counts(request):
             "header_favorite_count": 0,
             "header_offer_count": 0,
             "header_match_count": 0,
+            "header_pending_appointment_count": 0,
             "compare_count": compare_count,
         }
     unread_messages = Message.objects.filter(
@@ -44,6 +45,11 @@ def notification_counts(request):
         "header_offer_count": Offer.objects.filter(
             Q(sender=request.user) | Q(listing__owner=request.user),
             status=Offer.Status.PENDING,
+        ).count(),
+        "header_pending_appointment_count": Appointment.objects.filter(
+            invitee=request.user,
+            status=Appointment.Status.PENDING,
+            starts_at__gte=now,
         ).count(),
         "compare_count": compare_count,
     }

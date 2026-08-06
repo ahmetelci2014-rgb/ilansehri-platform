@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import timedelta
 import uuid
 
 from django.core.management.base import BaseCommand
@@ -6,7 +7,18 @@ from django.utils import timezone
 
 from apps.accounts.models import User, UserFollow
 from apps.listings.matching import sync_listing_matches
-from apps.listings.models import Category, Listing, ListingPriceHistory, Notification, Offer, OfferEvent, Transaction, TransactionEvent
+from apps.listings.models import (
+    Appointment,
+    Category,
+    Conversation,
+    Listing,
+    ListingPriceHistory,
+    Notification,
+    Offer,
+    OfferEvent,
+    Transaction,
+    TransactionEvent,
+)
 from apps.managed_services.models import ManagedActivity, ManagedRequest
 from apps.partners.models import PartnerProfile, Task
 from apps.support_center.models import SupportReply, SupportTicket
@@ -326,6 +338,33 @@ class Command(BaseCommand):
             defaults={"actor": seller, "note": "Elden teslim aşaması başladı."},
         )
 
+        appointment_conversation, _ = Conversation.objects.get_or_create(
+            listing=phone_listing,
+            buyer=buyer,
+            defaults={"seller": seller},
+        )
+        appointment_time = (timezone.now() + timedelta(days=2)).replace(
+            hour=14, minute=30, second=0, microsecond=0
+        )
+        Appointment.objects.update_or_create(
+            public_id=uuid.UUID("22222222-2222-4222-8222-222222222120"),
+            defaults={
+                "conversation": appointment_conversation,
+                "listing": phone_listing,
+                "proposer": buyer,
+                "invitee": seller,
+                "appointment_type": Appointment.Type.IN_PERSON,
+                "starts_at": appointment_time,
+                "duration_minutes": 30,
+                "city": "Şanlıurfa",
+                "district": "Karaköprü",
+                "place": "AVM ana giriş danışma önü",
+                "note": "Telefonu ve kutu içeriğini birlikte kontrol edeceğiz.",
+                "status": Appointment.Status.ACCEPTED,
+                "responded_at": timezone.now(),
+            },
+        )
+
         UserFollow.objects.get_or_create(follower=buyer, seller=seller)
         ListingPriceHistory.objects.get_or_create(
             listing=phone_listing,
@@ -364,7 +403,7 @@ class Command(BaseCommand):
                     "message": "Teklif kabul edildiğinde Teklif Merkezi'nde işlem kaydı oluşur. Teslim adımlarını bu kayıt üzerinden takip edebilirsin."
                 },
             )
-        message = "Demo kullanıcılar, ilanlar, akıllı eşleşmeler, destek talepleri, tam yönetim ve görev verileri hazırlandı."
+        message = "Demo kullanıcılar, ilanlar, randevular, akıllı eşleşmeler, destek talepleri, tam yönetim ve görev verileri hazırlandı."
         if options["with_admin"]:
             message += " Demo yönetici: demo_admin / DemoAdmin1234!"
         self.stdout.write(self.style.SUCCESS(message))

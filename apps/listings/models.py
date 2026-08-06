@@ -722,6 +722,89 @@ class Conversation(models.Model):
         return f"{self.listing} · {self.buyer} / {self.seller}"
 
 
+class Appointment(models.Model):
+    class Type(models.TextChoices):
+        IN_PERSON = "in_person", "Yüz yüze görüşme"
+        PHONE = "phone", "Telefon görüşmesi"
+        VIDEO = "video", "Görüntülü görüşme"
+        DELIVERY = "delivery", "Teslim / hizmet randevusu"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Yanıt bekliyor"
+        ACCEPTED = "accepted", "Onaylandı"
+        DECLINED = "declined", "Reddedildi"
+        CANCELLED = "cancelled", "İptal edildi"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    conversation = models.ForeignKey(
+        Conversation,
+        related_name="appointments",
+        on_delete=models.CASCADE,
+    )
+    listing = models.ForeignKey(
+        Listing,
+        related_name="appointments",
+        on_delete=models.CASCADE,
+    )
+    proposer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="proposed_appointments",
+        on_delete=models.CASCADE,
+    )
+    invitee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="received_appointments",
+        on_delete=models.CASCADE,
+    )
+    appointment_type = models.CharField(max_length=16, choices=Type.choices)
+    starts_at = models.DateTimeField()
+    duration_minutes = models.PositiveSmallIntegerField(default=30)
+    city = models.CharField(max_length=80, blank=True)
+    district = models.CharField(max_length=80, blank=True)
+    place = models.CharField(max_length=180, blank=True)
+    note = models.CharField(max_length=500, blank=True)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    reminder_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("starts_at", "-created_at")
+        constraints = [
+            models.CheckConstraint(
+                condition=~models.Q(proposer=models.F("invitee")),
+                name="prevent_self_appointment",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["status", "starts_at"]),
+            models.Index(fields=["invitee", "status", "starts_at"]),
+            models.Index(fields=["proposer", "status", "starts_at"]),
+        ]
+
+    def get_absolute_url(self):
+        return reverse("listings:appointment_list") + f"?highlight={self.public_id}"
+
+    def is_participant(self, user) -> bool:
+        return bool(user.is_authenticated and user.pk in {self.proposer_id, self.invitee_id})
+
+    def other_participant(self, user):
+        return self.invitee if user.pk == self.proposer_id else self.proposer
+
+    @property
+    def is_upcoming(self) -> bool:
+        return self.status == self.Status.ACCEPTED and self.starts_at >= timezone.now()
+
+    @property
+    def location_text(self) -> str:
+        parts = [item for item in (self.city, self.district, self.place) if item]
+        return " / ".join(parts)
+
+    def __str__(self) -> str:
+        return f"{self.listing} · {self.get_appointment_type_display()} · {self.starts_at:%d.%m.%Y %H:%M}"
+
+
 class Message(models.Model):
     conversation = models.ForeignKey(Conversation, related_name="messages", on_delete=models.CASCADE)
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="sent_listing_messages", on_delete=models.CASCADE)

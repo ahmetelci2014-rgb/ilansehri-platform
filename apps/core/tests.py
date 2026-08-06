@@ -123,6 +123,7 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "/static/js/v141-price-guide.js")
         self.assertContains(response, "/static/css/v15-message-safety.css")
         self.assertContains(response, "/static/js/v15-message-safety.js")
+        self.assertContains(response, "/static/css/v120-appointments.css")
 
 
 class MobileSystemContractTests(TestCase):

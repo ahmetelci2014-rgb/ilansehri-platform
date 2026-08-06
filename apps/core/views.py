@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from pathlib import Path
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.conf import settings
@@ -16,6 +17,10 @@ from apps.listings.models import Favorite, Listing, ListingPriceHistory, Listing
 from apps.managed_services.models import ManagedRequest
 from apps.partners.models import PartnerProfile, Task
 from apps.support_center.models import StaffActionLog, SupportTicket
+
+
+RELEASE_VERSION = (Path(settings.BASE_DIR) / "VERSION").read_text(encoding="utf-8").strip().removeprefix("v")
+RELEASE_CACHE = "".join(character for character in RELEASE_VERSION if character.isdigit())
 
 
 def _active_listing_q():
@@ -255,7 +260,7 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.19.0"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": RELEASE_VERSION})
 
 
 def robots_txt(request):
@@ -275,6 +280,8 @@ def robots_txt(request):
         "Disallow: /ilanlar/favorilerim/",
         "Disallow: /ilanlar/aramalarim/",
         "Disallow: /ilanlar/mesajlar/",
+        "Disallow: /ilanlar/randevularim/",
+        "Disallow: /ilanlar/randevu/",
         "Disallow: /ilanlar/eslesmelerim/",
         "Disallow: /ilanlar/bildirimler/",
         "Disallow: /ilanlar/tekliflerim/",
@@ -313,9 +320,9 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v1190";
-const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/css/v111-operations.css", "/static/css/v112-ai.css", "/static/css/v113-mobile-market.css", "/static/css/v132-mobile-system.css", "/static/css/v14-matching.css", "/static/css/v141-price-guide.css", "/static/css/v15-message-safety.css", "/static/css/v117-search-alerts.css", "/static/css/v118-trust-safety.css", "/static/css/v119-transactions.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/js/v111-operations.js", "/static/js/v112-ai.js", "/static/js/v113-mobile-market.js", "/static/js/v132-mobile-system.js", "/static/js/v141-price-guide.js", "/static/js/v15-message-safety.js", "/static/js/v116-location-discovery.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
-const PRIVATE_PREFIXES = ["/hesap/", "/yardim/talep/", "/yardim/taleplerim/", "/yardim/ekip/", "/ilanlar/favorilerim/", "/ilanlar/aramalarim/", "/ilanlar/taslaklarim/", "/ilanlar/yapay-zeka/", "/ilanlar/fiyat-rehberi/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/eslesmelerim/", "/ilanlar/tekliflerim/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
+const CACHE = "ilansehri-v__CACHE__";
+const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/css/v111-operations.css", "/static/css/v112-ai.css", "/static/css/v113-mobile-market.css", "/static/css/v132-mobile-system.css", "/static/css/v14-matching.css", "/static/css/v141-price-guide.css", "/static/css/v15-message-safety.css", "/static/css/v117-search-alerts.css", "/static/css/v118-trust-safety.css", "/static/css/v119-transactions.css", "/static/css/v120-appointments.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/js/v111-operations.js", "/static/js/v112-ai.js", "/static/js/v113-mobile-market.js", "/static/js/v132-mobile-system.js", "/static/js/v141-price-guide.js", "/static/js/v15-message-safety.js", "/static/js/v116-location-discovery.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
+const PRIVATE_PREFIXES = ["/hesap/", "/yardim/talep/", "/yardim/taleplerim/", "/yardim/ekip/", "/ilanlar/favorilerim/", "/ilanlar/aramalarim/", "/ilanlar/taslaklarim/", "/ilanlar/yapay-zeka/", "/ilanlar/fiyat-rehberi/", "/ilanlar/mesajlar/", "/ilanlar/randevularim/", "/ilanlar/randevu/", "/ilanlar/bildirimler/", "/ilanlar/eslesmelerim/", "/ilanlar/tekliflerim/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener("fetch", event => {
@@ -333,7 +340,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(fetch(event.request).catch(() => caches.match(event.request).then(hit => hit || caches.match("/offline/"))));
 });
-'''
+'''.replace("__CACHE__", RELEASE_CACHE)
     response = HttpResponse(script, content_type="application/javascript")
     response["Service-Worker-Allowed"] = "/"
     response["Cache-Control"] = "no-cache"

@@ -20,6 +20,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
 from apps.listings.models import (
+    Appointment,
     Conversation,
     Favorite,
     Listing,
@@ -108,6 +109,20 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["transactions"] = Transaction.objects.filter(Q(buyer=user) | Q(seller=user)).select_related(
             "listing", "buyer", "seller"
         )[:12]
+        context["upcoming_appointments"] = (
+            Appointment.objects.filter(
+                Q(proposer=user) | Q(invitee=user),
+                status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+                starts_at__gte=timezone.now(),
+            )
+            .select_related("listing", "proposer", "invitee", "conversation")
+            .order_by("starts_at")[:6]
+        )
+        context["pending_appointment_count"] = Appointment.objects.filter(
+            invitee=user,
+            status=Appointment.Status.PENDING,
+            starts_at__gte=timezone.now(),
+        ).count()
         context["saved_searches"] = SavedSearch.objects.filter(user=user)[:10]
         context["favorite_count"] = Favorite.objects.filter(user=user, listing__status="published").filter(Q(listing__expires_at__isnull=True) | Q(listing__expires_at__gt=timezone.now())).count()
         context["unread_message_count"] = sum(item.unread_count for item in context["conversations"])
@@ -319,6 +334,24 @@ def export_account_data(request):
                 "amount", "status", "delivery_type", "delivery_started_at",
                 "handover_verified_at", "buyer_confirmed_at", "seller_confirmed_at",
                 "created_at", "completed_at"
+            )
+        ),
+        "appointments": list(
+            Appointment.objects.filter(Q(proposer=user) | Q(invitee=user)).values(
+                "public_id",
+                "listing__title",
+                "proposer__username",
+                "invitee__username",
+                "appointment_type",
+                "starts_at",
+                "duration_minutes",
+                "city",
+                "district",
+                "place",
+                "note",
+                "status",
+                "responded_at",
+                "created_at",
             )
         ),
         "reviews_written": list(

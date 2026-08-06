@@ -13,6 +13,7 @@ from apps.accounts.models import AccountRiskEvent, NotificationPreference, User,
 from apps.support_center.models import StaffActionLog
 
 from .models import (
+    Appointment,
     Category,
     Conversation,
     Favorite,
@@ -40,6 +41,7 @@ from .services import (
     create_notification,
     notify_listing_publication,
     record_price_change,
+    send_appointment_reminders,
 )
 
 
@@ -1317,3 +1319,183 @@ class TrustSafetyInfrastructureTests(TestCase):
                 event_type=AccountRiskEvent.EventType.MESSAGE,
             ).exists()
         )
+
+
+class AppointmentFlowTests(TestCase):
+    def setUp(self):
+        self.seller = User.objects.create_user(
+            username="appointment-seller", password="StrongPass_2026", city="Şanlıurfa", district="Karaköprü"
+        )
+        self.buyer = User.objects.create_user(
+            username="appointment-buyer", password="StrongPass_2026", city="Şanlıurfa", district="Haliliye"
+        )
+        self.stranger = User.objects.create_user(username="appointment-stranger", password="StrongPass_2026")
+        self.category = Category.objects.create(name="Randevu test", slug="randevu-test")
+        self.listing = Listing.objects.create(
+            owner=self.seller,
+            category=self.category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="Randevulu test ilanı",
+            description="Güvenli randevu akışını doğrulamak için yayınlanmış test ilanı.",
+            price=Decimal("15000"),
+            city="Şanlıurfa",
+            district="Karaköprü",
+            status=Listing.Status.PUBLISHED,
+        )
+        self.conversation = Conversation.objects.create(
+            listing=self.listing,
+            buyer=self.buyer,
+            seller=self.seller,
+        )
+
+    def appointment_payload(self, *, days=2, hour=14):
+        starts_at = timezone.localtime(timezone.now() + timedelta(days=days)).replace(
+            hour=hour, minute=30, second=0, microsecond=0
+        )
+        return {
+            "appointment_type": Appointment.Type.IN_PERSON,
+            "starts_at": starts_at.strftime("%Y-%m-%dT%H:%M"),
+            "duration_minutes": "30",
+            "city": "Şanlıurfa",
+            "district": "Karaköprü",
+            "place": "AVM ana giriş danışma önü",
+            "note": "Ürünü ortak alanda birlikte kontrol edelim.",
+        }
+
+    def test_participant_can_create_and_invitee_can_accept_appointment(self):
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse("listings:create_appointment", kwargs={"pk": self.conversation.pk}),
+            self.appointment_payload(),
+        )
+        appointment = Appointment.objects.get(conversation=self.conversation)
+        self.assertRedirects(response, appointment.get_absolute_url())
+        self.assertEqual(appointment.proposer, self.buyer)
+        self.assertEqual(appointment.invitee, self.seller)
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.seller,
+                title="Yeni randevu önerisi",
+            ).exists()
+        )
+
+        self.client.force_login(self.seller)
+        accepted = self.client.post(
+            reverse(
+                "listings:appointment_action",
+                kwargs={"public_id": appointment.public_id, "action": "accept"},
+            )
+        )
+        self.assertEqual(accepted.status_code, 302)
+        appointment.refresh_from_db()
+        self.assertEqual(appointment.status, Appointment.Status.ACCEPTED)
+        self.assertIsNotNone(appointment.responded_at)
+
+    def test_non_participant_cannot_create_or_manage_appointment(self):
+        self.client.force_login(self.stranger)
+        create_response = self.client.post(
+            reverse("listings:create_appointment", kwargs={"pk": self.conversation.pk}),
+            self.appointment_payload(),
+        )
+        self.assertEqual(create_response.status_code, 404)
+
+        appointment = Appointment.objects.create(
+            conversation=self.conversation,
+            listing=self.listing,
+            proposer=self.buyer,
+            invitee=self.seller,
+            appointment_type=Appointment.Type.PHONE,
+            starts_at=timezone.now() + timedelta(days=2),
+            duration_minutes=30,
+        )
+        manage_response = self.client.post(
+            reverse(
+                "listings:appointment_action",
+                kwargs={"public_id": appointment.public_id, "action": "cancel"},
+            )
+        )
+        self.assertEqual(manage_response.status_code, 404)
+        self.assertNotContains(self.client.get(reverse("listings:appointment_list")), self.listing.title)
+
+    def test_overlapping_appointment_is_rejected(self):
+        starts_at = timezone.localtime(timezone.now() + timedelta(days=2)).replace(
+            hour=14, minute=30, second=0, microsecond=0
+        )
+        Appointment.objects.create(
+            conversation=self.conversation,
+            listing=self.listing,
+            proposer=self.seller,
+            invitee=self.buyer,
+            appointment_type=Appointment.Type.IN_PERSON,
+            starts_at=starts_at,
+            duration_minutes=60,
+            city="Şanlıurfa",
+            district="Karaköprü",
+            place="Güvenli ortak alan",
+            status=Appointment.Status.ACCEPTED,
+        )
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse("listings:create_appointment", kwargs={"pk": self.conversation.pk}),
+            self.appointment_payload(),
+            follow=True,
+        )
+        self.assertContains(response, "başka bir randevusu bulunuyor")
+        self.assertEqual(Appointment.objects.count(), 1)
+
+    def test_appointment_reminder_is_sent_once(self):
+        now = timezone.now().replace(second=0, microsecond=0)
+        appointment = Appointment.objects.create(
+            conversation=self.conversation,
+            listing=self.listing,
+            proposer=self.buyer,
+            invitee=self.seller,
+            appointment_type=Appointment.Type.DELIVERY,
+            starts_at=now + timedelta(hours=24),
+            duration_minutes=30,
+            city="Şanlıurfa",
+            district="Karaköprü",
+            place="AVM güvenlik noktası",
+            status=Appointment.Status.ACCEPTED,
+        )
+        self.assertEqual(send_appointment_reminders(now=now), 1)
+        appointment.refresh_from_db()
+        self.assertIsNotNone(appointment.reminder_sent_at)
+        self.assertEqual(Notification.objects.filter(title="Yaklaşan randevun").count(), 2)
+        self.assertEqual(send_appointment_reminders(now=now), 0)
+
+    def test_contact_details_are_rejected_in_appointment_fields(self):
+        self.client.force_login(self.buyer)
+        payload = self.appointment_payload()
+        payload["place"] = "https://ornek.test/gorusme"
+        response = self.client.post(
+            reverse("listings:create_appointment", kwargs={"pk": self.conversation.pk}),
+            payload,
+            follow=True,
+        )
+        self.assertContains(response, "Görüşme bilgisinde bağlantı")
+        self.assertFalse(Appointment.objects.exists())
+
+    def test_started_appointment_cannot_be_cancelled(self):
+        appointment = Appointment.objects.create(
+            conversation=self.conversation,
+            listing=self.listing,
+            proposer=self.buyer,
+            invitee=self.seller,
+            appointment_type=Appointment.Type.PHONE,
+            starts_at=timezone.now() - timedelta(minutes=5),
+            duration_minutes=30,
+            status=Appointment.Status.ACCEPTED,
+        )
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse(
+                "listings:appointment_action",
+                kwargs={"public_id": appointment.public_id, "action": "cancel"},
+            ),
+            follow=True,
+        )
+        self.assertContains(response, "Başlangıç zamanı geçen")
+        appointment.refresh_from_db()
+        self.assertEqual(appointment.status, Appointment.Status.ACCEPTED)

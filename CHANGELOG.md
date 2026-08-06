@@ -1,5 +1,18 @@
 # Değişiklik Günlüğü
 
+## v1.20.0 — Güvenli randevu ve teslim planlama
+
+- İlan görüşmelerine yüz yüze, telefon, görüntülü ve teslim/hizmet randevusu önerme akışı eklendi.
+- Randevular yalnız konuşmanın alıcı ve satıcısı tarafından görüntülenebilir ve yönetilebilir.
+- Geçmiş veya 90 günden uzak tarih, eksik yüz yüze buluşma bilgisi ve aynı saat aralığındaki çakışmalar engellenir.
+- Davet edilen kullanıcı için onay/ret; her iki taraf için aktif randevuyu iptal etme akışı eklendi.
+- Yaklaşan 24 saat içindeki onaylı randevulara tek seferlik uygulama içi ve tercih edilirse e-posta hatırlatması gönderilir.
+- Yanıt verilmeden tarihi geçen öneriler günlük bakım komutunda otomatik kapatılır.
+- Randevu merkezi hesap paneline, mobil menüye, kişisel veri ihracına, Django Admin'e ve demo verilerine eklendi.
+- `ensure_v120_schema` Codespaces, üretim ve iki GitHub Actions akışına eklendi.
+- Mobil Görsel Denetim alıcı ve satıcı randevu ekranlarını da kapsayacak şekilde genişletildi.
+- Sağlık yanıtı ve service worker önbellek sürümü doğrudan `VERSION` dosyasına bağlandı; gelecekteki sabit sürüm uyuşmazlıkları kaldırıldı.
+
 ## v1.19.0.2 — Mobil denetim giriş ve kapsam düzeltmesi
 
 - Mobil denetimde giriş formu dışındaki gizli arama düğmesinin seçilmesine yol açan geniş submit seçicisi kaldırıldı.

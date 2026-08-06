@@ -16,6 +16,7 @@
 - Arıyorum–Satıyorum açıklanabilir akıllı eşleştirme ve iki taraflı eşleşme merkezi
 - Ürün, araç ve emlak için açıklanabilir Akıllı Fiyat Rehberi
 - Güvenilir satıcı profili, yerel fotoğraf tekrar kontrolü ve personel risk inceleme merkezi
+- İlan görüşmesine bağlı güvenli randevu, teslim planlama, çakışma koruması ve hatırlatma
 
 ## Canlı lansman öncesi dış bağımlılıklar
 

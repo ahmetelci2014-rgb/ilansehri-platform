@@ -30,6 +30,7 @@ from apps.support_center.models import StaffActionLog
 from apps.support_center.services import log_staff_action
 
 from .forms import (
+    AppointmentForm,
     CounterOfferForm,
     HandoverCodeForm,
     ListingForm,
@@ -42,6 +43,7 @@ from .forms import (
 )
 from .locations import CITY_CHOICES, get_districts, get_neighborhoods
 from .models import (
+    Appointment,
     Category,
     Conversation,
     Favorite,
@@ -67,6 +69,7 @@ from .services import (
     consume_rate_limit,
     confirm_transaction,
     counter_offer,
+    create_appointment,
     create_offer_event,
     create_notification,
     notify_listing_publication,
@@ -79,6 +82,7 @@ from .services import (
     refresh_user_rating,
     reject_offer,
     review_window_is_open,
+    respond_appointment,
     start_transaction_delivery,
     verify_handover_code,
 )
@@ -1445,6 +1449,112 @@ def start_conversation(request, slug):
     return redirect("listings:conversation_detail", pk=conversation.pk)
 
 
+class AppointmentListView(LoginRequiredMixin, ListView):
+    template_name = "listings/appointment_list.html"
+    context_object_name = "appointments"
+    paginate_by = 30
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = (
+            Appointment.objects.filter(Q(proposer=user) | Q(invitee=user))
+            .select_related("listing", "proposer", "invitee", "conversation")
+            .order_by("starts_at", "-created_at")
+        )
+        mode = self.request.GET.get("mode", "upcoming")
+        if mode == "pending":
+            queryset = queryset.filter(
+                status=Appointment.Status.PENDING,
+                starts_at__gte=timezone.now(),
+            )
+        elif mode == "past":
+            queryset = queryset.filter(starts_at__lt=timezone.now()).order_by("-starts_at", "-created_at")
+        elif mode == "all":
+            pass
+        else:
+            mode = "upcoming"
+            queryset = queryset.filter(
+                status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+                starts_at__gte=timezone.now(),
+            )
+        self.mode = mode
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["mode"] = getattr(self, "mode", "upcoming")
+        context["highlight"] = self.request.GET.get("highlight", "")
+        context["pending_invites"] = Appointment.objects.filter(
+            invitee=self.request.user,
+            status=Appointment.Status.PENDING,
+            starts_at__gte=timezone.now(),
+        ).count()
+        return context
+
+
+@login_required
+@require_POST
+def create_conversation_appointment(request, pk):
+    conversation = get_object_or_404(
+        Conversation.objects.select_related("listing", "buyer", "seller").filter(
+            Q(buyer=request.user) | Q(seller=request.user)
+        ),
+        pk=pk,
+    )
+    other_user = conversation.other_participant(request.user)
+    if _blocked_between(request.user, other_user):
+        messages.error(request, "Engellenen kullanıcıyla randevu oluşturulamaz.")
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+    if not consume_rate_limit(request, "appointment-create", limit=8, period=3600):
+        messages.error(request, "Kısa sürede çok fazla randevu önerisi oluşturdun. Bir süre sonra tekrar dene.")
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+    form = AppointmentForm(request.POST)
+    if not form.is_valid():
+        first_error = next(
+            (str(error) for errors in form.errors.values() for error in errors),
+            "Randevu bilgilerini kontrol et.",
+        )
+        messages.error(request, first_error)
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+    try:
+        appointment = create_appointment(
+            conversation=conversation,
+            proposer=request.user,
+            cleaned_data=form.cleaned_data,
+        )
+        messages.success(request, "Randevu önerisi gönderildi. Diğer tarafın onayı bekleniyor.")
+        return redirect(appointment.get_absolute_url())
+    except PermissionError:
+        raise Http404
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+
+
+@login_required
+@require_POST
+def appointment_action(request, public_id, action):
+    appointment = get_object_or_404(
+        Appointment.objects.select_related("listing", "proposer", "invitee", "conversation"),
+        public_id=public_id,
+    )
+    if not appointment.is_participant(request.user):
+        raise Http404
+    try:
+        respond_appointment(appointment=appointment, actor=request.user, action=action)
+        message_map = {
+            "accept": "Randevu onaylandı.",
+            "decline": "Randevu reddedildi.",
+            "cancel": "Randevu iptal edildi.",
+        }
+        messages.success(request, message_map.get(action, "Randevu güncellendi."))
+    except PermissionError:
+        raise Http404
+    except ValueError as exc:
+        messages.error(request, str(exc))
+    return redirect(_safe_next_url(request, appointment.get_absolute_url()))
+
+
 class ConversationListView(LoginRequiredMixin, ListView):
     template_name = "listings/conversation_list.html"
     context_object_name = "conversations"
@@ -1507,6 +1617,16 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
         context["other_user"] = self.object.other_participant(self.request.user)
         context["blocked_between"] = _blocked_between(self.request.user, context["other_user"])
         context["other_user_trust_profile"] = build_trust_profile(context["other_user"])
+        initial = {
+            "appointment_type": Appointment.Type.IN_PERSON,
+            "duration_minutes": 30,
+            "city": self.object.listing.city,
+            "district": self.object.listing.district,
+        }
+        context["appointment_form"] = AppointmentForm(initial=initial)
+        context["conversation_appointments"] = self.object.appointments.select_related(
+            "proposer", "invitee"
+        ).order_by("-created_at")[:6]
         return context
 
     def get(self, request, *args, **kwargs):

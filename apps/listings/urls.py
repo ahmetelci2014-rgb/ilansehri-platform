@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    AppointmentListView,
     CompareListView,
     KindLandingView,
     ConversationDetailView,
@@ -19,9 +20,11 @@ from .views import (
     OfferCenterView,
     TransactionDetailView,
     archive_conversation,
+    appointment_action,
     bulk_moderate_listings,
     change_listing_status,
     counter_offer_action,
+    create_conversation_appointment,
     create_review,
     delete_listing_image,
     delete_listing_draft,
@@ -71,6 +74,9 @@ urlpatterns = [
     path("mesajlar/", ConversationListView.as_view(), name="conversation_list"),
     path("mesajlar/<int:pk>/", ConversationDetailView.as_view(), name="conversation_detail"),
     path("mesajlar/<int:pk>/arsivle/", archive_conversation, name="archive_conversation"),
+    path("mesajlar/<int:pk>/randevu/", create_conversation_appointment, name="create_appointment"),
+    path("randevularim/", AppointmentListView.as_view(), name="appointment_list"),
+    path("randevu/<uuid:public_id>/<str:action>/", appointment_action, name="appointment_action"),
     path("eslesmelerim/", ListingMatchCenterView.as_view(), name="matches"),
     path("eslesmelerim/yenile/", refresh_listing_matches, name="refresh_matches"),
     path("eslesmelerim/<int:pk>/gizle/", dismiss_listing_match, name="dismiss_match"),

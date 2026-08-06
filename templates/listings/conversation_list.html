@@ -2,7 +2,7 @@
 {% block title %}Mesajlarım — İlan Şehri{% endblock %}
 {% block content %}
 <section class="inbox-page shell">
-  <div class="market-page-title"><div><span class="section-label">MESAJ KUTUSU</span><h1>Görüşmelerim</h1><p>Alım ve satış görüşmelerini düzenli biçimde takip et.</p></div><a class="button" href="{% url 'listings:offer_center' %}">🤝 Teklif Merkezi</a></div>
+  <div class="market-page-title"><div><span class="section-label">MESAJ KUTUSU</span><h1>Görüşmelerim</h1><p>Alım ve satış görüşmelerini düzenli biçimde takip et.</p></div><div class="v120-title-actions"><a class="market-secondary-button" href="{% url 'listings:appointment_list' %}">📅 Randevularım</a><a class="button" href="{% url 'listings:offer_center' %}">🤝 Teklif Merkezi</a></div></div>
   <div class="inbox-toolbar">
     <nav><a href="{% url 'listings:conversation_list' %}" class="{% if mode == 'all' %}active{% endif %}">Tümü</a><a href="?mode=unread" class="{% if mode == 'unread' %}active{% endif %}">Okunmamış</a><a href="?mode=buying" class="{% if mode == 'buying' %}active{% endif %}">Alış görüşmeleri</a><a href="?mode=selling" class="{% if mode == 'selling' %}active{% endif %}">Satış görüşmeleri</a></nav>
     <form method="get"><input type="hidden" name="mode" value="{{ mode }}"><span>⌕</span><input name="q" value="{{ query }}" placeholder="İlan veya kullanıcı ara"><button>Ara</button></form>

@@ -1,16 +1,16 @@
 # İlan Şehri
 
-## v1.19 Güvenli teslim ve karşılıklı değerlendirme
+## v1.20 Güvenli randevu ve teslim planlama
 
-- Güvenli işlem yalnız satıcının başlattığı teslim aşamasından sonra tamamlanabilir.
-- Elden ve yerinde teslimlerde alıcının oluşturduğu, 15 dakika geçerli tek kullanımlık kod satıcı tarafından doğrulanır.
-- Teslim kodu yalnız hash olarak saklanır; kod işlem geçmişine veya personele açık metin olarak yazılmaz.
-- Alıcı ve satıcı onayları tarihleriyle kaydedilir; bütün önemli adımlar değiştirilemeyen işlem olayı geçmişine eklenir.
-- Değerlendirmeler iki taraf da yazana kadar gizli tutulur; tek taraf yazarsa 7 gün sonra bakım göreviyle yayınlanır.
-- Değerlendirme yalnız tamamlanmış gerçek işlem taraflarınca ve 30 gün içinde yapılabilir.
-- Mobil Görsel Denetim artık hataları gizlemez ve kritik sonuçlarda Actions çalışmasını kırmızı yapar.
+- Alıcı ve satıcı, mevcut ilan görüşmesinden ürün inceleme, teslim veya hizmet randevusu önerebilir.
+- Tarih, saat, görüşme türü, süre ve buluşma bilgisi yalnız görüşme taraflarına gösterilir.
+- Davet edilen kullanıcı randevuyu onaylayabilir veya reddedebilir; taraflar aktif randevuyu iptal edebilir.
+- Aynı saat aralığında taraflardan birinin başka aktif randevusu varsa yeni öneri engellenir.
+- Onaylanan randevular için yaklaşan 24 saat içinde tek seferlik bildirim oluşturulur.
+- Yanıt verilmeden tarihi geçen randevu önerileri günlük bakımda otomatik kapatılır.
+- Randevu merkezi hesap paneline, veri ihracına, yönetim ekranına ve gerçek mobil denetime eklendi.
 
-> Güncel sürüm: **v1.19.0** — güvenli teslim kodu, işlem olay geçmişi, kör değerlendirme ve gerçek mobil denetim eklendi.
+> Güncel sürüm: **v1.20.0** — güvenli görüşme planı, randevu çakışma koruması ve otomatik hatırlatma eklendi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -23,7 +23,7 @@
 - Kategoriye özel gelişmiş arama, filtreleme, sıralama ve ilan karşılaştırma
 - Favoriler, düzenlenebilir kayıtlı aramalar, anlık/günlük ilan alarmları, son görüntülenenler ve fiyat düşüşü takibi
 - Satıcı takip sistemi ve takip edilen satıcılardan yeni ilan akışı
-- Teklif, karşı teklif, pazarlık geçmişi ve güvenli işlem kaydı
+- Teklif, karşı teklif, pazarlık geçmişi, güvenli randevu ve işlem kaydı
 - Gelişmiş mesaj kutusu, alış/satış görüşmesi filtreleri ve görsel mesajlar
 - Büyük fotoğraf galerisi, benzer ilanlar, satıcı vitrini ve kullanıcı değerlendirmeleri
 - Üyelik, profil, telefon/e-posta doğrulama, güven puanı, engelleme ve şikâyet
@@ -82,7 +82,7 @@ Bu bilinen şifrelerle oluşturulan hesaplar canlı ortamda kullanılmamalıdır
 python manage.py marketplace_maintenance
 ```
 
-Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler ve günlük kayıtlı arama özetlerini üretir. Anlık kayıtlı arama bildirimleri ilan yayınlandığında otomatik oluşur.
+Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler, günlük kayıtlı arama özetlerini üretir, süresi geçen randevu önerilerini kapatır ve yaklaşan randevu hatırlatmalarını gönderir. Anlık kayıtlı arama bildirimleri ilan yayınlandığında otomatik oluşur.
 
 Canlı sunucuda günlük özetlerin otomatik oluşması için hosting zamanlayıcısında `bash scripts/run_daily_maintenance.sh` komutunu günde bir kez çalıştırın.
 

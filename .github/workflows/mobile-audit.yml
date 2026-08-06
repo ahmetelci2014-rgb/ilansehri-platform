@@ -38,6 +38,7 @@ jobs:
           python manage.py migrate --noinput
           python manage.py ensure_v118_schema
           python manage.py ensure_v119_schema
+          python manage.py ensure_v120_schema
           python manage.py seed_categories
           python manage.py seed_demo --with-admin
       - name: Gerçek mobil sayfaları tara
