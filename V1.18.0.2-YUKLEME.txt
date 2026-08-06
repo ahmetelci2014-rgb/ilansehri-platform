@@ -1,0 +1,18 @@
+İLAN ŞEHRİ v1.18.0.2 — DJANGO TEST VE EŞLEŞTİRME DÜZELTMESİ
+
+Düzeltilenler:
+1. Django Kontrol fiyat rehberi importu Django ortamı içinde çalıştırılır.
+2. Mobil sistem sürüm testi sabit 1.15.0 yerine kök VERSION dosyasını esas alır.
+3. Akıllı eşleştirme gerekçeleri 6 yerine 8 maddeye kadar saklanır; böylece
+   "Bütçeye uygun" ve konum gerekçeleri güçlü eşleşmelerde kaybolmaz.
+
+Yükleme:
+- Bu klasördeki .github ve apps klasörlerini proje ana dizinine kopyalayın.
+- Mevcut dosyaların değiştirilmesini onaylayın.
+- Commit: İlan Şehri v1.18.0.2 Django test ve eşleştirme düzeltmesi
+- Push origin yapın ve yeni Django Kontrol çalışmasını bekleyin.
+
+Not:
+Bad Request, Not Found ve Forbidden satırları, testlerin 400/404/403 güvenlik
+cevaplarını bilinçli olarak doğruladığı senaryolarda normaldir. Başarı ölçütü,
+test çalışmasının sonunda FAILED bulunmaması ve GitHub Actions sonucunun yeşil olmasıdır.

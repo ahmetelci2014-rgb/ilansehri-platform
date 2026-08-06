@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
@@ -126,7 +127,8 @@ class MobileSystemContractTests(TestCase):
     def test_health_and_shell_report_mobile_system_release(self):
         health = self.client.get(reverse("core:health"))
         self.assertEqual(health.status_code, 200)
-        self.assertEqual(health.json()["version"], "1.15.0")
+        expected_version = (settings.BASE_DIR / "VERSION").read_text(encoding="utf-8").strip().removeprefix("v")
+        self.assertEqual(health.json()["version"], expected_version)
 
         shell = self.client.get(reverse("support_center:help_center"))
         self.assertEqual(shell.status_code, 200)

@@ -240,7 +240,11 @@ def score_listing_pair(wanted: Listing, offered: Listing) -> MatchScore | None:
     score = max(0, min(100, score))
     if score < 50:
         return None
-    return MatchScore(score=score, reasons=reasons[:6])
+    # En güçlü eşleşmelerde bütçe ve konum gerekçeleri listenin sonuna
+    # kalabildiği için altı maddelik kesme önemli bilgileri gizliyordu.
+    # En fazla dokuz kısa gerekçe üretildiğinden sekiz madde arayüzü
+    # taşırmadan kullanıcıya daha açıklayıcı sonuç verir.
+    return MatchScore(score=score, reasons=reasons[:8])
 
 
 def _active_published_queryset():
