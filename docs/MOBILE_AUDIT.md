@@ -1,6 +1,6 @@
 # İlan Şehri Mobil Görsel Denetim
 
-v1.14.0 sürümünde de kullanılan mobil denetim altyapısı, mobil sorunları kullanıcıdan tek tek istemek yerine gerçek tarayıcıda düzenli olarak ölçmek için iki katmanlı kontrol kullanır.
+v1.14.1 sürümünde de kullanılan mobil denetim altyapısı, mobil sorunları kullanıcıdan tek tek istemek yerine gerçek tarayıcıda düzenli olarak ölçmek için iki katmanlı kontrol kullanır.
 
 ## 1. Mobil sözleşme kontrolü
 

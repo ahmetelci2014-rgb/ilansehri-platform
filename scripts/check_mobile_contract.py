@@ -26,24 +26,35 @@ def require(text: str, needle: str, source: str) -> None:
 
 def main() -> int:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if version != "v1.14.0":
-        fail(f"VERSION v1.14.0 olmalı, bulundu: {version}")
+    if version != "v1.14.1":
+        fail(f"VERSION v1.14.1 olmalı, bulundu: {version}")
 
     base = (ROOT / "templates/base.html").read_text(encoding="utf-8")
     views = (ROOT / "apps/core/views.py").read_text(encoding="utf-8")
     css = (ROOT / "static/css/v132-mobile-system.css").read_text(encoding="utf-8")
     js = (ROOT / "static/js/v132-mobile-system.js").read_text(encoding="utf-8")
     audit = (ROOT / "scripts/mobile_audit.py").read_text(encoding="utf-8")
+    listing_form = (ROOT / "templates/listings/form.html").read_text(encoding="utf-8")
+    listing_detail = (ROOT / "templates/listings/detail.html").read_text(encoding="utf-8")
+    pricing = (ROOT / "apps/listings/pricing.py").read_text(encoding="utf-8")
 
     require(base, "css/v132-mobile-system.css", "templates/base.html")
     require(base, "js/v132-mobile-system.js", "templates/base.html")
-    require(base, "v1.14.0", "templates/base.html")
-    require(views, 'const CACHE = "ilansehri-v1140";', "apps/core/views.py")
+    require(base, "v1.14.1", "templates/base.html")
+    require(views, 'const CACHE = "ilansehri-v1141";', "apps/core/views.py")
     require(views, "/static/css/v132-mobile-system.css", "apps/core/views.py")
     require(base, "css/v14-matching.css", "templates/base.html")
+    require(base, "css/v141-price-guide.css", "templates/base.html")
+    require(base, "js/v141-price-guide.js", "templates/base.html")
     require(views, "/static/css/v14-matching.css", "apps/core/views.py")
+    require(views, "/static/css/v141-price-guide.css", "apps/core/views.py")
+    require(views, "/static/js/v141-price-guide.js", "apps/core/views.py")
     require(views, "/static/js/v132-mobile-system.js", "apps/core/views.py")
-    require(views, '"version": "1.14.0"', "apps/core/views.py")
+    require(views, '"version": "1.14.1"', "apps/core/views.py")
+    require(listing_form, "data-price-guide-assistant", "templates/listings/form.html")
+    require(listing_detail, "listings/_price_guide.html", "templates/listings/detail.html")
+    require(pricing, "def build_price_guide", "apps/listings/pricing.py")
+    require(pricing, "_remove_outliers", "apps/listings/pricing.py")
 
     required_css_groups = (
         "body.page-dashboard .v16-account-layout",
@@ -76,6 +87,7 @@ def main() -> int:
         Path("templates/registration/password_reset_subject.txt"),
         Path("templates/admin/ai_listing/aisettings/change_form.html"),
         Path("templates/listings/_card.html"),
+        Path("templates/listings/_price_guide.html"),
     }
     missing_extends: list[str] = []
     for template in sorted((ROOT / "templates").rglob("*.html")):
@@ -98,7 +110,7 @@ def main() -> int:
     if offenders:
         fail("Mobil taşma riski taşıyan inline genişlikler: " + ", ".join(offenders))
 
-    print("Mobil sözleşme kontrolü başarılı: v1.14.0")
+    print("Mobil sözleşme kontrolü başarılı: v1.14.1")
     return 0
 
 

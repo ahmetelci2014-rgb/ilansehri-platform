@@ -79,6 +79,11 @@
       <section class="v16-wizard-section" data-v16-section="2">
         <div class="v16-step-head"><span>02</span><div><h2>İlanın temel bilgileri</h2><p>AI tarafından oluşturulan metni ve ürün durumunu mutlaka kontrol et.</p></div></div>
         <div class="v16-field-grid">{% for field in form %}{% if field.name in 'title description price price_on_request is_negotiable delivery_type condition' %}<div class="field {% if field.name == 'description' %}field-wide{% endif %}" data-field-name="{{ field.name }}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div>
+        <section class="v141-form-price-guide" data-price-guide-assistant data-price-guide-url="{% url 'listings:price_guide' %}" data-current-listing-id="{% if object %}{{ object.pk }}{% endif %}">
+          <div class="v141-form-price-head"><span>₺</span><div><small>AKILLI FİYAT REHBERİ</small><h3>Benzer ilanlardan fiyat aralığını gör</h3><p>Ürün, araç veya emlak bilgilerini tamamla; sistem yalnız yayındaki benzer ilanları karşılaştırsın.</p></div></div>
+          <div class="v141-form-price-actions"><button type="button" data-price-guide-run>Fiyat aralığını hesapla</button><small>Fiyat otomatik değiştirilmez. Son karar her zaman sana aittir.</small></div>
+          <div class="v141-form-price-result" data-price-guide-result aria-live="polite"></div>
+        </section>
         <div class="v16-choice-help">Fiyatı yapay zekâ doldurmaz. Başlık ve açıklamanın doğru, dürüst ve ürünle uyumlu olduğundan emin ol.</div>
       </section>
 

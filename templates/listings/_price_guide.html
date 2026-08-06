@@ -1,0 +1,15 @@
+{% if guide.available %}
+<section class="v141-price-guide v141-price-guide-{{ variant|default:'default' }} tone-{{ guide.status }}" aria-label="Akıllı fiyat rehberi">
+  <div class="v141-price-guide-head">
+    <span>₺</span>
+    <div><small>AKILLI FİYAT REHBERİ</small><b>{{ guide.status_label }}</b></div>
+    <em>{{ guide.confidence_label }}</em>
+  </div>
+  <div class="v141-price-range">
+    <div><small>Tahmini aralık</small><strong>{{ guide.lower_price|floatformat:"0g" }} – {{ guide.upper_price|floatformat:"0g" }} TL</strong></div>
+    <div><small>Orta değer</small><b>{{ guide.median_price|floatformat:"0g" }} TL</b></div>
+  </div>
+  <p>{{ guide.sample_count }} benzer aktif ilan karşılaştırıldı. {{ guide.message }}</p>
+  <details><summary>Hesaplama ayrıntıları</summary><ul>{% for item in guide.criteria %}<li>{{ item }}</li>{% endfor %}</ul></details>
+</section>
+{% endif %}

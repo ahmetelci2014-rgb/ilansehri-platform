@@ -25,6 +25,7 @@ from .models import (
     Transaction,
 )
 from .matching import score_listing_pair, sync_listing_matches
+from .pricing import build_price_guide
 from .services import assess_listing_quality, create_notification, record_price_change
 
 
@@ -756,3 +757,150 @@ class ListingMatchingTests(TestCase):
         self.assertNotContains(response, offered.title)
         self.assertEqual(response.context["wanted_match_count"], 0)
 
+
+
+@override_settings(AUTO_PUBLISH_LISTINGS=True)
+class ListingPriceGuideTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="price-owner", password="StrongPass_2026")
+        self.root = Category.objects.create(name="Elektronik", slug="price-elektronik")
+        self.category = Category.objects.create(name="Akıllı Telefon", slug="price-telefon", parent=self.root)
+        self.comparison_prices = [
+            Decimal("20000"), Decimal("22000"), Decimal("24000"), Decimal("25000"),
+            Decimal("26000"), Decimal("28000"), Decimal("30000"), Decimal("250000"),
+        ]
+        for index, price in enumerate(self.comparison_prices):
+            seller = User.objects.create_user(username=f"price-seller-{index}", password="StrongPass_2026")
+            Listing.objects.create(
+                owner=seller,
+                category=self.category,
+                kind=Listing.Kind.PRODUCT,
+                action=Listing.Action.SELL,
+                title=f"Apple iPhone 15 ilanı {index}",
+                description="Temiz kullanılmış, kutulu telefon.",
+                price=price,
+                brand="Apple",
+                model_name="iPhone 15",
+                city="Şanlıurfa",
+                district="Karaköprü",
+                status=Listing.Status.PUBLISHED,
+            )
+
+    def subject(self, **overrides):
+        data = {
+            "owner": self.owner,
+            "category": self.category,
+            "kind": Listing.Kind.PRODUCT,
+            "action": Listing.Action.SELL,
+            "title": "Apple iPhone 15",
+            "description": "Temiz telefon",
+            "price": Decimal("55000"),
+            "brand": "Apple",
+            "model_name": "iPhone 15",
+            "city": "Şanlıurfa",
+            "district": "Karaköprü",
+        }
+        data.update(overrides)
+        return Listing(**data)
+
+    def test_price_guide_removes_outlier_and_classifies_high_price(self):
+        guide = build_price_guide(self.subject())
+        self.assertTrue(guide.available)
+        self.assertEqual(guide.status, "high")
+        self.assertGreaterEqual(guide.sample_count, 7)
+        self.assertGreaterEqual(guide.removed_outliers, 1)
+        self.assertLess(guide.upper_price, Decimal("100000"))
+        self.assertGreater(guide.median_price, Decimal("20000"))
+
+    def test_price_guide_returns_unavailable_when_similar_data_is_insufficient(self):
+        Listing.objects.exclude(owner=self.owner).delete()
+        seller = User.objects.create_user(username="single-price-seller", password="StrongPass_2026")
+        Listing.objects.create(
+            owner=seller, category=self.category, kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL, title="Tek karşılaştırma", description="Tek ilan",
+            price=Decimal("25000"), brand="Apple", model_name="iPhone 15",
+            city="Şanlıurfa", district="Karaköprü", status=Listing.Status.PUBLISHED,
+        )
+        guide = build_price_guide(self.subject())
+        self.assertFalse(guide.available)
+        self.assertIn("yeterli", guide.message.lower())
+
+    def test_vehicle_guide_uses_brand_model_year_and_mileage(self):
+        vehicle_root = Category.objects.create(name="Araç", slug="price-vehicle-root")
+        vehicle_category = Category.objects.create(name="Otomobil", slug="price-vehicle", parent=vehicle_root)
+        prices = [Decimal("900000"), Decimal("940000"), Decimal("975000"), Decimal("1010000"), Decimal("1050000")]
+        sellers = list(User.objects.filter(username__startswith="price-seller-").order_by("username")[:5])
+        for index, (seller, price) in enumerate(zip(sellers, prices)):
+            Listing.objects.create(
+                owner=seller, category=vehicle_category, kind=Listing.Kind.VEHICLE,
+                action=Listing.Action.SELL, title=f"Toyota Corolla 2022 {index}",
+                description="Bakımlı otomobil", price=price, brand="Toyota", model_name="Corolla",
+                model_year=2021 + (index % 3), mileage=35000 + (index * 5000),
+                city="Şanlıurfa", district="Haliliye", status=Listing.Status.PUBLISHED,
+            )
+        guide = build_price_guide(self.subject(
+            category=vehicle_category, kind=Listing.Kind.VEHICLE, price=Decimal("1200000"),
+            brand="Toyota", model_name="Corolla", model_year=2022, mileage=45000,
+        ))
+        self.assertTrue(guide.available)
+        self.assertTrue(any("marka" in item.lower() and "model" in item.lower() for item in guide.criteria))
+        self.assertEqual(guide.status, "high")
+
+    def test_real_estate_guide_prioritizes_location_room_and_area(self):
+        estate_root = Category.objects.create(name="Emlak", slug="price-estate-root")
+        estate_category = Category.objects.create(name="Konut", slug="price-estate", parent=estate_root)
+        prices = [Decimal("20000"), Decimal("21000"), Decimal("22000"), Decimal("23000"), Decimal("24000"), Decimal("25000")]
+        sellers = list(User.objects.filter(username__startswith="price-seller-").order_by("username")[:6])
+        for index, (seller, price) in enumerate(zip(sellers, prices)):
+            Listing.objects.create(
+                owner=seller, category=estate_category, kind=Listing.Kind.REAL_ESTATE,
+                action=Listing.Action.RENT, title=f"Karaköprü 3+1 daire {index}",
+                description="Bakımlı kiralık daire", price=price, room_count="3+1",
+                area_m2=150 + (index * 5), city="Şanlıurfa", district="Karaköprü",
+                neighborhood="Akpıyar", status=Listing.Status.PUBLISHED,
+            )
+        guide = build_price_guide(self.subject(
+            category=estate_category, kind=Listing.Kind.REAL_ESTATE, action=Listing.Action.RENT,
+            price=Decimal("32000"), brand="", model_name="", room_count="3+1", area_m2=165,
+            city="Şanlıurfa", district="Karaköprü", neighborhood="Akpıyar",
+        ))
+        self.assertTrue(guide.available)
+        self.assertTrue(any("mahalle" in item.lower() or "ilçe" in item.lower() for item in guide.criteria))
+        self.assertEqual(guide.status, "high")
+
+    def test_authenticated_price_guide_endpoint_returns_market_range(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(
+            reverse("listings:price_guide"),
+            {
+                "kind": Listing.Kind.PRODUCT,
+                "action": Listing.Action.SELL,
+                "category": self.category.pk,
+                "price": "55000",
+                "brand": "Apple",
+                "model_name": "iPhone 15",
+                "city": "Şanlıurfa",
+                "district": "Karaköprü",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        guide = response.json()["guide"]
+        self.assertTrue(guide["available"])
+        self.assertEqual(guide["status"], "high")
+        self.assertGreaterEqual(guide["sample_count"], 7)
+
+    def test_listing_form_and_detail_show_price_guide_components(self):
+        self.client.force_login(self.owner)
+        form_page = self.client.get(reverse("listings:create"))
+        self.assertContains(form_page, "data-price-guide-assistant")
+        self.assertContains(form_page, reverse("listings:price_guide"))
+
+        listing = Listing.objects.create(
+            owner=self.owner, category=self.category, kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL, title="Pahalı iPhone 15", description="Temiz telefon",
+            price=Decimal("55000"), brand="Apple", model_name="iPhone 15",
+            city="Şanlıurfa", district="Karaköprü", status=Listing.Status.PUBLISHED,
+        )
+        detail = self.client.get(listing.get_absolute_url())
+        self.assertContains(detail, "AKILLI FİYAT REHBERİ")
+        self.assertContains(detail, "Piyasanın üzerinde")

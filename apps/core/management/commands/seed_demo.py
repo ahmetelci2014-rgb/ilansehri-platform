@@ -158,6 +158,42 @@ class Command(BaseCommand):
             )
             created_listings.append(listing)
 
+        # Akıllı Fiyat Rehberi sunumunda güvenilir bir örnek aralık oluşması için
+        # aynı kategori/modelde, farklı sahiplerden kontrollü piyasa ilanları eklenir.
+        phone_category = categories.get("Elektronik", fallback)
+        market_prices = [Decimal("24500"), Decimal("26000"), Decimal("27500"), Decimal("29000"), Decimal("30500"), Decimal("32000")]
+        for index, market_price in enumerate(market_prices, start=1):
+            market_user, created = User.objects.get_or_create(
+                username=f"demo_piyasa_{index}",
+                defaults={
+                    "first_name": "Piyasa",
+                    "last_name": f"Satıcı {index}",
+                    "city": "Şanlıurfa",
+                    "district": "Karaköprü" if index % 2 else "Haliliye",
+                },
+            )
+            if created:
+                market_user.set_unusable_password()
+                market_user.save(update_fields=["password"])
+            Listing.objects.update_or_create(
+                slug=f"demo-piyasa-telefon-{index}",
+                defaults={
+                    "owner": market_user,
+                    "category": phone_category,
+                    "kind": Listing.Kind.PRODUCT,
+                    "action": Listing.Action.SELL,
+                    "title": f"Apple iPhone 15 128 GB piyasa ilanı {index}",
+                    "description": "Temiz kullanılmış, kutulu ve çalışır durumda örnek piyasa ilanı.",
+                    "price": market_price,
+                    "condition": "Az kullanılmış",
+                    "brand": "Apple",
+                    "model_name": "iPhone 15",
+                    "city": "Şanlıurfa",
+                    "district": "Karaköprü" if index % 2 else "Haliliye",
+                    "status": Listing.Status.PUBLISHED,
+                },
+            )
+
         wanted_listing, _ = Listing.objects.update_or_create(
             slug="demo-telefon-ariyorum",
             defaults={

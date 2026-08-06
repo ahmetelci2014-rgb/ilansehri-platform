@@ -1,5 +1,17 @@
 # Değişiklik Günlüğü
 
+## v1.14.1 — Akıllı Fiyat Rehberi
+
+- Ürün, araç ve emlak ilanları için aktif benzer ilanlardan tahmini fiyat aralığı ve orta değer hesaplayan modül eklendi.
+- Kullanıcının fiyatı piyasanın altında, aralığında veya üzerinde olarak sınıflandırılır.
+- Ürünlerde kategori/marka/model/şehir; araçlarda marka/model/yıl/kilometre; emlakta şehir/ilçe/mahalle/oda/metrekare ölçütleri ayrı ayrı değerlendirilir.
+- Yeterli benzer ilan yoksa tahmin üretilmez; aşırı uç fiyatlar IQR yöntemiyle temizlenir.
+- Aynı satıcının diğer ilanları karşılaştırmadan çıkarılarak fiyat manipülasyonu azaltılır.
+- İlan oluşturma formuna manuel çalıştırılan fiyat rehberi ve önerilen orta değeri açık onayla fiyat alanına aktarma eklendi.
+- İlan detayında alıcı ve satıcı için piyasa konumu, aralık, örnek sayısı ve hesaplama açıklaması gösterilir.
+- Yeni CSS/JavaScript dosyaları PWA önbelleğine ve mobil sözleşme testine eklendi.
+- Model değişikliği ve migration yoktur.
+
 ## v1.14.0 — Arıyorum–Satıyorum akıllı eşleştirme
 
 - Arıyorum, hizmet arıyorum ve iş arıyorum ilanları için açıklanabilir 0–100 eşleşme puanı eklendi.
@@ -119,6 +131,18 @@
 - PWA önbelleği v1.11 olarak yenilendi.
 
 # Değişiklik Günlüğü
+
+## v1.14.1 — Akıllı Fiyat Rehberi
+
+- Ürün, araç ve emlak ilanları için aktif benzer ilanlardan tahmini fiyat aralığı ve orta değer hesaplayan modül eklendi.
+- Kullanıcının fiyatı piyasanın altında, aralığında veya üzerinde olarak sınıflandırılır.
+- Ürünlerde kategori/marka/model/şehir; araçlarda marka/model/yıl/kilometre; emlakta şehir/ilçe/mahalle/oda/metrekare ölçütleri ayrı ayrı değerlendirilir.
+- Yeterli benzer ilan yoksa tahmin üretilmez; aşırı uç fiyatlar IQR yöntemiyle temizlenir.
+- Aynı satıcının diğer ilanları karşılaştırmadan çıkarılarak fiyat manipülasyonu azaltılır.
+- İlan oluşturma formuna manuel çalıştırılan fiyat rehberi ve önerilen orta değeri açık onayla fiyat alanına aktarma eklendi.
+- İlan detayında alıcı ve satıcı için piyasa konumu, aralık, örnek sayısı ve hesaplama açıklaması gösterilir.
+- Yeni CSS/JavaScript dosyaları PWA önbelleğine ve mobil sözleşme testine eklendi.
+- Model değişikliği ve migration yoktur.
 
 ## v1.10 — Destek ve Operasyon Merkezi
 

@@ -14,6 +14,7 @@
 - Yardım Merkezi, kullanıcı destek talepleri ve personel destek operasyonu
 - Site geneli mobil tasarım sözleşmesi ve Playwright ekran görüntüsü denetimi
 - Arıyorum–Satıyorum açıklanabilir akıllı eşleştirme ve iki taraflı eşleşme merkezi
+- Ürün, araç ve emlak için açıklanabilir Akıllı Fiyat Rehberi
 
 ## Canlı lansman öncesi dış bağımlılıklar
 

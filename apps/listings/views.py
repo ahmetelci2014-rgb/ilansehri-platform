@@ -73,6 +73,7 @@ from .services import (
     reject_offer,
 )
 from .matching import blocked_owner_ids, refresh_user_matches, sync_listing_matches
+from .pricing import build_price_guide
 
 
 def _safe_int(value):
@@ -84,7 +85,8 @@ def _safe_int(value):
 
 def _safe_decimal(value):
     try:
-        return Decimal(value)
+        candidate = Decimal(value)
+        return candidate if candidate.is_finite() else None
     except (TypeError, ValueError, InvalidOperation):
         return None
 
@@ -355,6 +357,53 @@ def search_suggestions(request):
     return JsonResponse({"results": results[:10]})
 
 
+@login_required
+@require_GET
+def price_guide(request):
+    if not consume_rate_limit(request, "price_guide", limit=30, period=300):
+        return JsonResponse(
+            {"guide": {"available": False, "message": "Çok sık fiyat sorgusu yapıldı. Birkaç dakika sonra tekrar dene."}},
+            status=429,
+        )
+
+    kind = request.GET.get("kind", "").strip()
+    action = request.GET.get("action", "").strip()
+    category_id = _safe_int(request.GET.get("category"))
+    if kind not in dict(Listing.Kind.choices) or action not in dict(Listing.Action.choices) or not category_id:
+        return JsonResponse(
+            {"guide": {"available": False, "message": "İlan türü, işlem ve kategori bilgilerini tamamla."}}
+        )
+
+    category = Category.objects.filter(pk=category_id, is_active=True).select_related("parent").first()
+    if not category:
+        return JsonResponse({"guide": {"available": False, "message": "Geçerli bir kategori seç."}})
+
+    current_id = _safe_int(request.GET.get("current_id"))
+    if current_id and not Listing.objects.filter(pk=current_id, owner=request.user).exists():
+        current_id = None
+
+    subject = Listing(
+        owner=request.user,
+        category=category,
+        kind=kind,
+        action=action,
+        title=request.GET.get("title", "").strip()[:180],
+        description="",
+        price=_safe_decimal(request.GET.get("price")),
+        brand=request.GET.get("brand", "").strip()[:100],
+        model_name=request.GET.get("model_name", "").strip()[:100],
+        model_year=_safe_int(request.GET.get("model_year")),
+        mileage=_safe_int(request.GET.get("mileage")),
+        room_count=request.GET.get("room_count", "").strip()[:30],
+        area_m2=_safe_int(request.GET.get("area_m2")),
+        city=request.GET.get("city", "").strip()[:80],
+        district=request.GET.get("district", "").strip()[:80],
+        neighborhood=request.GET.get("neighborhood", "").strip()[:120],
+    )
+    guide = build_price_guide(subject, exclude_pk=current_id)
+    return JsonResponse({"guide": guide.to_dict()})
+
+
 class ListingListView(ListView):
     model = Listing
     template_name = "listings/list.html"
@@ -622,6 +671,7 @@ class ListingDetailView(FormMixin, DetailView):
                     .count()
                 )
                 context["owner_match_tab"] = "offered"
+        context["price_guide"] = build_price_guide(self.object, exclude_pk=self.object.pk)
         context["quality_profile"] = assess_listing_quality(self.object)
         context["canonical_url"] = self.request.build_absolute_uri(self.object.get_absolute_url())
         cover = self.object.cover_image

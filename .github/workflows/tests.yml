@@ -26,6 +26,8 @@ jobs:
         run: |
           python -c "from apps.ai_listing.services.exceptions import SafetyBlockedError"
           python -c "from apps.ai_listing.services.providers import GeminiVisionProvider, get_provider"
+      - name: Fiyat rehberi importunu doğrula
+        run: python -c "from apps.listings.pricing import PriceGuide, build_price_guide"
       - name: Migration üret ve uygula
         run: |
           python manage.py makemigrations accounts listings managed_services partners support_center ai_listing --noinput

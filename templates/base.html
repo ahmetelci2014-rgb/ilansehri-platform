@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="{% static 'css/v113-mobile-market.css' %}?v=1131">
   <link rel="stylesheet" href="{% static 'css/v132-mobile-system.css' %}?v=1132">
   <link rel="stylesheet" href="{% static 'css/v14-matching.css' %}?v=1140">
+  <link rel="stylesheet" href="{% static 'css/v141-price-guide.css' %}?v=1141">
   <script defer src="{% static 'js/app.js' %}"></script>
   <script defer src="{% static 'js/v16-premium.js' %}"></script>
   <script defer src="{% static 'js/v17-launch.js' %}"></script>
@@ -39,7 +40,8 @@
   <script defer src="{% static 'js/v111-operations.js' %}"></script>
   <script defer src="{% static 'js/v112-ai.js' %}?v=11223"></script>
   <script defer src="{% static 'js/v113-mobile-market.js' %}?v=1131"></script>
-  <script defer src="{% static 'js/v132-mobile-system.js' %}?v=1132"></script>
+  <script defer src="{% static 'js/v132-mobile-system.js' %}?v=1141"></script>
+  <script defer src="{% static 'js/v141-price-guide.js' %}?v=1141"></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body class="marketplace-body v18-theme app-{{ request.resolver_match.namespace|default:'core' }} page-{{ request.resolver_match.url_name|default:'page' }}">
@@ -84,7 +86,7 @@
   </div></div>
 </header>
 <main id="main-content">{% if messages %}<div class="message-stack" aria-live="polite">{% for message in messages %}<div class="message {{ message.tags }}" data-flash-message><span>{{ message }}</span><button type="button" aria-label="Bildirimi kapat" data-flash-close>×</button></div>{% endfor %}</div>{% endif %}{% block content %}{% endblock %}</main>
-<footer class="market-footer"><div class="shell market-footer-row"><a class="market-brand footer-logo" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a><div><a href="{% url 'core:trust' %}">Güven</a><a href="{% url 'core:terms' %}">Koşullar</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:about' %}">Hakkımızda</a><a href="{% url 'support_center:help_center' %}">Yardım Merkezi</a><a href="{% url 'managed_services:list' %}">Tam Yönetim</a></div><small>© {% now "Y" %} İlan Şehri · v1.14.0</small></div></footer>
+<footer class="market-footer"><div class="shell market-footer-row"><a class="market-brand footer-logo" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a><div><a href="{% url 'core:trust' %}">Güven</a><a href="{% url 'core:terms' %}">Koşullar</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:about' %}">Hakkımızda</a><a href="{% url 'support_center:help_center' %}">Yardım Merkezi</a><a href="{% url 'managed_services:list' %}">Tam Yönetim</a></div><small>© {% now "Y" %} İlan Şehri · v1.14.1</small></div></footer>
 <nav class="market-mobile-nav" aria-label="Mobil ana menü"><a href="{% url 'core:home' %}"><span>⌂</span><small>Ana sayfa</small></a><a href="{% url 'listings:list' %}"><span>⌕</span><small>Keşfet</small></a><a class="mobile-post" href="{% url 'listings:create' %}"><span>＋</span><small>İlan ver</small></a>{% if user.is_authenticated %}<a href="{% url 'listings:conversation_list' %}"><span>💬{% if unread_message_count %}<i class="mobile-nav-badge">{{ unread_message_count }}</i>{% endif %}</span><small>Mesaj</small></a><a href="{% url 'accounts:dashboard' %}"><span>●{% if unread_notification_count %}<i class="mobile-nav-badge">{{ unread_notification_count }}</i>{% endif %}</span><small>Hesabım</small></a>{% else %}<a href="{% url 'listings:compare' %}"><span>⇄{% if compare_count %}<i class="mobile-nav-badge">{{ compare_count }}</i>{% endif %}</span><small>Karşılaştır</small></a><a href="{% url 'login' %}"><span>●</span><small>Giriş</small></a>{% endif %}</nav>
 <button class="v18-scroll-top" type="button" aria-label="Sayfanın başına dön" data-scroll-top>↑</button>
 {% if compare_count %}<a class="compare-floating" href="{% url 'listings:compare' %}"><span>⇄</span><b>{{ compare_count }} ilanı karşılaştır</b></a>{% endif %}

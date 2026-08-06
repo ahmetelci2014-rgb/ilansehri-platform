@@ -1,0 +1,37 @@
+İLAN ŞEHRİ v1.14.1 — AKILLI FİYAT REHBERİ
+
+Bu sürüm:
+- Ürün, araç ve emlak ilanlarında aktif benzer ilanlardan tahmini fiyat aralığı üretir.
+- Girilen fiyatı piyasanın altında, aralığında veya üzerinde olarak gösterir.
+- Ürünlerde kategori/marka/model/şehir; araçlarda marka/model/yıl/kilometre;
+  emlakta şehir/ilçe/mahalle/oda/metrekare ölçütlerini ayrı değerlendirir.
+- Yeterli benzer ilan yoksa tahmin üretmez.
+- Aşırı uç fiyatları ve aynı satıcının diğer ilanlarını karşılaştırmadan çıkarır.
+- Formdaki fiyatı otomatik değiştirmez; yalnız kullanıcı açıkça onaylarsa orta değeri yazar.
+- İlan detayında alıcı ve satıcıya örnek sayısı, güven seviyesi ve hesaplama açıklaması gösterir.
+- v1.14.0 Akıllı Eşleştirme, mobil sistem ve Gemini ilan asistanı korunur.
+- Yeni model alanı ve migration yoktur.
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform klasörüne
+   kopyalayın ve mevcut dosyaları değiştirin.
+3. GitHub Desktop Summary:
+   İlan Şehri v1.14.1 akıllı fiyat rehberi
+4. Commit to main ve Push origin.
+5. Django Kontrol workflow'unun yeşil olmasını bekleyin.
+6. Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. İlan verme ekranında ürün/araç/emlak, satılık veya kiralık, kategori ve
+   temel özellikleri seçtikten sonra “Fiyat aralığını hesapla” düğmesini kullanın.
+
+Demo verisinde özelliği görünür test etmek için yalnız demo ortamında:
+python manage.py seed_demo --with-admin
+
+Not:
+Yerel ortamda sabitlenmiş Django paketi kurulamadığı için tam Django testleri
+GitHub Actions'a bırakıldı. Python, JavaScript, Bash, YAML, şablon dengesi,
+mobil sözleşme, deterministik fiyat matematiği, 390 px Chromium taşma testi
+ve ZIP bütünlüğü kontrol edildi.

@@ -250,7 +250,7 @@ def run_audit(base_url: str, output_dir: Path) -> list[PageResult]:
 
 def write_report(output_dir: Path, results: list[PageResult]) -> None:
     payload = {
-        "version": "v1.14.0",
+        "version": "v1.14.1",
         "summary": {
             "pages": len(results),
             "critical": sum(result.critical for result in results),

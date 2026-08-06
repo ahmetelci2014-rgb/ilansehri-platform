@@ -43,6 +43,8 @@
     {% endif %}
   </div>
 
+  {% include 'listings/_price_guide.html' with guide=price_guide variant='mobile' %}
+
   {% if user == listing.owner and listing.status == 'published' %}
   <a class="v114-owner-match-card" href="{% url 'listings:matches' %}?tab={{ owner_match_tab|default:'wanted' }}">
     <div><span>◎</span><div><b>{% if owner_match_tab == 'wanted' %}Bu arama için {{ owner_match_count }} uygun ilan{% else %}Bu ilanı arayan {{ owner_match_count }} kullanıcı ilanı{% endif %}</b><small>Akıllı eşleşme sonuçlarını incele</small></div></div><strong>Sonuçları aç →</strong>
@@ -76,6 +78,8 @@
 
     <aside class="v16-summary-card">
       <div class="v16-summary-price">{% with price_change=listing.latest_price_change %}<strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>{% if price_change and price_change.is_drop %}<del>{{ price_change.old_price|floatformat:"0g" }} TL</del><b>↓ %{{ listing.price_drop_percent }} düştü</b>{% endif %}{% endwith %}<div class="v16-summary-note">{% if listing.is_negotiable %}<span>✓ Pazarlık payı var</span>{% endif %}{% if listing.delivery_type %}<span>{{ listing.get_delivery_type_display }}</span>{% endif %}{% if listing.condition %}<span>{{ listing.condition }}</span>{% endif %}</div></div>
+
+      {% include 'listings/_price_guide.html' with guide=price_guide variant='aside' %}
 
       <a class="v16-seller-card" href="{% url 'accounts:public_profile' listing.owner.username %}"><span class="v16-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span><div><b>{{ listing.owner.display_name }}</b><small>★ {{ listing.owner.average_rating }} · {{ listing.owner.rating_count }} değerlendirme</small><em>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %} · Güven {{ listing.owner.trust_score }}/100</em></div><i>›</i></a>
 
