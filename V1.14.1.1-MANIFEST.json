@@ -1,0 +1,32 @@
+{
+  "version": "v1.14.1.1",
+  "name": "Emlak Fiyat Rehberi Hata Düzeltmesi",
+  "base_version": "v1.14.1",
+  "database_migration_required": false,
+  "root_cause": "Alt kategori için _root_q değerinin dict olması ve QuerySet.filter(root_q) şeklinde uygulanması Django FieldError oluşturuyordu.",
+  "changed_file_count": 12,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/tests.py",
+    "apps/core/views.py",
+    "apps/listings/pricing.py",
+    "apps/listings/tests.py",
+    "scripts/check_mobile_contract.py",
+    "scripts/mobile_audit.py",
+    "scripts/start_codespace.sh",
+    "static/js/v132-mobile-system.js",
+    "templates/base.html"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "mobile_contract": "passed",
+    "pricing_q_filter_guard": "passed",
+    "regression_test_added": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload"
+  }
+}

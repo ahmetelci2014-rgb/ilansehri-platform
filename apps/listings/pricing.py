@@ -142,7 +142,7 @@ def _category_filters(subject: Listing) -> tuple[dict, dict]:
     category = subject.category
     root_id = category.parent_id or category.pk
     if category.parent_id:
-        root = {"category__parent_id": root_id}
+        root = Q(category__parent_id=root_id)
     else:
         root = Q(category_id=root_id) | Q(category__parent_id=root_id)
     return exact, {"_root_q": root}
@@ -250,7 +250,13 @@ def _query_prices(queryset: QuerySet, plan: _CandidatePlan) -> list[Decimal]:
     filters = dict(plan.filters)
     root_q = filters.pop("_root_q", None)
     if root_q is not None:
-        queryset = queryset.filter(root_q)
+        if isinstance(root_q, Q):
+            queryset = queryset.filter(root_q)
+        elif isinstance(root_q, dict):
+            # Önceki plan biçimlerinden gelebilecek sözlükleri güvenli şekilde uygula.
+            queryset = queryset.filter(**root_q)
+        else:
+            raise TypeError("Kategori kök filtresi Q veya sözlük olmalıdır.")
     queryset = queryset.filter(**filters)
     return [Decimal(value) for value in queryset.order_by("-published_at").values_list("price", flat=True)[:160]]
 

@@ -868,6 +868,49 @@ class ListingPriceGuideTests(TestCase):
         self.assertTrue(any("mahalle" in item.lower() or "ilçe" in item.lower() for item in guide.criteria))
         self.assertEqual(guide.status, "high")
 
+    def test_real_estate_root_fallback_accepts_child_category_filter(self):
+        estate_root = Category.objects.create(name="Emlak kökü", slug="price-estate-fallback-root")
+        subject_category = Category.objects.create(
+            name="Kiralık daire", slug="price-estate-fallback-subject", parent=estate_root
+        )
+        sibling_category = Category.objects.create(
+            name="Kiralık konut", slug="price-estate-fallback-sibling", parent=estate_root
+        )
+        prices = [
+            Decimal("18000"), Decimal("19000"), Decimal("20000"),
+            Decimal("21000"), Decimal("22000"), Decimal("23000"),
+        ]
+        sellers = list(User.objects.filter(username__startswith="price-seller-").order_by("username")[:6])
+        for index, (seller, price) in enumerate(zip(sellers, prices)):
+            Listing.objects.create(
+                owner=seller, category=sibling_category, kind=Listing.Kind.REAL_ESTATE,
+                action=Listing.Action.RENT, title=f"Karaköprü kiralık konut {index}",
+                description="Benzer bölgede kiralık konut", price=price, room_count="3+1",
+                area_m2=150 + index, city="Şanlıurfa", district="Karaköprü",
+                status=Listing.Status.PUBLISHED,
+            )
+
+        guide = build_price_guide(self.subject(
+            category=subject_category, kind=Listing.Kind.REAL_ESTATE,
+            action=Listing.Action.RENT, price=Decimal("25000"), brand="", model_name="",
+            room_count="3+1", area_m2=152, city="Şanlıurfa", district="Karaköprü",
+        ))
+
+        self.assertTrue(guide.available)
+        self.assertGreaterEqual(guide.sample_count, 6)
+        self.assertTrue(any("yakın emlak kategorisi" in item.lower() for item in guide.criteria))
+
+        listing = Listing.objects.create(
+            owner=self.owner, category=subject_category, kind=Listing.Kind.REAL_ESTATE,
+            action=Listing.Action.RENT, title="Demo emlak kök filtre testi",
+            description="İlan detayında fiyat rehberi hatası üretmemeli.",
+            price=Decimal("25000"), room_count="3+1", area_m2=152,
+            city="Şanlıurfa", district="Karaköprü", status=Listing.Status.PUBLISHED,
+        )
+        detail = self.client.get(listing.get_absolute_url())
+        self.assertEqual(detail.status_code, 200)
+        self.assertContains(detail, "AKILLI FİYAT REHBERİ")
+
     def test_authenticated_price_guide_endpoint_returns_market_range(self):
         self.client.force_login(self.owner)
         response = self.client.get(

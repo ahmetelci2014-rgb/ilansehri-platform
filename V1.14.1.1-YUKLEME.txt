@@ -1,0 +1,35 @@
+İLAN ŞEHRİ v1.14.1.1 — EMLAK FİYAT REHBERİ HATA DÜZELTMESİ
+
+Kök neden:
+- Alt kategoriye bağlı emlak ilanı, yakın kategori fiyatlarını ararken kategori
+  kök filtresi sözlük biçiminde oluşturuluyordu.
+- Bu sözlük Django QuerySet.filter() metoduna Q nesnesi gibi gönderildiği için
+  `FieldError: Cannot parse keyword query as dict` oluşuyordu.
+- Sonuç olarak demo-emlak gibi ilan detayları HTTP 500 döndürüyordu.
+
+Düzeltme:
+- Kategori kök filtresi her durumda Django Q nesnesi olarak oluşturulur.
+- Eski sözlük biçiminden gelebilecek filtreler için savunmalı uyumluluk eklendi.
+- Alt kategorideki emlak ilanını yakın kardeş kategorilerle karşılaştıran test eklendi.
+- Aynı test ilan detayını açarak HTTP 200 ve fiyat rehberi bileşenini doğrular.
+- Akıllı eşleştirme, mobil sistem ve Gemini ilan asistanı değiştirilmedi.
+- Migration yoktur.
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. GitHub Desktop Summary:
+   İlan Şehri v1.14.1.1 emlak fiyat rehberi düzeltmesi
+4. Commit to main ve Push origin.
+5. Django Kontrol workflow'unun yeşil olmasını bekleyin.
+6. Yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Ardından /ilanlar/demo-emlak/ sayfasını yeniden açın.
+
+Not:
+Python derleme, JavaScript, Bash, mobil sözleşme, fiyat filtresi koruması ve
+ZIP bütünlüğü kontrol edildi. Tam Django testleri GitHub Actions üzerinde
+çalışacaktır.

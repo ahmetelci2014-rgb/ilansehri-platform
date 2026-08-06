@@ -26,8 +26,8 @@ def require(text: str, needle: str, source: str) -> None:
 
 def main() -> int:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if version != "v1.14.1":
-        fail(f"VERSION v1.14.1 olmalı, bulundu: {version}")
+    if version != "v1.14.1.1":
+        fail(f"VERSION v1.14.1.1 olmalı, bulundu: {version}")
 
     base = (ROOT / "templates/base.html").read_text(encoding="utf-8")
     views = (ROOT / "apps/core/views.py").read_text(encoding="utf-8")
@@ -40,8 +40,8 @@ def main() -> int:
 
     require(base, "css/v132-mobile-system.css", "templates/base.html")
     require(base, "js/v132-mobile-system.js", "templates/base.html")
-    require(base, "v1.14.1", "templates/base.html")
-    require(views, 'const CACHE = "ilansehri-v1141";', "apps/core/views.py")
+    require(base, "v1.14.1.1", "templates/base.html")
+    require(views, 'const CACHE = "ilansehri-v11411";', "apps/core/views.py")
     require(views, "/static/css/v132-mobile-system.css", "apps/core/views.py")
     require(base, "css/v14-matching.css", "templates/base.html")
     require(base, "css/v141-price-guide.css", "templates/base.html")
@@ -50,7 +50,7 @@ def main() -> int:
     require(views, "/static/css/v141-price-guide.css", "apps/core/views.py")
     require(views, "/static/js/v141-price-guide.js", "apps/core/views.py")
     require(views, "/static/js/v132-mobile-system.js", "apps/core/views.py")
-    require(views, '"version": "1.14.1"', "apps/core/views.py")
+    require(views, '"version": "1.14.1.1"', "apps/core/views.py")
     require(listing_form, "data-price-guide-assistant", "templates/listings/form.html")
     require(listing_detail, "listings/_price_guide.html", "templates/listings/detail.html")
     require(pricing, "def build_price_guide", "apps/listings/pricing.py")
@@ -110,7 +110,7 @@ def main() -> int:
     if offenders:
         fail("Mobil taşma riski taşıyan inline genişlikler: " + ", ".join(offenders))
 
-    print("Mobil sözleşme kontrolü başarılı: v1.14.1")
+    print("Mobil sözleşme kontrolü başarılı: v1.14.1.1")
     return 0
 
 

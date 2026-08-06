@@ -1,6 +1,6 @@
 # İlan Şehri
 
-> Güncel sürüm: **v1.14.1** — ürün, araç ve emlak ilanlarında aktif benzer ilanlardan tahmini fiyat aralığı, orta değer ve piyasa konumu üreten Akıllı Fiyat Rehberi eklendi.
+> Güncel sürüm: **v1.14.1.1** — emlak ilan detayındaki akıllı fiyat rehberi kategori kök filtresi düzeltildi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -8,7 +8,6 @@
 
 - Konum ve kategori odaklı fotoğraflı marketplace akışı
 - Arıyorum–Satıyorum akıllı eşleştirme, iki taraflı eşleşme merkezi ve bildirimler
-- Ürün, araç ve emlak için uç fiyatları ayıklayan açıklanabilir Akıllı Fiyat Rehberi
 - Site genelinde ortak mobil ekran sistemi, kompakt ilan akışı, alttan açılan filtreler ve sabit tek el navigasyonu
 - Fotoğrafla başlayan yapay zekâ ilan hazırlama, güvenli görsel analiz ve kullanıcı onayı
 - Kategoriye özel gelişmiş arama, filtreleme, sıralama ve ilan karşılaştırma
@@ -24,16 +23,6 @@
 - PWA, Docker, PostgreSQL, WhiteNoise ve Gunicorn canlı sunucu hazırlığı
 - GitHub Actions migration, güvenlik, statik dosya, mobil sözleşme ve Playwright ekran görüntüsü kontrolleri
 
-
-
-## v1.14.1 Akıllı Fiyat Rehberi
-
-- İlan verme ve düzenleme ekranında benzer aktif ilanlardan tahmini fiyat aralığı hesaplanır.
-- Kullanıcının girdiği fiyat “piyasanın altında”, “piyasa aralığında” veya “piyasanın üzerinde” olarak açıklanır.
-- Ürünlerde kategori/marka/model/şehir; araçlarda marka/model/yıl/kilometre; emlakta konum/oda/metrekare ölçütleri kullanılır.
-- Yetersiz benzer ilan varsa sistem tahmin üretmez.
-- Aşırı uç fiyatlar ve aynı satıcının diğer ilanları karşılaştırmadan çıkarılır.
-- Sonuç yalnız rehber niteliğindedir; fiyatı kullanıcı onayı olmadan değiştirmez.
 
 ## v1.14 Arıyorum–Satıyorum akıllı eşleştirme
 
