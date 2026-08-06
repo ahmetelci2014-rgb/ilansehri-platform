@@ -111,7 +111,9 @@ class MobileMarketplaceExperienceTests(TestCase):
     def test_service_worker_uses_mobile_release_cache(self):
         response = self.client.get(reverse("core:service_worker"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'const CACHE = "ilansehri-v1180";')
+        release_version = (settings.BASE_DIR / "VERSION").read_text(encoding="utf-8").strip().removeprefix("v")
+        cache_version = "".join(character for character in release_version if character.isdigit())
+        self.assertContains(response, f'const CACHE = "ilansehri-v{cache_version}";')
         self.assertContains(response, "/static/css/v113-mobile-market.css")
         self.assertContains(response, "/static/js/v113-mobile-market.js")
         self.assertContains(response, "/static/css/v132-mobile-system.css")

@@ -1,0 +1,10 @@
+İLAN ŞEHRİ v1.19.0.1 — SERVICE WORKER TEST DÜZELTMESİ
+
+1. Bu klasörün içindeki apps klasörünü proje ana klasörüne kopyalayın.
+2. apps/core/tests.py dosyasının değiştirilmesini onaylayın.
+3. GitHub Desktop özetine şunu yazın:
+   İlan Şehri v1.19.0.1 service worker test düzeltmesi
+4. Commit to main ve Push origin yapın.
+5. Actions bölümünde en yeni Django Kontrol çalışmasını bekleyin.
+
+Düzeltme yalnız test sözleşmesini değiştirir. Site koduna, veritabanına ve kullanıcı verilerine dokunmaz.
