@@ -31,6 +31,7 @@ from apps.support_center.services import log_staff_action
 
 from .forms import (
     CounterOfferForm,
+    HandoverCodeForm,
     ListingForm,
     ListingReportForm,
     MessageForm,
@@ -58,11 +59,13 @@ from .models import (
     SavedSearch,
     SavedSearchMatch,
     Transaction,
+    TransactionEvent,
 )
 from .services import (
     accept_offer,
     assess_listing_quality,
     consume_rate_limit,
+    confirm_transaction,
     counter_offer,
     create_offer_event,
     create_notification,
@@ -71,8 +74,13 @@ from .services import (
     optimize_listing_image,
     record_price_change,
     finalize_transaction,
+    issue_handover_code,
+    record_transaction_event,
     refresh_user_rating,
     reject_offer,
+    review_window_is_open,
+    start_transaction_delivery,
+    verify_handover_code,
 )
 from .matching import blocked_owner_ids, refresh_user_matches, sync_listing_matches
 from .message_safety import safe_notification_preview
@@ -1079,6 +1087,16 @@ class OfferCenterView(LoginRequiredMixin, TemplateView):
         context["status_filter"] = status_filter
         context["counter_form"] = CounterOfferForm()
         context["pending_count"] = base.filter(status=Offer.Status.PENDING).count()
+        transaction_qs = (
+            Transaction.objects.filter(Q(buyer=user) | Q(seller=user))
+            .select_related("listing", "buyer", "seller")
+            .prefetch_related("listing__images")
+            .order_by("-updated_at")
+        )
+        context["active_transaction_count"] = transaction_qs.filter(
+            status__in=[Transaction.Status.AGREED, Transaction.Status.DELIVERY, Transaction.Status.DISPUTED]
+        ).count()
+        context["transactions"] = transaction_qs[:20]
         return context
 
 
@@ -1152,20 +1170,29 @@ class TransactionDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Transaction.objects.select_related("listing", "offer", "buyer", "seller").prefetch_related("reviews")
+        qs = (
+            Transaction.objects.select_related("listing", "offer", "buyer", "seller")
+            .prefetch_related("reviews", "events__actor")
+        )
         if user.is_staff:
             return qs
         return qs.filter(Q(buyer=user) | Q(seller=user))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        is_participant = self.object.is_participant(self.request.user)
+        user = self.request.user
+        is_participant = self.object.is_participant(user)
+        my_review = self.object.reviews.filter(reviewer=user).first() if is_participant else None
         context["is_participant"] = is_participant
-        context["review_form"] = ReviewForm() if is_participant else None
+        context["is_buyer"] = bool(is_participant and user.pk == self.object.buyer_id)
+        context["is_seller"] = bool(is_participant and user.pk == self.object.seller_id)
+        context["review_window_open"] = bool(is_participant and review_window_is_open(self.object))
+        context["review_form"] = ReviewForm() if is_participant and not my_review else None
+        context["handover_form"] = HandoverCodeForm()
         context["dispute_form"] = TransactionDisputeForm(instance=self.object) if is_participant else None
-        context["my_review"] = self.object.reviews.filter(reviewer=self.request.user).first() if is_participant else None
+        context["my_review"] = my_review
         context["other_user"] = (
-            self.object.seller if self.request.user.pk == self.object.buyer_id else self.object.buyer
+            self.object.seller if user.pk == self.object.buyer_id else self.object.buyer
         ) if is_participant else None
         return context
 
@@ -1183,54 +1210,70 @@ def transaction_action(request, public_id, action):
         messages.warning(request, "Bu işlem kapanmış durumda.")
         return redirect(transaction.get_absolute_url())
 
-    if action == "delivery":
-        transaction.status = Transaction.Status.DELIVERY
-        transaction.save(update_fields=["status", "updated_at"])
-        messages.success(request, "İşlem teslim / hizmet aşamasına geçirildi.")
-    elif action == "confirm":
-        if request.user.pk == transaction.buyer_id:
-            transaction.buyer_confirmed = True
-            fields = ["buyer_confirmed", "updated_at"]
-        else:
-            transaction.seller_confirmed = True
-            fields = ["seller_confirmed", "updated_at"]
-        transaction.save(update_fields=fields)
-        finalize_transaction(transaction)
-        messages.success(request, "Tamamlama onayın kaydedildi.")
-    elif action == "cancel":
-        if transaction.status != Transaction.Status.AGREED:
-            messages.error(request, "Teslim aşamasındaki işlem tek taraflı iptal edilemez; uyuşmazlık bildir.")
-        else:
-            transaction.status = Transaction.Status.CANCELLED
-            transaction.cancelled_at = timezone.now()
-            transaction.save(update_fields=["status", "cancelled_at", "updated_at"])
-            Listing.objects.filter(pk=transaction.listing_id).update(
-                status=Listing.Status.PAUSED,
-                updated_at=timezone.now(),
+    try:
+        if action == "delivery":
+            start_transaction_delivery(transaction=transaction, actor=request.user)
+            messages.success(request, "İşlem teslim / hizmet aşamasına geçirildi.")
+        elif action == "generate_code":
+            _, raw_code = issue_handover_code(transaction=transaction, actor=request.user)
+            messages.success(
+                request,
+                f"Teslim kodun: {raw_code}. Bu kod 15 dakika geçerlidir; yalnız teslim anında satıcıya söyle.",
             )
-            sync_listing_matches(transaction.listing, notify=False)
-            messages.success(request, "İşlem iptal edildi.")
-    elif action == "dispute":
-        form = TransactionDisputeForm(request.POST, instance=transaction)
-        if form.is_valid():
-            transaction = form.save(commit=False)
-            transaction.status = Transaction.Status.DISPUTED
-            transaction.save(update_fields=["status", "dispute_reason", "updated_at"])
-            for staff_user in transaction.seller.__class__.objects.filter(is_staff=True, is_active=True)[:20]:
-                create_notification(
-                    user=staff_user,
-                    actor=request.user,
-                    listing=transaction.listing,
-                    notification_type=Notification.Type.SYSTEM,
-                    title="Yeni işlem uyuşmazlığı",
-                    body=f"{transaction.listing.title} işlemi için inceleme istendi.",
-                    link=transaction.get_absolute_url(),
+        elif action == "verify_code":
+            form = HandoverCodeForm(request.POST)
+            if not form.is_valid():
+                messages.error(request, "6 haneli teslim kodunu kontrol et.")
+            else:
+                verify_handover_code(
+                    transaction=transaction, actor=request.user, raw_code=form.cleaned_data["code"]
                 )
-            messages.warning(request, "Uyuşmazlık kaydı açıldı. Destek ekibi inceleyecek.")
+                messages.success(request, "Teslim kodu doğrulandı. Satıcı onayı kaydedildi.")
+        elif action == "confirm":
+            confirm_transaction(transaction=transaction, actor=request.user)
+            messages.success(request, "Tamamlama onayın kaydedildi.")
+        elif action == "cancel":
+            if transaction.status != Transaction.Status.AGREED:
+                messages.error(request, "Teslim aşamasındaki işlem tek taraflı iptal edilemez; uyuşmazlık bildir.")
+            else:
+                transaction.status = Transaction.Status.CANCELLED
+                transaction.cancelled_at = timezone.now()
+                transaction.save(update_fields=["status", "cancelled_at", "updated_at"])
+                record_transaction_event(
+                    transaction=transaction, actor=request.user,
+                    event_type=TransactionEvent.Type.CANCELLED, note="İşlem teslim başlamadan iptal edildi.",
+                )
+                Listing.objects.filter(pk=transaction.listing_id).update(
+                    status=Listing.Status.PAUSED, updated_at=timezone.now(),
+                )
+                sync_listing_matches(transaction.listing, notify=False)
+                messages.success(request, "İşlem iptal edildi.")
+        elif action == "dispute":
+            form = TransactionDisputeForm(request.POST, instance=transaction)
+            if form.is_valid():
+                transaction = form.save(commit=False)
+                transaction.status = Transaction.Status.DISPUTED
+                transaction.save(update_fields=["status", "dispute_reason", "updated_at"])
+                record_transaction_event(
+                    transaction=transaction, actor=request.user,
+                    event_type=TransactionEvent.Type.DISPUTED, note="Taraflardan biri destek incelemesi istedi.",
+                )
+                for staff_user in transaction.seller.__class__.objects.filter(is_staff=True, is_active=True)[:20]:
+                    create_notification(
+                        user=staff_user, actor=request.user, listing=transaction.listing,
+                        notification_type=Notification.Type.SYSTEM, title="Yeni işlem uyuşmazlığı",
+                        body=f"{transaction.listing.title} işlemi için inceleme istendi.",
+                        link=transaction.get_absolute_url(),
+                    )
+                messages.warning(request, "Uyuşmazlık kaydı açıldı. Destek ekibi inceleyecek.")
+            else:
+                messages.error(request, "Uyuşmazlık açıklamasını kontrol et.")
         else:
-            messages.error(request, "Uyuşmazlık açıklamasını kontrol et.")
-    else:
-        messages.error(request, "Geçersiz işlem.")
+            messages.error(request, "Geçersiz işlem.")
+    except PermissionError:
+        raise Http404
+    except ValueError as exc:
+        messages.error(request, str(exc))
     return redirect(transaction.get_absolute_url())
 
 
@@ -1241,24 +1284,39 @@ def moderate_transaction(request, public_id, action):
         raise Http404
     transaction = get_object_or_404(
         Transaction.objects.select_related("buyer", "seller", "listing"),
-        public_id=public_id,
-        status=Transaction.Status.DISPUTED,
+        public_id=public_id, status=Transaction.Status.DISPUTED,
     )
+    now = timezone.now()
     if action == "complete":
         transaction.buyer_confirmed = True
         transaction.seller_confirmed = True
-        transaction.save(update_fields=["buyer_confirmed", "seller_confirmed", "updated_at"])
+        transaction.buyer_confirmed_at = transaction.buyer_confirmed_at or now
+        transaction.seller_confirmed_at = transaction.seller_confirmed_at or now
+        transaction.status = Transaction.Status.DELIVERY
+        transaction.save(
+            update_fields=[
+                "buyer_confirmed", "seller_confirmed", "buyer_confirmed_at",
+                "seller_confirmed_at", "status", "updated_at",
+            ]
+        )
+        record_transaction_event(
+            transaction=transaction, actor=request.user, event_type=TransactionEvent.Type.MODERATED,
+            note="Destek ekibi uyuşmazlığı tamamlandı olarak sonuçlandırdı.",
+        )
         finalize_transaction(transaction)
         title = "Uyuşmazlık tamamlandı olarak çözüldü"
         body = "Destek ekibi işlem kaydını tamamlandı olarak kapattı."
         messages.success(request, "Uyuşmazlık tamamlandı olarak kapatıldı.")
     elif action == "cancel":
         transaction.status = Transaction.Status.CANCELLED
-        transaction.cancelled_at = timezone.now()
+        transaction.cancelled_at = now
         transaction.save(update_fields=["status", "cancelled_at", "updated_at"])
+        record_transaction_event(
+            transaction=transaction, actor=request.user, event_type=TransactionEvent.Type.MODERATED,
+            note="Destek ekibi uyuşmazlığı iptal ile sonuçlandırdı.",
+        )
         Listing.objects.filter(pk=transaction.listing_id).update(
-            status=Listing.Status.PAUSED,
-            updated_at=timezone.now(),
+            status=Listing.Status.PAUSED, updated_at=now,
         )
         title = "Uyuşmazlık iptal ile sonuçlandı"
         body = "Destek ekibi işlem kaydını iptal ederek ilanı duraklattı."
@@ -1268,12 +1326,8 @@ def moderate_transaction(request, public_id, action):
         return redirect(transaction.get_absolute_url())
     for recipient in (transaction.buyer, transaction.seller):
         create_notification(
-            user=recipient,
-            actor=request.user,
-            listing=transaction.listing,
-            notification_type=Notification.Type.SYSTEM,
-            title=title,
-            body=body,
+            user=recipient, actor=request.user, listing=transaction.listing,
+            notification_type=Notification.Type.SYSTEM, title=title, body=body,
             link=transaction.get_absolute_url(),
         )
     return redirect(transaction.get_absolute_url())
@@ -1281,31 +1335,57 @@ def moderate_transaction(request, public_id, action):
 
 @login_required
 @require_POST
+@db_transaction.atomic
 def create_review(request, public_id):
-    transaction = get_object_or_404(Transaction.objects.select_related("buyer", "seller", "listing"), public_id=public_id)
-    if not transaction.is_participant(request.user) or transaction.status != Transaction.Status.COMPLETED:
+    transaction = get_object_or_404(
+        Transaction.objects.select_for_update().select_related("buyer", "seller", "listing"),
+        public_id=public_id,
+    )
+    if not transaction.is_participant(request.user) or not review_window_is_open(transaction):
         raise Http404
     if Review.objects.filter(transaction=transaction, reviewer=request.user).exists():
         messages.warning(request, "Bu işlem için daha önce değerlendirme yaptın.")
         return redirect(transaction.get_absolute_url())
     form = ReviewForm(request.POST)
     if form.is_valid():
+        now = timezone.now()
+        other_review = transaction.reviews.exclude(reviewer=request.user).first()
         review = form.save(commit=False)
         review.transaction = transaction
         review.reviewer = request.user
         review.reviewed_user = transaction.seller if request.user.pk == transaction.buyer_id else transaction.buyer
+        review.is_visible = bool(other_review)
+        review.published_at = now if other_review else None
         review.save()
-        refresh_user_rating(review.reviewed_user)
-        create_notification(
-            user=review.reviewed_user,
-            actor=request.user,
-            listing=transaction.listing,
-            notification_type=Notification.Type.REVIEW,
-            title="Yeni değerlendirmen var",
-            body=f"{request.user.display_name} işleminizi {review.rating}/5 puanladı.",
-            link=reverse("accounts:public_profile", kwargs={"username": review.reviewed_user.username}),
-        )
-        messages.success(request, "Değerlendirmen yayınlandı.")
+        if other_review:
+            if not other_review.is_visible:
+                Review.objects.filter(pk=other_review.pk).update(is_visible=True, published_at=now)
+                published_reviews = (review, other_review)
+                success_message = "İki taraf da değerlendirdi; yorumlar aynı anda yayınlandı."
+            else:
+                published_reviews = (review,)
+                success_message = "Değerlendirmen yayınlandı."
+            for reviewed_user in {item.reviewed_user_id: item.reviewed_user for item in published_reviews}.values():
+                refresh_user_rating(reviewed_user)
+            for item in published_reviews:
+                create_notification(
+                    user=item.reviewed_user, actor=item.reviewer, listing=transaction.listing,
+                    notification_type=Notification.Type.REVIEW, title="İşlem değerlendirmesi yayınlandı",
+                    body=f"Tamamlanan işlem için {item.rating}/5 puanlık değerlendirme yayınlandı.",
+                    link=reverse("accounts:public_profile", kwargs={"username": item.reviewed_user.username}),
+                )
+            messages.success(request, success_message)
+        else:
+            create_notification(
+                user=review.reviewed_user, actor=request.user, listing=transaction.listing,
+                notification_type=Notification.Type.REVIEW, title="Değerlendirme süreci başladı",
+                body="Diğer taraf değerlendirmesini gönderdi. Sen de yazdığında iki yorum aynı anda yayınlanacak.",
+                link=transaction.get_absolute_url(),
+            )
+            messages.success(
+                request,
+                "Değerlendirmen kaydedildi. Diğer taraf da yazdığında veya 7 gün dolduğunda yayınlanacak.",
+            )
     else:
         messages.error(request, "Puan ve yorum alanlarını kontrol et.")
     return redirect(transaction.get_absolute_url())

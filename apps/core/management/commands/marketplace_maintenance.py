@@ -9,11 +9,11 @@ from django.utils import timezone
 from apps.accounts.models import VerificationCode
 from apps.listings.models import Listing, Notification, SavedSearch, SavedSearchMatch
 from apps.listings.search_alerts import apply_listing_filters, attach_nearby_distances, saved_search_result_params
-from apps.listings.services import create_notification
+from apps.listings.services import create_notification, publish_due_reviews
 
 
 class Command(BaseCommand):
-    help = "Süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler ve günlük arama özetlerini üretir."
+    help = "İlan, doğrulama, günlük arama ve kör değerlendirme bakımını çalıştırır."
 
     def handle(self, *args, **options):
         now = timezone.now()
@@ -90,10 +90,13 @@ class Command(BaseCommand):
                 update_fields.append("last_notified_at")
             saved.save(update_fields=update_fields)
 
+        published_review_count = publish_due_reviews(now=now)
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"Bakım tamamlandı: {expired_count} ilan kapatıldı, "
                 f"{deleted_codes} doğrulama kaydı temizlendi, "
-                f"{alert_count} günlük arama özeti ve {match_count} tekil eşleşme üretildi."
+                f"{alert_count} günlük arama özeti ve {match_count} tekil eşleşme üretildi, "
+                f"{published_review_count} bekleyen değerlendirme yayınlandı."
             )
         )

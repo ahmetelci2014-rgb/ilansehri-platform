@@ -316,11 +316,16 @@ def export_account_data(request):
         "transactions": list(
             Transaction.objects.filter(Q(buyer=user) | Q(seller=user)).values(
                 "public_id", "listing__title", "buyer__username", "seller__username",
-                "amount", "status", "created_at", "completed_at"
+                "amount", "status", "delivery_type", "delivery_started_at",
+                "handover_verified_at", "buyer_confirmed_at", "seller_confirmed_at",
+                "created_at", "completed_at"
             )
         ),
         "reviews_written": list(
-            user.written_reviews.values("transaction__listing__title", "reviewed_user__username", "rating", "comment", "created_at")
+            user.written_reviews.values(
+                "transaction__listing__title", "reviewed_user__username", "rating", "comment",
+                "is_visible", "published_at", "created_at"
+            )
         ),
         "favorites": list(
             Favorite.objects.filter(user=user).values("listing__title", "listing__slug", "created_at")

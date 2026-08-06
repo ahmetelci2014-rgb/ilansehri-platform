@@ -26,8 +26,8 @@ def require(text: str, needle: str, source: str) -> None:
 
 def main() -> int:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if version != "v1.18.0":
-        fail(f"VERSION v1.18.0 olmalı, bulundu: {version}")
+    if version != "v1.19.0":
+        fail(f"VERSION v1.19.0 olmalı, bulundu: {version}")
 
     base = (ROOT / "templates/base.html").read_text(encoding="utf-8")
     views = (ROOT / "apps/core/views.py").read_text(encoding="utf-8")
@@ -41,12 +41,17 @@ def main() -> int:
     saved_searches = (ROOT / "templates/listings/saved_searches.html").read_text(encoding="utf-8")
     location_js = (ROOT / "static/js/v116-location-discovery.js").read_text(encoding="utf-8")
     maintenance_script = (ROOT / "scripts/run_daily_maintenance.sh").read_text(encoding="utf-8")
+    transaction_template = (ROOT / "templates/listings/transaction_detail.html").read_text(encoding="utf-8")
+    transaction_services = (ROOT / "apps/listings/services.py").read_text(encoding="utf-8")
+    transaction_css = (ROOT / "static/css/v119-transactions.css").read_text(encoding="utf-8")
+    mobile_workflow = (ROOT / ".github/workflows/mobile-audit.yml").read_text(encoding="utf-8")
 
     require(base, "css/v132-mobile-system.css", "templates/base.html")
     require(base, "js/v132-mobile-system.js", "templates/base.html")
-    require(base, "v1.18.0", "templates/base.html")
+    require(base, "v1.19.0", "templates/base.html")
     require(base, "v118-trust-safety.css", "templates/base.html")
-    require(views, 'const CACHE = "ilansehri-v1180";', "apps/core/views.py")
+    require(base, "v119-transactions.css", "templates/base.html")
+    require(views, 'const CACHE = "ilansehri-v1190";', "apps/core/views.py")
     require(views, "/static/css/v132-mobile-system.css", "apps/core/views.py")
     require(base, "css/v14-matching.css", "templates/base.html")
     require(base, "css/v141-price-guide.css", "templates/base.html")
@@ -62,9 +67,10 @@ def main() -> int:
     require(views, "/static/js/v15-message-safety.js", "apps/core/views.py")
     require(views, "/static/css/v117-search-alerts.css", "apps/core/views.py")
     require(views, "/static/css/v118-trust-safety.css", "apps/core/views.py")
+    require(views, "/static/css/v119-transactions.css", "apps/core/views.py")
     require(views, "/static/js/v116-location-discovery.js", "apps/core/views.py")
     require(views, "/static/js/v132-mobile-system.js", "apps/core/views.py")
-    require(views, '"version": "1.18.0"', "apps/core/views.py")
+    require(views, '"version": "1.19.0"', "apps/core/views.py")
     require(listing_form, "data-price-guide-assistant", "templates/listings/form.html")
     require(listing_form, "data-listing-location-capture", "templates/listings/form.html")
     require(location_js, "data-listing-latitude", "static/js/v116-location-discovery.js")
@@ -72,6 +78,18 @@ def main() -> int:
     require(search_alerts, "def apply_listing_filters", "apps/listings/search_alerts.py")
     require(search_alerts, "def saved_search_result_params", "apps/listings/search_alerts.py")
     require(maintenance_script, "marketplace_maintenance", "scripts/run_daily_maintenance.sh")
+    require(transaction_template, "generate_code", "templates/listings/transaction_detail.html")
+    require(transaction_template, "verify_code", "templates/listings/transaction_detail.html")
+    require(transaction_template, "KÖR DEĞERLENDİRME", "templates/listings/transaction_detail.html")
+    require(transaction_services, "def issue_handover_code", "apps/listings/services.py")
+    require(transaction_services, "def publish_due_reviews", "apps/listings/services.py")
+    require(transaction_css, ".v119-transaction-page", "static/css/v119-transactions.css")
+    if "continue-on-error: true" in mobile_workflow:
+        fail("Mobil Görsel Denetim gerçek hataları gizlememeli")
+    require(mobile_workflow, "mobile_audit.py --strict", ".github/workflows/mobile-audit.yml")
+    require(mobile_workflow, "manage.py makemigrations", ".github/workflows/mobile-audit.yml")
+    require(audit, "or self.console_errors", "scripts/mobile_audit.py")
+    require(audit, "or self.page_errors", "scripts/mobile_audit.py")
     require(listing_detail, "listings/_price_guide.html", "templates/listings/detail.html")
     require(pricing, "def build_price_guide", "apps/listings/pricing.py")
     require(pricing, "_remove_outliers", "apps/listings/pricing.py")
@@ -144,7 +162,7 @@ def main() -> int:
     if offenders:
         fail("Mobil taşma riski taşıyan inline genişlikler: " + ", ".join(offenders))
 
-    print("Mobil sözleşme kontrolü başarılı: v1.18.0")
+    print("Mobil sözleşme kontrolü başarılı: v1.19.0")
     return 0
 
 

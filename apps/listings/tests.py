@@ -1,9 +1,13 @@
+from datetime import timedelta
 from decimal import Decimal
+import re
 
 from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.messages import get_messages
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.accounts.models import AccountRiskEvent, NotificationPreference, User, UserBlock
 from apps.support_center.models import StaffActionLog
@@ -25,6 +29,7 @@ from .models import (
     SavedSearch,
     SavedSearchMatch,
     Transaction,
+    TransactionEvent,
 )
 from .matching import score_listing_pair, sync_listing_matches
 from .message_safety import analyze_message, safe_notification_preview
@@ -184,33 +189,141 @@ class ListingFlowTests(TestCase):
         offer = Offer.objects.create(listing=listing, sender=self.buyer, amount="23000", message="Teklif")
         offer.status = Offer.Status.ACCEPTED
         offer.save()
-        transaction = Transaction.objects.create(listing=listing, offer=offer, buyer=self.buyer, seller=self.owner, amount="23000")
-        self.client.force_login(self.buyer)
-        self.client.post(reverse("listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": "confirm"}))
+        transaction = Transaction.objects.create(
+            listing=listing, offer=offer, buyer=self.buyer, seller=self.owner, amount="23000"
+        )
         self.client.force_login(self.owner)
+        self.client.post(reverse("listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": "delivery"}))
+        self.client.post(reverse("listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": "confirm"}))
+        self.client.force_login(self.buyer)
         self.client.post(reverse("listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": "confirm"}))
         transaction.refresh_from_db(); listing.refresh_from_db()
         self.assertEqual(transaction.status, Transaction.Status.COMPLETED)
         self.assertEqual(listing.status, Listing.Status.COMPLETED)
+        self.assertIsNotNone(transaction.delivery_started_at)
+        self.assertTrue(transaction.events.filter(event_type=TransactionEvent.Type.COMPLETED).exists())
 
-    def test_completed_transaction_can_be_reviewed_once(self):
+    def test_completed_transaction_reviews_publish_together_and_only_once(self):
         listing = self.create_listing(status=Listing.Status.COMPLETED)
         offer = Offer.objects.create(listing=listing, sender=self.buyer, amount="23000", message="Teklif", status=Offer.Status.ACCEPTED)
         transaction = Transaction.objects.create(
-            listing=listing,
-            offer=offer,
-            buyer=self.buyer,
-            seller=self.owner,
-            amount="23000",
-            status=Transaction.Status.COMPLETED,
+            listing=listing, offer=offer, buyer=self.buyer, seller=self.owner, amount="23000",
+            status=Transaction.Status.COMPLETED, completed_at=timezone.now(),
         )
-        self.client.force_login(self.buyer)
         url = reverse("listings:create_review", kwargs={"public_id": transaction.public_id})
-        self.client.post(url, {"rating": "5", "comment": "Güvenilir satıcı."})
-        self.client.post(url, {"rating": "1", "comment": "İkinci yorum."})
-        self.assertEqual(Review.objects.filter(transaction=transaction, reviewer=self.buyer).count(), 1)
+        self.client.force_login(self.buyer)
+        self.client.post(url, {"rating": "5", "comment": "Güvenilir satıcı ve zamanında teslim."})
+        first = Review.objects.get(transaction=transaction, reviewer=self.buyer)
+        self.assertFalse(first.is_visible)
         self.owner.refresh_from_db()
+        self.assertEqual(self.owner.rating_count, 0)
+
+        self.client.force_login(self.owner)
+        self.client.post(url, {"rating": "5", "comment": "Alıcı iletişimde hızlı ve güvenilirdi."})
+        self.assertTrue(all(transaction.reviews.values_list("is_visible", flat=True)))
+        self.owner.refresh_from_db(); self.buyer.refresh_from_db()
         self.assertEqual(self.owner.rating_count, 1)
+        self.assertEqual(self.buyer.rating_count, 1)
+
+        self.client.force_login(self.buyer)
+        self.client.post(url, {"rating": "1", "comment": "Bu ikinci yorum kaydedilmemelidir."})
+        self.assertEqual(Review.objects.filter(transaction=transaction, reviewer=self.buyer).count(), 1)
+
+    def test_buyer_cannot_start_delivery_or_confirm_before_delivery(self):
+        listing = self.create_listing()
+        offer = Offer.objects.create(listing=listing, sender=self.buyer, message="Teklif", status=Offer.Status.ACCEPTED)
+        transaction = Transaction.objects.create(listing=listing, offer=offer, buyer=self.buyer, seller=self.owner)
+        self.client.force_login(self.buyer)
+        delivery = self.client.post(
+            reverse("listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": "delivery"})
+        )
+        self.assertEqual(delivery.status_code, 404)
+        self.client.post(
+            reverse("listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": "confirm"})
+        )
+        transaction.refresh_from_db()
+        self.assertFalse(transaction.buyer_confirmed)
+        self.assertEqual(transaction.status, Transaction.Status.AGREED)
+
+    def test_handover_code_verifies_seller_and_buyer_finishes_transaction(self):
+        listing = self.create_listing(delivery_type=Listing.DeliveryType.HANDOVER)
+        offer = Offer.objects.create(listing=listing, sender=self.buyer, message="Teklif", status=Offer.Status.ACCEPTED)
+        transaction = Transaction.objects.create(
+            listing=listing, offer=offer, buyer=self.buyer, seller=self.owner,
+            delivery_type=Listing.DeliveryType.HANDOVER,
+        )
+        action = lambda name: reverse(
+            "listings:transaction_action", kwargs={"public_id": transaction.public_id, "action": name}
+        )
+        self.client.force_login(self.owner)
+        self.client.post(action("delivery"))
+        self.client.force_login(self.buyer)
+        response = self.client.post(action("generate_code"))
+        message_text = " ".join(str(item) for item in get_messages(response.wsgi_request))
+        code = re.search(r"\b(\d{6})\b", message_text).group(1)
+
+        self.client.force_login(self.owner)
+        self.client.post(action("verify_code"), {"code": code})
+        transaction.refresh_from_db()
+        self.assertTrue(transaction.seller_confirmed)
+        self.assertIsNotNone(transaction.handover_verified_at)
+
+        self.client.force_login(self.buyer)
+        self.client.post(action("confirm"))
+        transaction.refresh_from_db()
+        self.assertEqual(transaction.status, Transaction.Status.COMPLETED)
+
+    def test_single_blind_review_is_published_by_daily_maintenance_after_seven_days(self):
+        listing = self.create_listing(status=Listing.Status.COMPLETED)
+        offer = Offer.objects.create(listing=listing, sender=self.buyer, message="Teklif", status=Offer.Status.ACCEPTED)
+        transaction = Transaction.objects.create(
+            listing=listing, offer=offer, buyer=self.buyer, seller=self.owner,
+            status=Transaction.Status.COMPLETED, completed_at=timezone.now() - timedelta(days=8),
+        )
+        review = Review.objects.create(
+            transaction=transaction, reviewer=self.buyer, reviewed_user=self.owner,
+            rating=4, comment="Teslim sorunsuz tamamlandı.", is_visible=False,
+        )
+        Review.objects.filter(pk=review.pk).update(created_at=timezone.now() - timedelta(days=8))
+        call_command("marketplace_maintenance")
+        review.refresh_from_db(); self.owner.refresh_from_db()
+        self.assertTrue(review.is_visible)
+        self.assertIsNotNone(review.published_at)
+        self.assertEqual(self.owner.rating_count, 1)
+
+    def test_late_second_review_does_not_republish_first_review_notification(self):
+        listing = self.create_listing(status=Listing.Status.COMPLETED)
+        offer = Offer.objects.create(
+            listing=listing, sender=self.buyer, message="Teklif", status=Offer.Status.ACCEPTED
+        )
+        transaction = Transaction.objects.create(
+            listing=listing, offer=offer, buyer=self.buyer, seller=self.owner,
+            status=Transaction.Status.COMPLETED, completed_at=timezone.now() - timedelta(days=8),
+        )
+        first = Review.objects.create(
+            transaction=transaction, reviewer=self.buyer, reviewed_user=self.owner,
+            rating=5, comment="Teslim zamanında ve sorunsuz tamamlandı.", is_visible=False,
+        )
+        Review.objects.filter(pk=first.pk).update(created_at=timezone.now() - timedelta(days=8))
+        call_command("marketplace_maintenance")
+        first.refresh_from_db()
+        self.assertTrue(first.is_visible)
+        owner_notice_count = Notification.objects.filter(
+            user=self.owner, notification_type=Notification.Type.REVIEW
+        ).count()
+
+        self.client.force_login(self.owner)
+        self.client.post(
+            reverse("listings:create_review", kwargs={"public_id": transaction.public_id}),
+            {"rating": "5", "comment": "Alıcı teslim saatine uydu ve iletişimi iyiydi."},
+        )
+        self.assertEqual(
+            Notification.objects.filter(
+                user=self.owner, notification_type=Notification.Type.REVIEW
+            ).count(),
+            owner_notice_count,
+        )
+        self.assertTrue(Review.objects.get(transaction=transaction, reviewer=self.owner).is_visible)
 
     def test_owner_can_manage_listing_images(self):
         listing = self.create_listing()

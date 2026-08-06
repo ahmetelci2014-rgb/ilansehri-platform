@@ -20,6 +20,7 @@ from .models import (
     SavedSearch,
     SavedSearchMatch,
     Transaction,
+    TransactionEvent,
 )
 from .matching import sync_listing_matches
 from .services import (
@@ -105,17 +106,36 @@ class ListingAdmin(admin.ModelAdmin):
     inlines = (ListingImageInline, OfferInline)
 
 
+class TransactionEventInline(admin.TabularInline):
+    model = TransactionEvent
+    extra = 0
+    can_delete = False
+    readonly_fields = ("event_type", "actor", "note", "metadata", "created_at")
+
+
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ("public_id", "listing", "buyer", "seller", "amount", "status", "created_at")
-    list_filter = ("status", "buyer_confirmed", "seller_confirmed")
+    list_display = ("public_id", "listing", "buyer", "seller", "amount", "status", "delivery_type", "created_at")
+    list_filter = ("status", "delivery_type", "buyer_confirmed", "seller_confirmed")
     search_fields = ("public_id", "listing__title", "buyer__username", "seller__username")
-    readonly_fields = ("public_id", "created_at", "updated_at", "completed_at", "cancelled_at")
+    readonly_fields = (
+        "public_id", "created_at", "updated_at", "delivery_started_at", "handover_verified_at",
+        "buyer_confirmed_at", "seller_confirmed_at", "completed_at", "cancelled_at",
+    )
+    inlines = (TransactionEventInline,)
+
+
+@admin.register(TransactionEvent)
+class TransactionEventAdmin(admin.ModelAdmin):
+    list_display = ("transaction", "event_type", "actor", "created_at")
+    list_filter = ("event_type", "created_at")
+    search_fields = ("transaction__public_id", "transaction__listing__title", "actor__username", "note")
+    readonly_fields = ("transaction", "event_type", "actor", "note", "metadata", "created_at")
 
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ("reviewed_user", "reviewer", "rating", "is_visible", "created_at")
+    list_display = ("reviewed_user", "reviewer", "rating", "is_visible", "published_at", "created_at")
     list_filter = ("rating", "is_visible")
     search_fields = ("reviewed_user__username", "reviewer__username", "comment")
 

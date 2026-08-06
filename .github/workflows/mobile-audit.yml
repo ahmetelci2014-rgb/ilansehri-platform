@@ -16,7 +16,6 @@ concurrency:
 jobs:
   mobile-audit:
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +34,10 @@ jobs:
           DJANGO_SETTINGS_MODULE: config.settings_test
         run: |
           cp .env.example .env
+          python manage.py makemigrations accounts listings managed_services partners support_center ai_listing --noinput
           python manage.py migrate --noinput
+          python manage.py ensure_v118_schema
+          python manage.py ensure_v119_schema
           python manage.py seed_categories
           python manage.py seed_demo --with-admin
       - name: Gerçek mobil sayfaları tara
@@ -53,7 +55,7 @@ jobs:
             sleep 1
           done
           curl --fail http://127.0.0.1:8000/health/
-          python scripts/mobile_audit.py --base-url http://127.0.0.1:8000 --output mobile-audit-artifacts
+          python scripts/mobile_audit.py --strict --base-url http://127.0.0.1:8000 --output mobile-audit-artifacts
           cp /tmp/ilansehri-mobile-audit-server.log mobile-audit-artifacts/server.log
       - name: Mobil ekran görüntülerini yükle
         if: always()

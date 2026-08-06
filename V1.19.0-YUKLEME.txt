@@ -1,0 +1,15 @@
+İLAN ŞEHRİ v1.19.0 — GÜVENLİ TESLİM VE KÖR DEĞERLENDİRME
+
+1. Güncelleme ZIP dosyasını çıkarın.
+2. İçindeki dosyaları proje köküne kopyalayıp mevcut dosyaları değiştirin.
+3. GitHub Desktop commit özeti:
+   İlan Şehri v1.19.0 güvenli teslim ve karşılıklı değerlendirme
+4. Commit to main ve Push origin yapın.
+5. Django Kontrol ve Mobil Görsel Denetim sonuçlarının ikisinin de yeşil olmasını bekleyin.
+6. Codespaces terminali:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+start_codespace.sh, ensure_v118_schema ve ensure_v119_schema komutlarını otomatik çalıştırır.
+Gerçek sunucuda günlük bakım zamanlayıcısı, tek taraflı değerlendirmelerin 7 gün sonra yayınlanması için gereklidir.

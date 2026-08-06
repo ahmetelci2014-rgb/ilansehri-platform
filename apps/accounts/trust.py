@@ -75,14 +75,20 @@ def _response_label(minutes: int | None) -> str:
 def build_trust_profile(
     user, *, include_private: bool = False, include_response: bool = True
 ) -> TrustProfile:
-    from apps.listings.models import Transaction
+    from apps.listings.models import Transaction, TransactionEvent
 
     completed = Transaction.objects.filter(
         Q(buyer=user) | Q(seller=user), status=Transaction.Status.COMPLETED
     ).count()
-    disputes = Transaction.objects.filter(
-        Q(buyer=user) | Q(seller=user), status=Transaction.Status.DISPUTED
-    ).count()
+    disputes = (
+        TransactionEvent.objects.filter(
+            Q(transaction__buyer=user) | Q(transaction__seller=user),
+            event_type=TransactionEvent.Type.DISPUTED,
+        )
+        .values("transaction_id")
+        .distinct()
+        .count()
+    )
     active_report_count = UserReport.objects.filter(
         reported_user=user, status__in=[UserReport.Status.OPEN, UserReport.Status.REVIEWING]
     ).count()

@@ -6,6 +6,7 @@ set -euo pipefail
 python manage.py makemigrations accounts listings managed_services partners support_center ai_listing --noinput
 python manage.py migrate --noinput
 python manage.py ensure_v118_schema
+python manage.py ensure_v119_schema
 python manage.py backfill_image_fingerprints --limit 5000
 python manage.py seed_categories
 python manage.py marketplace_maintenance

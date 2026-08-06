@@ -1,0 +1,148 @@
+{
+  "project": "İlan Şehri",
+  "version": "v1.19.0",
+  "based_on": "v1.18.0.2",
+  "release": "Güvenli teslim, işlem tamamlama ve kör değerlendirme",
+  "features": [
+    "Satıcının başlattığı teslim/hizmet aşaması",
+    "Elden ve yerinde teslim için 15 dakikalık 6 haneli tek kullanımlık kod",
+    "Kod hashleme, 5 deneme sınırı ve 60 saniye yenileme beklemesi",
+    "Alıcı-satıcı karşılıklı tamamlanma onayı",
+    "Sıralı işlem olay geçmişi ve personel uyuşmazlık çözümü",
+    "İki taraf yazana veya 7 gün dolana kadar gizli değerlendirme",
+    "Yalnız gerçek tamamlanmış işlem taraflarına 30 günlük değerlendirme hakkı",
+    "Mobil denetimde gerçek hata/taşma/tarayıcı hatalarını engelleyici kontrol"
+  ],
+  "validation": {
+    "python_compileall": "passed",
+    "mobile_contract": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "json_yaml_parse": "passed",
+    "template_static_references": "passed",
+    "django_regression_tests": "run by GitHub Actions after upload",
+    "playwright_mobile_audit": "run by GitHub Actions after upload"
+  },
+  "changed_files": [
+    {
+      "path": ".github/workflows/mobile-audit.yml",
+      "status": "modified"
+    },
+    {
+      "path": ".github/workflows/tests.yml",
+      "status": "modified"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "status": "modified"
+    },
+    {
+      "path": "README.md",
+      "status": "modified"
+    },
+    {
+      "path": "V1.19.0-DENETIM-RAPORU.md",
+      "status": "added"
+    },
+    {
+      "path": "V1.19.0-MANIFEST.json",
+      "status": "added"
+    },
+    {
+      "path": "V1.19.0-YUKLEME.txt",
+      "status": "added"
+    },
+    {
+      "path": "VERSION",
+      "status": "modified"
+    },
+    {
+      "path": "apps/accounts/trust.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/accounts/views.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/core/management/commands/ensure_v119_schema.py",
+      "status": "added"
+    },
+    {
+      "path": "apps/core/management/commands/marketplace_maintenance.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/core/management/commands/seed_demo.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/core/views.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/listings/admin.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/listings/forms.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/listings/models.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/listings/services.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/listings/tests.py",
+      "status": "modified"
+    },
+    {
+      "path": "apps/listings/views.py",
+      "status": "modified"
+    },
+    {
+      "path": "docs/SECURE_TRANSACTIONS_V119.md",
+      "status": "added"
+    },
+    {
+      "path": "scripts/bootstrap_production.sh",
+      "status": "modified"
+    },
+    {
+      "path": "scripts/check_mobile_contract.py",
+      "status": "modified"
+    },
+    {
+      "path": "scripts/mobile_audit.py",
+      "status": "modified"
+    },
+    {
+      "path": "scripts/start_codespace.sh",
+      "status": "modified"
+    },
+    {
+      "path": "static/css/v119-transactions.css",
+      "status": "added"
+    },
+    {
+      "path": "static/js/v132-mobile-system.js",
+      "status": "modified"
+    },
+    {
+      "path": "templates/base.html",
+      "status": "modified"
+    },
+    {
+      "path": "templates/listings/offer_center.html",
+      "status": "modified"
+    },
+    {
+      "path": "templates/listings/transaction_detail.html",
+      "status": "modified"
+    }
+  ]
+}

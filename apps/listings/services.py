@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
 import re
+import secrets
 import time
 
 from django.conf import settings
 from django.core.cache import cache
+from django.contrib.auth.hashers import check_password, make_password
 from django.core.mail import send_mail
 from django.core.files.base import ContentFile
 from django.db import transaction as db_transaction
-from django.db.models import Avg, Count, F
+from django.db.models import Avg, Count, F, Q
 from django.urls import reverse
 from django.utils import timezone
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -27,6 +30,7 @@ from .models import (
     SavedSearch,
     SavedSearchMatch,
     Transaction,
+    TransactionEvent,
 )
 
 
@@ -450,6 +454,8 @@ def accept_offer(*, offer: Offer, actor) -> Transaction:
         raise ValueError("Teklif artık beklemede değil.")
     if listing.status not in {Listing.Status.PUBLISHED, Listing.Status.PAUSED}:
         raise ValueError("Bu ilan için işlem başlatılamaz.")
+    if locked_offer.sender_id == listing.owner_id:
+        raise ValueError("Kullanıcı kendi ilanıyla işlem oluşturamaz.")
 
     locked_offer.status = Offer.Status.ACCEPTED
     locked_offer.responded_at = timezone.now()
@@ -473,8 +479,16 @@ def accept_offer(*, offer: Offer, actor) -> Transaction:
             "buyer": locked_offer.sender,
             "seller": listing.owner,
             "amount": amount,
+            "delivery_type": listing.delivery_type,
         },
     )
+    if not transaction.events.exists():
+        record_transaction_event(
+            transaction=transaction,
+            actor=actor,
+            event_type=TransactionEvent.Type.CREATED,
+            note="Teklif kabul edildi ve güvenli işlem kaydı açıldı.",
+        )
     listing.status = Listing.Status.PAUSED
     listing.save(update_fields=["status", "updated_at"])
 
@@ -489,6 +503,209 @@ def accept_offer(*, offer: Offer, actor) -> Transaction:
         link=transaction.get_absolute_url(),
     )
     return transaction
+
+
+HANDOVER_CODE_TTL = timedelta(minutes=15)
+HANDOVER_CODE_COOLDOWN = timedelta(seconds=60)
+HANDOVER_CODE_MAX_ATTEMPTS = 5
+REVIEW_BLIND_PERIOD = timedelta(days=7)
+REVIEW_WINDOW = timedelta(days=30)
+
+
+def record_transaction_event(
+    *, transaction: Transaction, event_type: str, actor=None, note: str = "", metadata: dict | None = None
+) -> TransactionEvent:
+    return TransactionEvent.objects.create(
+        transaction=transaction,
+        actor=actor,
+        event_type=event_type,
+        note=(note or "")[:240],
+        metadata=metadata or {},
+    )
+
+
+@db_transaction.atomic
+def start_transaction_delivery(*, transaction: Transaction, actor) -> Transaction:
+    locked = Transaction.objects.select_for_update().select_related("listing", "buyer", "seller").get(
+        pk=transaction.pk
+    )
+    if actor.pk != locked.seller_id:
+        raise PermissionError("Teslim aşamasını yalnız satıcı başlatabilir.")
+    if locked.status != Transaction.Status.AGREED:
+        raise ValueError("Bu işlem teslim aşamasına geçirilemez.")
+    now = timezone.now()
+    locked.status = Transaction.Status.DELIVERY
+    locked.delivery_type = locked.delivery_type or locked.listing.delivery_type
+    locked.delivery_started_at = now
+    locked.save(update_fields=["status", "delivery_type", "delivery_started_at", "updated_at"])
+    record_transaction_event(
+        transaction=locked, actor=actor, event_type=TransactionEvent.Type.DELIVERY_STARTED,
+        note=f"Teslim yöntemi: {locked.get_delivery_type_display() or 'Görüşülür'}",
+    )
+    create_notification(
+        user=locked.buyer, actor=actor, listing=locked.listing,
+        notification_type=Notification.Type.TRANSACTION,
+        title="Teslim aşaması başladı",
+        body="Satıcı işlemi teslim / hizmet aşamasına geçirdi.",
+        link=locked.get_absolute_url(),
+    )
+    return locked
+
+
+@db_transaction.atomic
+def issue_handover_code(*, transaction: Transaction, actor) -> tuple[Transaction, str]:
+    locked = Transaction.objects.select_for_update().select_related("listing", "buyer", "seller").get(
+        pk=transaction.pk
+    )
+    if actor.pk != locked.buyer_id:
+        raise PermissionError("Teslim kodunu yalnız alıcı oluşturabilir.")
+    if locked.status != Transaction.Status.DELIVERY or not locked.requires_handover_code:
+        raise ValueError("Bu işlem için teslim kodu kullanılamaz.")
+    if locked.handover_verified_at:
+        raise ValueError("Teslim kodu daha önce doğrulandı.")
+    now = timezone.now()
+    if locked.handover_code_created_at and locked.handover_code_created_at > now - HANDOVER_CODE_COOLDOWN:
+        raise ValueError("Yeni teslim kodu oluşturmadan önce 60 saniye bekle.")
+    raw_code = f"{secrets.randbelow(1_000_000):06d}"
+    locked.handover_code_hash = make_password(raw_code)
+    locked.handover_code_created_at = now
+    locked.handover_code_attempts = 0
+    locked.save(
+        update_fields=["handover_code_hash", "handover_code_created_at", "handover_code_attempts", "updated_at"]
+    )
+    record_transaction_event(
+        transaction=locked, actor=actor, event_type=TransactionEvent.Type.CODE_CREATED,
+        note="15 dakika geçerli teslim kodu oluşturuldu.",
+    )
+    create_notification(
+        user=locked.seller, actor=actor, listing=locked.listing,
+        notification_type=Notification.Type.TRANSACTION,
+        title="Alıcı teslim kodu oluşturdu",
+        body="Kodu yalnız yüz yüze teslim anında alıcıdan iste ve güvenli işlem ekranına gir.",
+        link=locked.get_absolute_url(),
+    )
+    return locked, raw_code
+
+
+@db_transaction.atomic
+def verify_handover_code(*, transaction: Transaction, actor, raw_code: str) -> Transaction:
+    locked = Transaction.objects.select_for_update().select_related("listing", "buyer", "seller").get(
+        pk=transaction.pk
+    )
+    if actor.pk != locked.seller_id:
+        raise PermissionError("Teslim kodunu yalnız satıcı doğrulayabilir.")
+    if locked.status != Transaction.Status.DELIVERY or not locked.requires_handover_code:
+        raise ValueError("Bu işlem için teslim kodu doğrulanamaz.")
+    if locked.handover_verified_at:
+        return locked
+    now = timezone.now()
+    if not locked.handover_code_hash or not locked.handover_code_created_at:
+        raise ValueError("Alıcının önce teslim kodu oluşturması gerekiyor.")
+    if locked.handover_code_created_at < now - HANDOVER_CODE_TTL:
+        locked.handover_code_hash = ""
+        locked.save(update_fields=["handover_code_hash", "updated_at"])
+        raise ValueError("Teslim kodunun süresi doldu. Alıcı yeni kod oluşturmalı.")
+    if locked.handover_code_attempts >= HANDOVER_CODE_MAX_ATTEMPTS:
+        raise ValueError("Çok fazla hatalı deneme yapıldı. Alıcı yeni kod oluşturmalı.")
+    locked.handover_code_attempts += 1
+    if not check_password(raw_code, locked.handover_code_hash):
+        locked.save(update_fields=["handover_code_attempts", "updated_at"])
+        raise ValueError("Teslim kodu hatalı.")
+    locked.handover_verified_at = now
+    locked.seller_confirmed = True
+    locked.seller_confirmed_at = now
+    locked.handover_code_hash = ""
+    locked.save(
+        update_fields=[
+            "handover_code_attempts", "handover_verified_at", "seller_confirmed",
+            "seller_confirmed_at", "handover_code_hash", "updated_at",
+        ]
+    )
+    record_transaction_event(
+        transaction=locked, actor=actor, event_type=TransactionEvent.Type.HANDOVER_VERIFIED,
+        note="Tek kullanımlık teslim kodu doğrulandı.",
+    )
+    record_transaction_event(
+        transaction=locked, actor=actor, event_type=TransactionEvent.Type.SELLER_CONFIRMED,
+        note="Satıcı teslimi kod ile onayladı.",
+    )
+    create_notification(
+        user=locked.buyer, actor=actor, listing=locked.listing,
+        notification_type=Notification.Type.TRANSACTION,
+        title="Teslim kodu doğrulandı",
+        body="Satıcı teslim kodunu doğruladı. Ürünü veya hizmeti kontrol ettikten sonra tamamlamayı onayla.",
+        link=locked.get_absolute_url(),
+    )
+    return locked
+
+
+@db_transaction.atomic
+def confirm_transaction(*, transaction: Transaction, actor) -> Transaction:
+    locked = Transaction.objects.select_for_update().select_related("listing", "buyer", "seller").get(
+        pk=transaction.pk
+    )
+    if not locked.is_participant(actor):
+        raise PermissionError("Bu işlemin tarafı değilsin.")
+    if locked.status != Transaction.Status.DELIVERY:
+        raise ValueError("Tamamlama onayı yalnız teslim aşamasında verilebilir.")
+    now = timezone.now()
+    if actor.pk == locked.buyer_id:
+        if locked.requires_handover_code and not locked.handover_verified_at:
+            raise ValueError("Önce satıcının teslim kodunu doğrulaması gerekiyor.")
+        if not locked.buyer_confirmed:
+            locked.buyer_confirmed = True
+            locked.buyer_confirmed_at = now
+            locked.save(update_fields=["buyer_confirmed", "buyer_confirmed_at", "updated_at"])
+            record_transaction_event(
+                transaction=locked, actor=actor, event_type=TransactionEvent.Type.BUYER_CONFIRMED,
+                note="Alıcı teslimi / hizmeti onayladı.",
+            )
+    else:
+        if locked.requires_handover_code and not locked.handover_verified_at:
+            raise ValueError("Elden veya yerinde teslimde satıcı onayı teslim kodu ile verilir.")
+        if not locked.seller_confirmed:
+            locked.seller_confirmed = True
+            locked.seller_confirmed_at = now
+            locked.save(update_fields=["seller_confirmed", "seller_confirmed_at", "updated_at"])
+            record_transaction_event(
+                transaction=locked, actor=actor, event_type=TransactionEvent.Type.SELLER_CONFIRMED,
+                note="Satıcı teslimi / hizmeti onayladı.",
+            )
+    finalize_transaction(locked)
+    return Transaction.objects.get(pk=locked.pk)
+
+
+def review_window_is_open(transaction: Transaction, *, now=None) -> bool:
+    now = now or timezone.now()
+    completed_reference = transaction.completed_at or transaction.updated_at or transaction.created_at
+    return bool(
+        transaction.status == Transaction.Status.COMPLETED
+        and completed_reference
+        and completed_reference >= now - REVIEW_WINDOW
+    )
+
+
+def publish_due_reviews(*, now=None) -> int:
+    now = now or timezone.now()
+    due = list(
+        Review.objects.filter(is_visible=False, created_at__lte=now - REVIEW_BLIND_PERIOD)
+        .select_related("reviewed_user", "reviewer", "transaction__listing")
+    )
+    if not due:
+        return 0
+    Review.objects.filter(pk__in=[item.pk for item in due]).update(is_visible=True, published_at=now)
+    reviewed_users = {item.reviewed_user_id: item.reviewed_user for item in due}
+    for user in reviewed_users.values():
+        refresh_user_rating(user)
+    for item in due:
+        create_notification(
+            user=item.reviewed_user, actor=item.reviewer, listing=item.transaction.listing,
+            notification_type=Notification.Type.REVIEW,
+            title="İşlem değerlendirmen yayınlandı",
+            body=f"Tamamlanan işlem için {item.rating}/5 puanlık değerlendirme yayınlandı.",
+            link=reverse("accounts:public_profile", kwargs={"username": item.reviewed_user.username}),
+        )
+    return len(due)
 
 
 def reject_offer(*, offer: Offer, actor) -> None:
@@ -530,6 +747,10 @@ def finalize_transaction(transaction: Transaction) -> None:
     transaction.status = Transaction.Status.COMPLETED
     transaction.completed_at = timezone.now()
     transaction.save(update_fields=["status", "completed_at", "updated_at"])
+    record_transaction_event(
+        transaction=transaction, event_type=TransactionEvent.Type.COMPLETED,
+        note="İşlem iki tarafın onayıyla tamamlandı.",
+    )
     Listing.objects.filter(pk=transaction.listing_id).update(
         status=Listing.Status.COMPLETED,
         updated_at=timezone.now(),

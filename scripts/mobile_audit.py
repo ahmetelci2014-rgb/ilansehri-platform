@@ -51,6 +51,7 @@ ROLE_ROUTES = {
         ("messages", "/ilanlar/mesajlar/"),
         ("notifications", "/ilanlar/bildirimler/"),
         ("offers", "/ilanlar/tekliflerim/"),
+        ("secure-transaction", "/ilanlar/islem/11111111-1111-4111-8111-111111111119/"),
         ("matches", "/ilanlar/eslesmelerim/"),
         ("support-tickets", "/yardim/taleplerim/"),
         ("support-create", "/yardim/talep/yeni/"),
@@ -61,6 +62,7 @@ ROLE_ROUTES = {
         ("drafts", "/ilanlar/taslaklarim/"),
         ("messages", "/ilanlar/mesajlar/"),
         ("offers", "/ilanlar/tekliflerim/"),
+        ("secure-transaction", "/ilanlar/islem/11111111-1111-4111-8111-111111111119/"),
         ("matches", "/ilanlar/eslesmelerim/?tab=offered"),
         ("managed", "/tam-yonetim/"),
         ("edit-listing", "/ilanlar/demo-telefon/duzenle/"),
@@ -73,6 +75,7 @@ ROLE_ROUTES = {
     "admin": (
         ("staff-dashboard", "/yonetim/"),
         ("moderation", "/ilanlar/moderasyon/"),
+        ("secure-transaction", "/ilanlar/islem/11111111-1111-4111-8111-111111111119/"),
         ("support-staff", "/yardim/ekip/"),
         ("managed-staff", "/tam-yonetim/operasyon/"),
         ("partner-staff", "/kazanc-agi/ekip/"),
@@ -106,7 +109,14 @@ class PageResult:
 
     @property
     def critical(self) -> bool:
-        return bool(self.error or self.status is None or self.status >= 400 or self.horizontal_overflow > 2)
+        return bool(
+            self.error
+            or self.status is None
+            or self.status >= 400
+            or self.horizontal_overflow > 2
+            or self.console_errors
+            or self.page_errors
+        )
 
 
 def slugify(value: str) -> str:
@@ -250,7 +260,7 @@ def run_audit(base_url: str, output_dir: Path) -> list[PageResult]:
 
 def write_report(output_dir: Path, results: list[PageResult]) -> None:
     payload = {
-        "version": "v1.18.0",
+        "version": "v1.19.0",
         "summary": {
             "pages": len(results),
             "critical": sum(result.critical for result in results),

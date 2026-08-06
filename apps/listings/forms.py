@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from django import forms
 from django.utils import timezone
 
@@ -428,8 +430,51 @@ class ReviewForm(forms.ModelForm):
         labels = {"rating": "Puanın", "comment": "Deneyimini paylaş"}
         widgets = {
             "rating": forms.RadioSelect(choices=[(value, f"{value} yıldız") for value in range(5, 0, -1)]),
-            "comment": forms.Textarea(attrs={"rows": 5, "placeholder": "İletişim, doğruluk ve teslim deneyimini anlat..."}),
+            "comment": forms.Textarea(
+                attrs={
+                    "rows": 5,
+                    "placeholder": "İletişim, doğruluk ve teslim deneyimini anlat...",
+                    "maxlength": "1000",
+                }
+            ),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        rating = cleaned.get("rating")
+        comment = (cleaned.get("comment") or "").strip()
+        if rating and rating <= 2 and len(comment) < 20:
+            self.add_error("comment", "1 veya 2 yıldızlı değerlendirmede en az 20 karakter açıklama yaz.")
+        if re.search(
+            r"(?:https?://|www\.|(?:\+?90|0)?5\d{9}|[\w.+-]+@[\w-]+(?:\.[\w-]+)+)",
+            comment,
+            re.IGNORECASE,
+        ):
+            self.add_error("comment", "Değerlendirmede bağlantı, telefon numarası veya e-posta paylaşma.")
+        cleaned["comment"] = comment
+        return cleaned
+
+
+class HandoverCodeForm(forms.Form):
+    code = forms.CharField(
+        label="6 haneli teslim kodu",
+        min_length=6,
+        max_length=6,
+        widget=forms.TextInput(
+            attrs={
+                "inputmode": "numeric",
+                "autocomplete": "one-time-code",
+                "pattern": "[0-9]{6}",
+                "placeholder": "000000",
+            }
+        ),
+    )
+
+    def clean_code(self):
+        code = self.cleaned_data["code"].strip()
+        if not code.isdigit() or len(code) != 6:
+            raise forms.ValidationError("Teslim kodu 6 rakamdan oluşmalıdır.")
+        return code
 
 
 class TransactionDisputeForm(forms.ModelForm):

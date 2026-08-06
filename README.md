@@ -1,15 +1,16 @@
-
 # İlan Şehri
 
-## v1.18 Güvenilir satıcı ve dolandırıcılık koruması
+## v1.19 Güvenli teslim ve karşılıklı değerlendirme
 
-- Satıcı profilleri; doğrulama, hesap yaşı, yanıt süresi, işlem geçmişi ve kullanıcı puanlarından açıklanabilir güven profili üretir.
-- Şüpheli ilan içeriği, yüksek riskli mesaj, olağan dışı fiyat ve başka hesaplarda kullanılan fotoğraflar personel inceleme kuyruğuna alınır.
-- Kullanıcı şikâyeti, ilan şikâyeti ve otomatik risk kayıtları tek moderasyon merkezinden yönetilir.
-- Sistem otomatik suçlama veya hesap kapatma yapmaz; risk sinyalleri yalnız yetkili ekibin incelemesine yardımcı olur.
-- Kayıtlı aramalar, yakınlık keşfi, güvenli mesajlaşma, akıllı eşleştirme ve fiyat rehberi korunur.
+- Güvenli işlem yalnız satıcının başlattığı teslim aşamasından sonra tamamlanabilir.
+- Elden ve yerinde teslimlerde alıcının oluşturduğu, 15 dakika geçerli tek kullanımlık kod satıcı tarafından doğrulanır.
+- Teslim kodu yalnız hash olarak saklanır; kod işlem geçmişine veya personele açık metin olarak yazılmaz.
+- Alıcı ve satıcı onayları tarihleriyle kaydedilir; bütün önemli adımlar değiştirilemeyen işlem olayı geçmişine eklenir.
+- Değerlendirmeler iki taraf da yazana kadar gizli tutulur; tek taraf yazarsa 7 gün sonra bakım göreviyle yayınlanır.
+- Değerlendirme yalnız tamamlanmış gerçek işlem taraflarınca ve 30 gün içinde yapılabilir.
+- Mobil Görsel Denetim artık hataları gizlemez ve kritik sonuçlarda Actions çalışmasını kırmızı yapar.
 
-> Güncel sürüm: **v1.18.0** — güvenilir satıcı profili, açıklanabilir risk olayları, gelişmiş kullanıcı şikâyeti ve yerel fotoğraf tekrar kontrolü eklendi.
+> Güncel sürüm: **v1.19.0** — güvenli teslim kodu, işlem olay geçmişi, kör değerlendirme ve gerçek mobil denetim eklendi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 

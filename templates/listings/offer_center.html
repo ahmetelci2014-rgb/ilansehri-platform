@@ -4,6 +4,20 @@
 <section class="offer-center-page shell">
   <div class="market-page-title"><div><span class="section-label">PAZARLIK MERKEZİ</span><h1>Tekliflerim</h1><p>Gönderdiğin ve aldığın teklifleri tek ekrandan yönet.</p></div><a class="button" href="{% url 'listings:list' %}">İlan keşfet</a></div>
   <nav class="offer-tabs"><a href="{% url 'listings:offer_center' %}" class="{% if not status_filter %}active{% endif %}">Tümü</a><a href="?status=pending" class="{% if status_filter == 'pending' %}active{% endif %}">Bekleyenler</a><a href="?status=accepted" class="{% if status_filter == 'accepted' %}active{% endif %}">Kabul edilen</a><a href="?status=rejected" class="{% if status_filter == 'rejected' %}active{% endif %}">Kapananlar</a></nav>
+  {% if transactions %}
+  <section class="v119-transaction-strip">
+    <div class="market-section-head"><div><h2>Güvenli işlemlerim</h2><p>{{ active_transaction_count }} aktif işlem; teslim ve değerlendirme adımlarını buradan sürdür.</p></div></div>
+    <div class="v119-transaction-grid">
+      {% for transaction in transactions %}
+        <a href="{{ transaction.get_absolute_url }}" class="v119-transaction-mini status-{{ transaction.status }}">
+          <span>{{ transaction.get_status_display }}</span><b>{{ transaction.listing.title }}</b>
+          <small>{% if user == transaction.buyer %}Satıcı: {{ transaction.seller.display_name }}{% else %}Alıcı: {{ transaction.buyer.display_name }}{% endif %} · {{ transaction.updated_at|date:"d.m H:i" }}</small>
+          <em>{% if transaction.amount %}{{ transaction.amount|floatformat:"0g" }} TL{% else %}Tutar belirtilmedi{% endif %}</em>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
   <div class="offer-center-list">
     {% for offer in offers %}
       <article class="offer-center-card{% if offer.status == 'pending' and offer.current_recipient_id == user.pk %} needs-action{% endif %}">

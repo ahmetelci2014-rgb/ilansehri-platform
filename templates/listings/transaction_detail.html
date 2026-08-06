@@ -1,16 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}Güvenli İşlem — {{ transaction.listing.title }}{% endblock %}
 {% block content %}
-<section class="account-page shell">
+<section class="account-page shell v119-transaction-page">
   <div class="account-heading">
-    <div><span class="section-label">GÜVENLİ İŞLEM #{{ transaction.public_id|stringformat:'s'|slice:':8' }}</span><h1>{{ transaction.listing.title }}</h1><p>{{ transaction.get_status_display }} · {{ transaction.created_at|date:"d.m.Y H:i" }}</p></div>
+    <div>
+      <span class="section-label">GÜVENLİ İŞLEM #{{ transaction.public_id|stringformat:'s'|slice:':8' }}</span>
+      <h1>{{ transaction.listing.title }}</h1>
+      <p>{{ transaction.get_status_display }} · {{ transaction.created_at|date:"d.m.Y H:i" }}</p>
+    </div>
     <a class="button secondary" href="{{ transaction.listing.get_absolute_url }}">İlanı gör</a>
   </div>
 
   <div class="transaction-progress">
     <div class="{% if transaction.status != 'cancelled' %}active{% endif %}"><span>1</span><b>Anlaşma</b></div>
     <div class="{% if transaction.status == 'delivery' or transaction.status == 'completed' or transaction.status == 'disputed' %}active{% endif %}"><span>2</span><b>Teslim / hizmet</b></div>
-    <div class="{% if transaction.status == 'completed' %}active{% endif %}"><span>3</span><b>Karşılıklı onay</b></div>
+    <div class="{% if transaction.handover_verified_at or transaction.status == 'completed' %}active{% endif %}"><span>3</span><b>Güvenli onay</b></div>
     <div class="{% if transaction.status == 'completed' %}active{% endif %}"><span>4</span><b>Değerlendirme</b></div>
   </div>
 
@@ -19,21 +23,56 @@
       <div class="transaction-party-grid">
         <article><small>Alıcı</small><strong>{{ transaction.buyer.display_name }}</strong><span>{% if transaction.buyer.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %}</span></article>
         <article><small>Satıcı</small><strong>{{ transaction.seller.display_name }}</strong><span>{% if transaction.seller.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %}</span></article>
-        <article><small>Anlaşılan tutar</small><strong>{% if transaction.amount %}{{ transaction.amount }} TL{% else %}Taraflar arasında{% endif %}</strong></article>
+        <article><small>Anlaşılan tutar</small><strong>{% if transaction.amount %}{{ transaction.amount|floatformat:"0g" }} TL{% else %}Taraflar arasında{% endif %}</strong></article>
+        <article><small>Teslim yöntemi</small><strong>{{ transaction.get_delivery_type_display|default:"Görüşülür" }}</strong></article>
       </div>
 
-      <article class="description-card">
-        <h2>Teslim onayları</h2>
-        <div class="confirmation-list"><div><span>Alıcı onayı</span><b>{% if transaction.buyer_confirmed %}✓ Onaylandı{% else %}Bekliyor{% endif %}</b></div><div><span>Satıcı onayı</span><b>{% if transaction.seller_confirmed %}✓ Onaylandı{% else %}Bekliyor{% endif %}</b></div></div>
-        <p>İşlem, alıcı ve satıcı ayrı ayrı tamamlandı onayı verdiğinde kapanır.</p>
+      <article class="description-card v119-confirmation-card">
+        <div class="v119-card-heading"><div><span class="section-label">KARŞILIKLI ONAY</span><h2>Teslim durumu</h2></div>{% if transaction.handover_verified_at %}<span class="v119-verified-chip">✓ Kod doğrulandı</span>{% endif %}</div>
+        <div class="confirmation-list">
+          <div><span>Alıcı onayı</span><b>{% if transaction.buyer_confirmed %}✓ Onaylandı{% if transaction.buyer_confirmed_at %} · {{ transaction.buyer_confirmed_at|date:"d.m H:i" }}{% endif %}{% else %}Bekliyor{% endif %}</b></div>
+          <div><span>Satıcı onayı</span><b>{% if transaction.seller_confirmed %}✓ Onaylandı{% if transaction.seller_confirmed_at %} · {{ transaction.seller_confirmed_at|date:"d.m H:i" }}{% endif %}{% else %}Bekliyor{% endif %}</b></div>
+        </div>
+        <p>İşlem yalnız teslim aşamasında ve iki taraf ayrı ayrı onay verdiğinde tamamlanır.</p>
       </article>
+
+      {% if transaction.requires_handover_code and transaction.status == 'delivery' and is_participant %}
+        <article class="description-card v119-handover-card">
+          <div class="v119-card-heading"><div><span class="section-label">TEK KULLANIMLIK KOD</span><h2>Güvenli elden teslim</h2></div><span>15 dakika</span></div>
+          {% if transaction.handover_verified_at %}
+            <div class="notice success">Teslim kodu doğrulandı. Alıcı ürünü veya hizmeti kontrol ettikten sonra tamamlamayı onaylayabilir.</div>
+          {% elif is_buyer %}
+            <p>Ürün veya hizmet fiziksel olarak yanındayken kod oluştur. Kodu yalnız teslim anında satıcıya söyle; mesajla önceden paylaşma.</p>
+            <form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'generate_code' %}">{% csrf_token %}<button class="button">15 dakikalık teslim kodu oluştur</button></form>
+            {% if transaction.handover_code_is_active %}<small>Aktif bir kod bulunuyor. Kod görünmüyorsa 60 saniye sonra yenisini oluşturabilirsin.</small>{% endif %}
+          {% elif is_seller %}
+            <p>Alıcının yalnız teslim anında söylediği 6 haneli kodu gir. Beş hatalı denemeden sonra yeni kod gerekir.</p>
+            <form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'verify_code' %}" class="panel-form compact v119-code-form">{% csrf_token %}{{ handover_form.as_p }}<button class="button">Kodu doğrula ve teslimi onayla</button></form>
+          {% endif %}
+        </article>
+      {% endif %}
 
       {% if transaction.dispute_reason %}<article class="warning-card"><h3>Uyuşmazlık kaydı</h3><p>{{ transaction.dispute_reason }}</p></article>{% endif %}
 
+      <article class="description-card v119-event-card">
+        <div class="v119-card-heading"><div><span class="section-label">İŞLEM GEÇMİŞİ</span><h2>Doğrulanabilir adımlar</h2></div></div>
+        <div class="v119-event-list">
+          {% for event in transaction.events.all %}
+            <div><span class="timeline-dot"></span><div><b>{{ event.get_event_type_display }}</b><p>{{ event.note|default:"İşlem kaydı güncellendi." }}</p><small>{{ event.actor.display_name|default:"Sistem" }} · {{ event.created_at|date:"d.m.Y H:i" }}</small></div></div>
+          {% empty %}<p>Henüz işlem olayı bulunmuyor.</p>{% endfor %}
+        </div>
+      </article>
+
       {% if is_participant and transaction.status == 'completed' %}
-        <article class="description-card"><h2>Deneyimini değerlendir</h2>
-          {% if my_review %}<div class="notice success">Bu işlem için {{ my_review.rating }}/5 puan verdin.</div>
-          {% else %}<form method="post" action="{% url 'listings:create_review' transaction.public_id %}" class="panel-form compact">{% csrf_token %}{{ review_form.as_p }}<button>Değerlendirmeyi yayınla</button></form>{% endif %}
+        <article class="description-card v119-review-card">
+          <span class="section-label">KÖR DEĞERLENDİRME</span><h2>Deneyimini değerlendir</h2>
+          <p>Yorumun, diğer taraf da değerlendirme yaptığında aynı anda yayınlanır. Diğer taraf yazmazsa 7 gün sonra otomatik yayınlanır.</p>
+          {% if my_review %}
+            {% if my_review.is_visible %}<div class="notice success">Bu işlem için {{ my_review.rating }}/5 puan verdin ve değerlendirme yayınlandı.</div>
+            {% else %}<div class="notice warning">{{ my_review.rating }}/5 puanlık değerlendirmen güvenli biçimde saklanıyor; henüz karşı tarafa ve profile gösterilmiyor.</div>{% endif %}
+          {% elif review_window_open %}
+            <form method="post" action="{% url 'listings:create_review' transaction.public_id %}" class="panel-form compact">{% csrf_token %}{{ review_form.as_p }}<button>Değerlendirmeyi güvenli biçimde kaydet</button></form>
+          {% else %}<div class="notice">Değerlendirme süresi tamamlandı.</div>{% endif %}
         </article>
       {% endif %}
     </div>
@@ -43,17 +82,21 @@
         <h3>{% if user.is_staff and not is_participant %}Moderasyon işlemleri{% else %}İşlem adımları{% endif %}</h3>
         {% if is_participant %}
           {% if transaction.status == 'agreed' %}
-            <form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'delivery' %}">{% csrf_token %}<button class="button full">Teslim aşamasına geç</button></form>
+            {% if is_seller %}<form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'delivery' %}">{% csrf_token %}<button class="button full">Teslim aşamasını başlat</button></form>{% else %}<div class="offer-waiting">Satıcının teslim aşamasını başlatması bekleniyor.</div>{% endif %}
             <form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'cancel' %}">{% csrf_token %}<button class="button secondary full">İşlemi iptal et</button></form>
           {% endif %}
-          {% if transaction.status == 'agreed' or transaction.status == 'delivery' %}
-            <form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'confirm' %}">{% csrf_token %}<button class="button full">Benim için tamamlandı</button></form>
+          {% if transaction.status == 'delivery' %}
+            {% if is_buyer and not transaction.buyer_confirmed %}
+              {% if transaction.requires_handover_code and not transaction.handover_verified_at %}<div class="notice warning">Tamamlamadan önce satıcının teslim kodunu doğrulaması gerekir.</div>{% else %}<form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'confirm' %}">{% csrf_token %}<button class="button full">Teslim aldım, tamamlandı</button></form>{% endif %}
+            {% elif is_seller and not transaction.seller_confirmed %}
+              {% if transaction.requires_handover_code %}<div class="notice warning">Satıcı onayı teslim kodu doğrulandığında otomatik kaydedilir.</div>{% else %}<form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'confirm' %}">{% csrf_token %}<button class="button full">Teslim ettim, tamamlandı</button></form>{% endif %}
+            {% endif %}
             <details><summary>Uyuşmazlık bildir</summary><form method="post" action="{% url 'listings:transaction_action' transaction.public_id 'dispute' %}" class="panel-form compact">{% csrf_token %}{{ dispute_form.as_p }}<button class="button secondary full">İnceleme iste</button></form></details>
           {% endif %}
         {% endif %}
 
         {% if user.is_staff and transaction.status == 'disputed' %}
-          <p>Taraf açıklamasını ve ilan kayıtlarını inceledikten sonra işlemi sonuçlandır.</p>
+          <p>Taraf açıklamasını, işlem geçmişini ve ilan kayıtlarını inceledikten sonra işlemi sonuçlandır.</p>
           <form method="post" action="{% url 'listings:moderate_transaction' transaction.public_id 'complete' %}">{% csrf_token %}<button class="button full">Tamamlandı olarak kapat</button></form>
           <form method="post" action="{% url 'listings:moderate_transaction' transaction.public_id 'cancel' %}">{% csrf_token %}<button class="button danger-button full">İptal ederek kapat</button></form>
         {% endif %}
@@ -62,7 +105,7 @@
         {% elif transaction.status == 'cancelled' %}<div class="notice">İşlem iptal edildi.</div>
         {% elif transaction.status == 'disputed' %}<div class="notice warning">Destek ekibi uyuşmazlığı inceliyor.</div>{% endif %}
       </div>
-      <div class="safe-box"><b>Önemli</b><p>Bu ekran süreç kaydı sağlar. Ödeme hizmeti etkinleştirilene kadar para transferi tarafların kendi sorumluluğundadır.</p></div>
+      <div class="safe-box"><b>Önemli</b><p>İlan Şehri bu sürümde ödeme kuruluşu değildir. Teslim kodu para transferini değil, yalnız yüz yüze teslim adımını kayıt altına alır.</p></div>
     </aside>
   </div>
 </section>

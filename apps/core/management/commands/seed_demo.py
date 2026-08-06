@@ -1,10 +1,12 @@
 from decimal import Decimal
+import uuid
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from apps.accounts.models import User, UserFollow
 from apps.listings.matching import sync_listing_matches
-from apps.listings.models import Category, Listing, ListingPriceHistory, Notification, Offer, OfferEvent
+from apps.listings.models import Category, Listing, ListingPriceHistory, Notification, Offer, OfferEvent, Transaction, TransactionEvent
 from apps.managed_services.models import ManagedActivity, ManagedRequest
 from apps.partners.models import PartnerProfile, Task
 from apps.support_center.models import SupportReply, SupportTicket
@@ -93,8 +95,6 @@ class Command(BaseCommand):
                 "city": "Şanlıurfa",
                 "district": "Karaköprü",
                 "neighborhood": "Atakent",
-                "latitude": Decimal("37.196400"),
-                "longitude": Decimal("38.802300"),
             },
             {
                 "key": "demo-arac",
@@ -114,8 +114,6 @@ class Command(BaseCommand):
                 "city": "Şanlıurfa",
                 "district": "Haliliye",
                 "neighborhood": "Sırrın",
-                "latitude": Decimal("37.145900"),
-                "longitude": Decimal("38.806700"),
             },
             {
                 "key": "demo-emlak",
@@ -134,8 +132,6 @@ class Command(BaseCommand):
                 "city": "Şanlıurfa",
                 "district": "Karaköprü",
                 "neighborhood": "Akpıyar",
-                "latitude": Decimal("37.184900"),
-                "longitude": Decimal("38.788600"),
             },
             {
                 "key": "demo-hizmet",
@@ -149,8 +145,6 @@ class Command(BaseCommand):
                 "fee_type": Listing.FeeType.NEGOTIABLE,
                 "city": "Şanlıurfa",
                 "district": "Karaköprü",
-                "latitude": Decimal("37.174200"),
-                "longitude": Decimal("38.795900"),
             },
         ]
         created_listings = []
@@ -198,8 +192,6 @@ class Command(BaseCommand):
                     "model_name": "iPhone 15",
                     "city": "Şanlıurfa",
                     "district": "Karaköprü" if index % 2 else "Haliliye",
-                    "latitude": Decimal("37.190000") + Decimal(index) / Decimal("1000"),
-                    "longitude": (Decimal("38.790000") + Decimal(index) / Decimal("1200")).quantize(Decimal("0.000001")),
                     "status": Listing.Status.PUBLISHED,
                 },
             )
@@ -218,8 +210,6 @@ class Command(BaseCommand):
                 "model_name": "iPhone 15",
                 "city": "Şanlıurfa",
                 "district": "Haliliye",
-                "latitude": Decimal("37.166500"),
-                "longitude": Decimal("38.795200"),
                 "status": Listing.Status.PUBLISHED,
             },
         )
@@ -285,6 +275,57 @@ class Command(BaseCommand):
                 "message": offer.message,
             },
         )
+        transaction_listing, _ = Listing.objects.update_or_create(
+            slug="demo-guvenli-islem",
+            defaults={
+                "owner": seller,
+                "category": phone_category,
+                "kind": Listing.Kind.PRODUCT,
+                "action": Listing.Action.SELL,
+                "title": "Güvenli teslim demo telefonu",
+                "description": "Tek kullanımlık teslim kodu ve karşılıklı onay ekranı için demo işlem ilanı.",
+                "price": Decimal("26500"),
+                "condition": "Az kullanılmış",
+                "brand": "Apple",
+                "model_name": "iPhone 15",
+                "delivery_type": Listing.DeliveryType.HANDOVER,
+                "city": "Şanlıurfa",
+                "district": "Karaköprü",
+                "status": Listing.Status.PAUSED,
+            },
+        )
+        transaction_offer, _ = Offer.objects.update_or_create(
+            listing=transaction_listing, sender=buyer,
+            defaults={
+                "amount": Decimal("26000"),
+                "message": "Elden teslim için anlaştık.",
+                "last_actor": seller,
+                "status": Offer.Status.ACCEPTED,
+                "responded_at": timezone.now(),
+            },
+        )
+        demo_transaction, _ = Transaction.objects.update_or_create(
+            public_id=uuid.UUID("11111111-1111-4111-8111-111111111119"),
+            defaults={
+                "listing": transaction_listing,
+                "offer": transaction_offer,
+                "buyer": buyer,
+                "seller": seller,
+                "amount": Decimal("26000"),
+                "status": Transaction.Status.DELIVERY,
+                "delivery_type": Listing.DeliveryType.HANDOVER,
+                "delivery_started_at": timezone.now(),
+            },
+        )
+        TransactionEvent.objects.get_or_create(
+            transaction=demo_transaction, event_type=TransactionEvent.Type.CREATED,
+            defaults={"actor": seller, "note": "Demo güvenli işlem kaydı oluşturuldu."},
+        )
+        TransactionEvent.objects.get_or_create(
+            transaction=demo_transaction, event_type=TransactionEvent.Type.DELIVERY_STARTED,
+            defaults={"actor": seller, "note": "Elden teslim aşaması başladı."},
+        )
+
         UserFollow.objects.get_or_create(follower=buyer, seller=seller)
         ListingPriceHistory.objects.get_or_create(
             listing=phone_listing,

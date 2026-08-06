@@ -437,8 +437,18 @@ class Transaction(models.Model):
     seller = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="sales", on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.AGREED)
+    delivery_type = models.CharField(
+        max_length=20, choices=Listing.DeliveryType.choices, blank=True, default=""
+    )
+    delivery_started_at = models.DateTimeField(null=True, blank=True)
+    handover_code_hash = models.CharField(max_length=128, blank=True, default="")
+    handover_code_created_at = models.DateTimeField(null=True, blank=True)
+    handover_code_attempts = models.PositiveSmallIntegerField(default=0)
+    handover_verified_at = models.DateTimeField(null=True, blank=True)
     buyer_confirmed = models.BooleanField(default=False)
     seller_confirmed = models.BooleanField(default=False)
+    buyer_confirmed_at = models.DateTimeField(null=True, blank=True)
+    seller_confirmed_at = models.DateTimeField(null=True, blank=True)
     dispute_reason = models.TextField(max_length=1500, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
@@ -447,6 +457,12 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ("-created_at",)
+        constraints = [
+            models.CheckConstraint(
+                condition=~models.Q(buyer=models.F("seller")),
+                name="prevent_self_transaction",
+            )
+        ]
 
     def get_absolute_url(self):
         return reverse("listings:transaction_detail", kwargs={"public_id": self.public_id})
@@ -454,8 +470,53 @@ class Transaction(models.Model):
     def is_participant(self, user) -> bool:
         return user.pk in {self.buyer_id, self.seller_id}
 
+    @property
+    def requires_handover_code(self) -> bool:
+        return self.delivery_type in {Listing.DeliveryType.HANDOVER, Listing.DeliveryType.ON_SITE}
+
+    @property
+    def handover_code_is_active(self) -> bool:
+        return bool(
+            self.handover_code_hash
+            and self.handover_code_created_at
+            and self.handover_code_created_at >= timezone.now() - timedelta(minutes=15)
+            and self.handover_code_attempts < 5
+            and not self.handover_verified_at
+        )
+
     def __str__(self) -> str:
         return f"{self.listing} · {self.get_status_display()}"
+
+
+class TransactionEvent(models.Model):
+    class Type(models.TextChoices):
+        CREATED = "created", "İşlem oluşturuldu"
+        DELIVERY_STARTED = "delivery_started", "Teslim aşaması başladı"
+        CODE_CREATED = "code_created", "Teslim kodu oluşturuldu"
+        HANDOVER_VERIFIED = "handover_verified", "Teslim kodu doğrulandı"
+        BUYER_CONFIRMED = "buyer_confirmed", "Alıcı tamamlamayı onayladı"
+        SELLER_CONFIRMED = "seller_confirmed", "Satıcı tamamlamayı onayladı"
+        COMPLETED = "completed", "İşlem tamamlandı"
+        CANCELLED = "cancelled", "İşlem iptal edildi"
+        DISPUTED = "disputed", "Uyuşmazlık açıldı"
+        MODERATED = "moderated", "Destek ekibi sonuçlandırdı"
+
+    transaction = models.ForeignKey(Transaction, related_name="events", on_delete=models.CASCADE)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="transaction_events", on_delete=models.SET_NULL,
+        null=True, blank=True,
+    )
+    event_type = models.CharField(max_length=24, choices=Type.choices)
+    note = models.CharField(max_length=240, blank=True, default="")
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at",)
+        indexes = [models.Index(fields=["transaction", "created_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.transaction} · {self.get_event_type_display()}"
 
 
 class Review(models.Model):
@@ -465,12 +526,17 @@ class Review(models.Model):
     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField(max_length=1000, blank=True)
     is_visible = models.BooleanField(default=True)
+    published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("-created_at",)
         constraints = [
-            models.UniqueConstraint(fields=("transaction", "reviewer"), name="unique_transaction_reviewer")
+            models.UniqueConstraint(fields=("transaction", "reviewer"), name="unique_transaction_reviewer"),
+            models.CheckConstraint(
+                condition=~models.Q(reviewer=models.F("reviewed_user")),
+                name="prevent_self_review",
+            ),
         ]
 
     def __str__(self) -> str:
