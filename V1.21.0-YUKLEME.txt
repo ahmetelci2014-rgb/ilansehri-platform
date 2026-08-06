@@ -1,0 +1,26 @@
+İLAN ŞEHRİ v1.21.0 — KATEGORİ, FİLTRE, KONUM VE MOBİL KEŞİF
+================================================================
+
+TABAN SÜRÜM
+- v1.20.0
+
+YÜKLEME
+1. Güncelleme ZIP dosyasını çıkarın.
+2. İçindeki bütün klasör ve dosyaları mevcut İlan Şehri proje ana klasörüne kopyalayın.
+3. Var olan dosyaların değiştirilmesini onaylayın.
+4. GitHub Desktop özetine şunu yazın:
+   İlan Şehri v1.21.0 kategori filtre konum ve mobil keşif
+5. Commit to main ve Push origin yapın.
+6. Django Kontrol ile Mobil Görsel Denetim sonuçlarının ikisinin de yeşil olmasını bekleyin.
+7. İki denetim de yeşil olduktan sonra Codespaces terminalinde:
+
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+ÖNEMLİ
+- Bu sürüm veritabanı şema değişikliği yapmaz; yeni migration zorunlu değildir.
+- start_codespace.sh kategori kataloğunu tekrar güvenli biçimde günceller.
+- Mevcut ilanlar ve kategori kayıtları silinmez.
+- Kök kategori filtresi aktif alt kategorileri de kapsar.
+- Randevu ve görev ortağı sistemi kaldırılmaz; ana ilan keşfini kalabalıklaştırmayacak ikincil konumda tutulur.

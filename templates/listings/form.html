@@ -53,6 +53,7 @@
             <button type="button" data-ai-clear-images hidden>Tümünü temizle</button>
           </div>
           <div class="image-preview-grid ai-image-preview-grid" data-image-preview aria-live="polite"></div>
+          <div class="v121-photo-quality" data-photo-quality-summary><strong>Fotoğraf kontrolü</strong><span>Net, aydınlık ve farklı açılardan fotoğraflar ekle.</span></div>
         </div>
 
         <div class="ai-listing-status{% if not ai_config.can_analyze %} warning{% endif %}" data-ai-status>{{ ai_config.status_message }}</div>
@@ -72,13 +73,13 @@
 
       <section class="v16-wizard-section" data-v16-section="1">
         <div class="v16-step-head"><span>01</span><div><h2>Ne ilanı veriyorsun?</h2><p>AI önerisini kontrol et veya doğru tür ve kategoriyi kendin seç.</p></div></div>
-        <div class="v16-field-grid"><div class="field">{{ form.kind.label_tag }}{{ form.kind }}{{ form.kind.errors }}</div><div class="field">{{ form.action.label_tag }}{{ form.action }}{{ form.action.errors }}</div><div class="field">{{ form.category.label_tag }}{{ form.category }}{{ form.category.errors }}</div><div class="field">{{ form.management_mode.label_tag }}{{ form.management_mode }}{{ form.management_mode.errors }}</div></div>
+        <div class="v16-field-grid"><div class="field">{{ form.kind.label_tag }}{{ form.kind }}{{ form.kind.errors }}</div><div class="field">{{ form.action.label_tag }}{{ form.action }}{{ form.action.errors }}</div><div class="field">{{ form.category.label_tag }}{{ form.category }}{{ form.category.errors }}<div class="v121-category-selection-help" data-category-selection-help>Önce ilan türünü seç; kategori listesi otomatik daralacak.</div></div><div class="field">{{ form.management_mode.label_tag }}{{ form.management_mode }}{{ form.management_mode.errors }}</div></div>
         <div class="v16-choice-help"><b>İpucu:</b> Yapay zekâ yalnız fotoğrafta anlayabildiği kategori bilgisini önerir. Satış, kiralama, takas veya arama kararını sen seçersin.</div>
       </section>
 
       <section class="v16-wizard-section" data-v16-section="2">
         <div class="v16-step-head"><span>02</span><div><h2>İlanın temel bilgileri</h2><p>AI tarafından oluşturulan metni ve ürün durumunu mutlaka kontrol et.</p></div></div>
-        <div class="v16-field-grid">{% for field in form %}{% if field.name in 'title description price price_on_request is_negotiable delivery_type condition' %}<div class="field {% if field.name == 'description' %}field-wide{% endif %}" data-field-name="{{ field.name }}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div>
+        <div class="v16-field-grid">{% for field in form %}{% if field.name in 'title description price price_on_request is_negotiable delivery_type condition' %}<div class="field {% if field.name == 'description' %}field-wide{% endif %}" data-field-name="{{ field.name }}"{% if field.name == 'condition' %} data-kind-field="condition"{% elif field.name == 'delivery_type' %} data-kind-field="delivery_type"{% endif %}>{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div>
         <section class="v141-form-price-guide" data-price-guide-assistant data-price-guide-url="{% url 'listings:price_guide' %}" data-current-listing-id="{% if object %}{{ object.pk }}{% endif %}">
           <div class="v141-form-price-head"><span>₺</span><div><small>AKILLI FİYAT REHBERİ</small><h3>Benzer ilanlardan fiyat aralığını gör</h3><p>Ürün, araç veya emlak bilgilerini tamamla; sistem yalnız yayındaki benzer ilanları karşılaştırsın.</p></div></div>
           <div class="v141-form-price-actions"><button type="button" data-price-guide-run>Fiyat aralığını hesapla</button><small>Fiyat otomatik değiştirilmez. Son karar her zaman sana aittir.</small></div>
@@ -109,6 +110,7 @@
             <label for="{{ form.images.id_for_label }}"><span>📷</span><strong>Yeni fotoğraf ekle</strong><small>En fazla 10 fotoğraf; ilk yeni fotoğraf kapak adayı olur.</small></label>
             {% for error in form.images.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
             <div class="image-preview-grid" data-image-preview></div>
+            <div class="v121-photo-quality" data-photo-quality-summary><strong>Fotoğraf kontrolü</strong><span>Yeni fotoğrafların çözünürlüğü burada kontrol edilir.</span></div>
           </div>
         {% else %}
           <div class="ai-photo-review">

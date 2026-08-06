@@ -29,6 +29,7 @@ from apps.managed_services.models import ManagedRequest
 from apps.support_center.models import StaffActionLog
 from apps.support_center.services import log_staff_action
 
+from .catalog import category_options, category_path
 from .forms import (
     AppointmentForm,
     CounterOfferForm,
@@ -301,15 +302,17 @@ class SavedSearchListView(LoginRequiredMixin, TemplateView):
             )
         )
         label_map = {
-            "q": "Arama", "city": "Şehir", "district": "İlçe", "kind": "İlan türü",
-            "action": "İşlem", "category": "Kategori", "brand": "Marka", "model": "Model",
-            "condition": "Durum", "delivery_type": "Teslimat", "fuel_type": "Yakıt",
-            "transmission": "Vites", "fee_type": "Ücret", "job_type": "İş türü",
-            "room_count": "Oda", "min_price": "En az", "max_price": "En çok",
+            "q": "Arama", "city": "Şehir", "district": "İlçe", "neighborhood": "Mahalle",
+            "kind": "İlan türü", "action": "İşlem", "category": "Kategori", "brand": "Marka",
+            "model": "Model", "condition": "Durum", "color": "Renk",
+            "delivery_type": "Teslimat", "fuel_type": "Yakıt", "transmission": "Vites",
+            "fee_type": "Ücret", "job_type": "İş türü", "room_count": "Oda",
+            "heating_type": "Isıtma", "floor_location": "Kat", "service_area": "Hizmet bölgesi",
+            "experience_level": "Deneyim", "min_price": "En az", "max_price": "En çok",
             "min_year": "Min. yıl", "max_year": "Maks. yıl", "max_mileage": "Azami km",
-            "min_area": "Min. m²", "max_area": "Maks. m²", "price_drop": "Fiyat düşüşü",
-            "verified": "Doğrulanmış", "managed": "Güvenceli", "following": "Takip edilen",
-            "radius": "Yakınlık",
+            "min_area": "Min. m²", "max_area": "Maks. m²", "max_building_age": "Azami bina yaşı",
+            "price_drop": "Fiyat düşüşü", "verified": "Doğrulanmış", "managed": "Güvenceli",
+            "following": "Takip edilen", "radius": "Yakınlık",
         }
         for saved in searches:
             saved.query_string = urlencode(saved_search_result_params(saved.query_params or {}), doseq=True)
@@ -488,39 +491,158 @@ class ListingListView(ListView):
         pagination_params = self.request.GET.copy()
         pagination_params.pop("page", None)
         context["pagination_query"] = pagination_params.urlencode()
+
         favorite_ids = set()
         if self.request.user.is_authenticated:
             favorite_ids = set(
                 Favorite.objects.filter(user=self.request.user).values_list("listing_id", flat=True)
             )
-        active_labels = []
+
+        params = normalize_saved_search_params(self.request.GET)
+        display_filters = dict(params)
+        display_filters["sort"] = self.request.GET.get("sort", "newest")[:20] or "newest"
+        all_categories = list(
+            Category.objects.filter(is_active=True)
+            .select_related("parent", "parent__parent")
+            .prefetch_related("children")
+            .order_by("parent__sort_order", "parent__name", "sort_order", "name")
+        )
+        categories_by_id = {item.pk: item for item in all_categories}
+        selected_category = categories_by_id.get(_safe_int(params.get("category")))
+
+        choice_maps = {
+            "kind": dict(Listing.Kind.choices),
+            "action": dict(Listing.Action.choices),
+            "delivery_type": dict(Listing.DeliveryType.choices),
+            "fuel_type": dict(Listing.FuelType.choices),
+            "transmission": dict(Listing.Transmission.choices),
+            "fee_type": dict(Listing.FeeType.choices),
+            "job_type": dict(Listing.JobType.choices),
+        }
         label_map = {
-            "q": "Arama", "city": "Şehir", "district": "İlçe", "brand": "Marka",
-            "model": "Model", "condition": "Durum", "room_count": "Oda",
+            "q": "Arama", "city": "Şehir", "district": "İlçe", "neighborhood": "Mahalle",
+            "kind": "İlan türü", "action": "İşlem", "category": "Kategori",
+            "brand": "Marka", "model": "Model", "condition": "Durum", "color": "Renk",
+            "delivery_type": "Teslimat", "room_count": "Oda", "heating_type": "Isıtma",
+            "floor_location": "Kat", "service_area": "Hizmet bölgesi",
+            "experience_level": "Deneyim", "fuel_type": "Yakıt", "transmission": "Vites",
+            "fee_type": "Ücret tipi", "job_type": "Çalışma şekli",
             "min_price": "En az fiyat", "max_price": "En çok fiyat",
             "min_year": "En düşük yıl", "max_year": "En yüksek yıl",
             "max_mileage": "Azami km", "min_area": "En az m²", "max_area": "En çok m²",
+            "max_building_age": "Azami bina yaşı",
+            "verified": "Doğrulanmış satıcı", "managed": "İlan Şehri güvenceli",
+            "price_drop": "Fiyatı düşen", "following": "Takip edilen satıcı",
         }
-        for key, label in label_map.items():
-            value = self.request.GET.get(key, "").strip()
-            if value:
-                active_labels.append({"key": key, "label": label, "value": value})
-        nearby = parse_nearby_params(self.request.GET)
+        ordered_filter_keys = (
+            "q", "kind", "category", "action", "city", "district", "neighborhood",
+            "brand", "model", "condition", "color", "delivery_type", "room_count",
+            "min_price", "max_price", "min_year", "max_year", "max_mileage",
+            "fuel_type", "transmission", "min_area", "max_area", "max_building_age",
+            "heating_type", "floor_location", "service_area", "fee_type", "job_type",
+            "experience_level", "verified", "managed", "price_drop", "following",
+        )
+        active_labels = []
+        for key in ordered_filter_keys:
+            value = params.get(key, "")
+            if not value:
+                continue
+            display_value = value
+            if key in choice_maps:
+                display_value = choice_maps[key].get(value, value)
+            elif key == "category" and selected_category:
+                display_value = category_path(selected_category)
+            elif key in {"verified", "managed", "price_drop", "following"}:
+                display_value = "Evet"
+            remove_params = self.request.GET.copy()
+            remove_params.pop("page", None)
+            remove_params.pop(key, None)
+            active_labels.append(
+                {
+                    "key": key,
+                    "label": label_map.get(key, key.replace("_", " ").title()),
+                    "value": display_value,
+                    "remove_url": f"{reverse('listings:list')}?{remove_params.urlencode()}" if remove_params else reverse("listings:list"),
+                }
+            )
+
+        nearby = parse_nearby_params(params)
         if nearby:
-            active_labels.append({"key": "radius", "label": "Yakınlık", "value": f"{nearby[2]} km"})
+            remove_params = self.request.GET.copy()
+            for key in ("lat", "lng", "radius"):
+                remove_params.pop(key, None)
+            if remove_params.get("sort") == "nearby":
+                remove_params["sort"] = "newest"
+            active_labels.append(
+                {
+                    "key": "radius",
+                    "label": "Yakınlık",
+                    "value": f"{nearby[2]} km",
+                    "remove_url": f"{reverse('listings:list')}?{remove_params.urlencode()}" if remove_params else reverse("listings:list"),
+                }
+            )
+
+        kind = params.get("kind", "")
+        category_counts = (
+            Listing.objects.filter(_active_listing_q())
+            .values("category_id")
+            .annotate(total=Count("id"))
+        )
+        if kind:
+            category_counts = category_counts.filter(kind=kind)
+        if params.get("city"):
+            category_counts = category_counts.filter(city__iexact=params["city"])
+        totals = {row["category_id"]: row["total"] for row in category_counts}
+        shortcuts = []
+        for option in category_options(all_categories):
+            if option["depth"] == 0 or not option["is_leaf"]:
+                continue
+            if kind and option["kind"] != kind:
+                continue
+            total = totals.get(option["id"], 0)
+            if total:
+                query = {"category": option["id"]}
+                if kind:
+                    query["kind"] = kind
+                if params.get("city"):
+                    query["city"] = params["city"]
+                shortcuts.append(option | {"total": total, "url": f"{reverse('listings:list')}?{urlencode(query)}"})
+        shortcuts.sort(key=lambda item: (-item["total"], item["path"].casefold()))
+
+        if params.get("q"):
+            result_title = f"“{params['q']}” sonuçları"
+        elif selected_category:
+            result_title = category_path(selected_category)
+        elif kind:
+            result_title = f"{dict(Listing.Kind.choices).get(kind, 'İlan')} ilanları"
+        elif params.get("city"):
+            result_title = f"{params['city']} ilanları"
+        else:
+            result_title = "Tüm ilanlar"
+        location_summary = " / ".join(
+            value for value in (params.get("city"), params.get("district"), params.get("neighborhood")) if value
+        )
+
         context.update(
             {
                 "kind_choices": Listing.Kind.choices,
                 "action_choices": Listing.Action.choices,
                 "city_choices": CITY_CHOICES,
-                "category_choices": Category.objects.filter(is_active=True).select_related("parent"),
+                "category_options": category_options(all_categories),
                 "fuel_choices": Listing.FuelType.choices,
                 "transmission_choices": Listing.Transmission.choices,
                 "delivery_choices": Listing.DeliveryType.choices,
                 "fee_choices": Listing.FeeType.choices,
                 "job_choices": Listing.JobType.choices,
-                "active_filters": self.request.GET,
+                "active_filters": display_filters,
                 "active_filter_labels": active_labels,
+                "active_filter_count": len(active_labels),
+                "selected_category": selected_category,
+                "category_shortcuts": shortcuts[:10],
+                "result_title": result_title,
+                "location_summary": location_summary,
+                "district_suggestions": get_districts(params.get("city", "")),
+                "neighborhood_suggestions": get_neighborhoods(params.get("city", ""), params.get("district", "")),
                 "favorite_ids": favorite_ids,
                 "compare_ids": set(_compare_ids(self.request)),
                 "saved_search_form": SavedSearchForm(),
@@ -2241,13 +2363,51 @@ def moderate_risk_event(request, pk, action):
     return redirect("listings:moderation")
 
 
+def _merge_location_suggestions(catalog_values, observed_values, *, limit=140):
+    merged = []
+    seen = set()
+    for raw in (*catalog_values, *observed_values):
+        value = " ".join(str(raw or "").split())
+        key = value.casefold()
+        if not value or key in seen:
+            continue
+        seen.add(key)
+        merged.append(value)
+        if len(merged) >= limit:
+            break
+    return merged
+
+
 @require_GET
 def location_suggestions(request):
-    city = request.GET.get("city", "").strip()
-    district = request.GET.get("district", "").strip()
+    city = " ".join(request.GET.get("city", "").strip().split())[:80]
+    district = " ".join(request.GET.get("district", "").strip().split())[:80]
+    observed_districts = []
+    observed_neighborhoods = []
+    if city:
+        observed_districts = list(
+            Listing.objects.filter(_active_listing_q(), city__iexact=city)
+            .exclude(district="")
+            .order_by("district")
+            .values_list("district", flat=True)
+            .distinct()[:140]
+        )
+    if city and district:
+        observed_neighborhoods = list(
+            Listing.objects.filter(
+                _active_listing_q(), city__iexact=city, district__iexact=district
+            )
+            .exclude(neighborhood="")
+            .order_by("neighborhood")
+            .values_list("neighborhood", flat=True)
+            .distinct()[:140]
+        )
     return JsonResponse(
         {
-            "districts": list(get_districts(city)),
-            "neighborhoods": list(get_neighborhoods(city, district)),
+            "districts": _merge_location_suggestions(get_districts(city), observed_districts),
+            "neighborhoods": _merge_location_suggestions(
+                get_neighborhoods(city, district), observed_neighborhoods
+            ),
+            "catalog_complete": bool(get_districts(city)),
         }
     )

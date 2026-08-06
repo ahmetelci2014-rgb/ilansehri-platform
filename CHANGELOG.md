@@ -1,5 +1,20 @@
 # Değişiklik Günlüğü
 
+## v1.21.0 — Kategori, filtre, konum ve mobil keşif
+
+- Kök kategori slug'larını ilan türleriyle eşleyen ortak kategori sözleşmesi eklendi.
+- İlan oluştururken ilan türüyle uyuşmayan veya alt kategori seçilmeden gönderilen kayıtlar engellendi.
+- Profesyonel ürün, araç, emlak, hizmet, iş ve ihtiyaç alt kategori kataloğu genişletildi; mevcut kayıtlar silinmeden güncellenir.
+- Kök kategori filtresi bütün aktif alt kategorileri kapsayacak şekilde düzeltildi.
+- Mahalle, renk, ısıtma, kat, hizmet bölgesi, deneyim ve azami bina yaşı filtreleri liste ekranı ile kayıtlı aramalarda ortaklaştırıldı.
+- Aktif filtreler kullanıcı dostu etiketlerle tek tek kaldırılabilir hale getirildi; sonuç başlığı ve konum özeti seçime göre yenilendi.
+- Şehir–ilçe–mahalle öneri servisi statik katalogla birlikte yayındaki ilanlarda kullanılan konumları güvenli biçimde sunar.
+- Mobil ilan sonuçları alttan açılan filtre paneli, popüler alt kategori kısayolları ve yatay aktif filtre şeridiyle yeniden düzenlendi.
+- Yeni fotoğraflara yüklemeden önce sıralama, kaldırma, kapak adayı ve çözünürlük kalite uyarısı eklendi.
+- Randevu yalnız bekleyen davet olduğunda ana başlıkta görünür; ilan desteği ve görev ortağı alanı ikincil hesap bağlantıları olarak korunur.
+- Mobil Görsel Denetim konum ve kategori filtreli kamu ekranlarıyla 138 ekran kombinasyonuna genişletildi.
+- Yeni kategori, filtre, konum ve form sözleşmeleri için regresyon testleri eklendi; veritabanı şema değişikliği gerekmez.
+
 ## v1.20.0 — Güvenli randevu ve teslim planlama
 
 - İlan görüşmelerine yüz yüze, telefon, görüntülü ve teslim/hizmet randevusu önerme akışı eklendi.

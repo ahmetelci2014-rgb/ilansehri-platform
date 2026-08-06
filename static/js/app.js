@@ -18,29 +18,87 @@ document.addEventListener("DOMContentLoaded", () => {
   const imageInput = document.querySelector("[data-image-input]");
   const preview = document.querySelector("[data-image-preview]");
   if (imageInput && preview && !imageInput.closest("[data-ai-quick-start]")) {
-    imageInput.addEventListener("change", () => {
-      preview.innerHTML = "";
-      Array.from(imageInput.files || []).slice(0, 10).forEach((file, index) => {
+    let selectedFiles = [];
+    let objectUrls = [];
+    const qualitySummary = imageInput.closest("form")?.querySelector("[data-photo-quality-summary]");
+
+    const escapeHtml = (value) => String(value || "").replace(/[&<>'"]/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
+    }[char]));
+
+    const syncInputFiles = () => {
+      if (typeof DataTransfer === "undefined") return;
+      const transfer = new DataTransfer();
+      selectedFiles.forEach((file) => transfer.items.add(file));
+      imageInput.files = transfer.files;
+    };
+
+    const updateQuality = () => {
+      if (!qualitySummary) return;
+      const warnings = preview.querySelectorAll(".v121-photo-resolution.warning").length;
+      qualitySummary.classList.toggle("warning", warnings > 0);
+      qualitySummary.innerHTML = selectedFiles.length
+        ? `<strong>${selectedFiles.length} fotoğraf seçildi</strong><span>${warnings ? `${warnings} fotoğraf düşük çözünürlüklü görünüyor.` : "Çözünürlük kontrolü temiz. İlk fotoğraf kapak adayıdır."}</span>`
+        : "<strong>Fotoğraf kontrolü</strong><span>Net, aydınlık ve farklı açılardan fotoğraflar ekle.</span>";
+    };
+
+    const renderPreviews = () => {
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+      objectUrls = [];
+      preview.replaceChildren();
+      selectedFiles.forEach((file, index) => {
         if (!file.type.startsWith("image/")) return;
-        const reader = new FileReader();
-        reader.addEventListener("load", () => {
-          const item = document.createElement("div");
-          item.className = "image-preview-item";
-          item.innerHTML = `<img alt="Seçilen fotoğraf ${index + 1}"><span>${index === 0 ? "Yeni kapak adayı" : index + 1}</span>`;
-          item.querySelector("img").src = reader.result;
-          preview.appendChild(item);
+        const url = URL.createObjectURL(file);
+        objectUrls.push(url);
+        const item = document.createElement("article");
+        item.className = "image-preview-item";
+        item.innerHTML = `
+          <img src="${url}" alt="Seçilen fotoğraf ${index + 1}">
+          <span>${index === 0 ? "Kapak adayı" : `${index + 1}. fotoğraf`}</span>
+          <small class="v121-photo-resolution">Çözünürlük kontrol ediliyor…</small>
+          <div class="v121-photo-tools">
+            <button type="button" data-photo-move="-1" aria-label="Fotoğrafı sola taşı" ${index === 0 ? "disabled" : ""}>←</button>
+            <button type="button" data-photo-remove aria-label="${index + 1}. fotoğrafı kaldır">×</button>
+            <button type="button" data-photo-move="1" aria-label="Fotoğrafı sağa taşı" ${index === selectedFiles.length - 1 ? "disabled" : ""}>→</button>
+          </div>`;
+        const image = item.querySelector("img");
+        const resolution = item.querySelector(".v121-photo-resolution");
+        image.addEventListener("load", () => {
+          const lowResolution = image.naturalWidth < 900 || image.naturalHeight < 700;
+          resolution.textContent = `${image.naturalWidth}×${image.naturalHeight}${lowResolution ? " · daha yüksek çözünürlük önerilir" : " · uygun"}`;
+          resolution.classList.toggle("warning", lowResolution);
+          updateQuality();
           if (index === 0) {
             const liveMedia = document.querySelector("[data-preview-media]");
             if (liveMedia) {
               const liveImage = document.createElement("img");
-              liveImage.src = reader.result;
+              liveImage.src = url;
               liveImage.alt = "İlan fotoğrafı önizlemesi";
               liveMedia.replaceChildren(liveImage);
             }
           }
+        }, { once: true });
+        item.querySelector("[data-photo-remove]").addEventListener("click", () => {
+          selectedFiles.splice(index, 1);
+          syncInputFiles();
+          renderPreviews();
         });
-        reader.readAsDataURL(file);
+        item.querySelectorAll("[data-photo-move]").forEach((button) => button.addEventListener("click", () => {
+          const target = index + Number(button.dataset.photoMove || 0);
+          if (target < 0 || target >= selectedFiles.length) return;
+          [selectedFiles[index], selectedFiles[target]] = [selectedFiles[target], selectedFiles[index]];
+          syncInputFiles();
+          renderPreviews();
+        }));
+        preview.appendChild(item);
       });
+      updateQuality();
+    };
+
+    imageInput.addEventListener("change", () => {
+      selectedFiles = Array.from(imageInput.files || []).slice(0, 10);
+      syncInputFiles();
+      renderPreviews();
     });
   }
 
@@ -58,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const kindSelect = listingForm?.querySelector("#id_kind");
   const actionSelect = listingForm?.querySelector("#id_action");
   const fieldKinds = {
-    condition: ["product", "vehicle"], brand: ["product", "vehicle"], model_name: ["product", "vehicle"],
+    condition: ["product", "vehicle"], delivery_type: ["product", "vehicle", "real_estate", "service"], brand: ["product", "vehicle"], model_name: ["product", "vehicle"],
     color: ["product", "vehicle", "real_estate"],
     search_tags_text: ["product", "vehicle", "real_estate", "service", "need", "job"],
     technical_features_text: ["product", "vehicle", "real_estate", "service", "need", "job"],

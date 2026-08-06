@@ -1,16 +1,16 @@
 # İlan Şehri
 
-## v1.20 Güvenli randevu ve teslim planlama
+## v1.21 Kategori, filtre, konum ve mobil keşif
 
-- Alıcı ve satıcı, mevcut ilan görüşmesinden ürün inceleme, teslim veya hizmet randevusu önerebilir.
-- Tarih, saat, görüşme türü, süre ve buluşma bilgisi yalnız görüşme taraflarına gösterilir.
-- Davet edilen kullanıcı randevuyu onaylayabilir veya reddedebilir; taraflar aktif randevuyu iptal edebilir.
-- Aynı saat aralığında taraflardan birinin başka aktif randevusu varsa yeni öneri engellenir.
-- Onaylanan randevular için yaklaşan 24 saat içinde tek seferlik bildirim oluşturulur.
-- Yanıt verilmeden tarihi geçen randevu önerileri günlük bakımda otomatik kapatılır.
-- Randevu merkezi hesap paneline, veri ihracına, yönetim ekranına ve gerçek mobil denetime eklendi.
+- Profesyonel kök/alt kategori kataloğu ve ilan türü–kategori uyumluluk kontrolü eklendi.
+- Kök kategori aramaları bütün aktif alt kategorileri kapsar.
+- Mahalle, renk, ısıtma, kat, hizmet bölgesi, deneyim ve bina yaşı ortak filtre motoruna bağlandı.
+- Şehir–ilçe–mahalle önerileri katalog ve yayındaki ilan konumlarıyla birlikte çalışır.
+- Mobil filtre paneli, aktif filtre etiketleri, kategori kısayolları ve konum özeti yenilendi.
+- Yeni fotoğraflarda sıralama, kaldırma, kapak adayı ve çözünürlük uyarısı eklendi.
+- Randevu ve görev ortağı bağlantıları ana ilan deneyimini kalabalıklaştırmayacak biçimde ikincil konuma alındı.
 
-> Güncel sürüm: **v1.20.0** — güvenli görüşme planı, randevu çakışma koruması ve otomatik hatırlatma eklendi.
+> Güncel sürüm: **v1.21.0** — kategori, filtre, konum ve mobil ilan keşfi güçlendirildi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 

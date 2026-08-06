@@ -85,6 +85,8 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "js/v113-mobile-market.js")
         self.assertContains(response, "css/v132-mobile-system.css")
         self.assertContains(response, "js/v132-mobile-system.js")
+        self.assertContains(response, "css/v121-discovery.css")
+        self.assertContains(response, "js/v121-discovery.js")
         self.assertContains(response, "css/v14-matching.css")
         self.assertContains(response, "css/v141-price-guide.css")
         self.assertContains(response, "js/v141-price-guide.js")
@@ -107,6 +109,8 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "v131-mobile-quick-filters")
         self.assertContains(response, "v131-mobile-result-summary")
         self.assertContains(response, "data-kind-filter")
+        self.assertContains(response, "data-v121-category-filter")
+        self.assertContains(response, "data-v121-neighborhood")
 
     def test_service_worker_uses_mobile_release_cache(self):
         response = self.client.get(reverse("core:service_worker"))
@@ -124,6 +128,8 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "/static/css/v15-message-safety.css")
         self.assertContains(response, "/static/js/v15-message-safety.js")
         self.assertContains(response, "/static/css/v120-appointments.css")
+        self.assertContains(response, "/static/css/v121-discovery.css")
+        self.assertContains(response, "/static/js/v121-discovery.js")
 
 
 class MobileSystemContractTests(TestCase):

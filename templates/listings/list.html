@@ -1,55 +1,190 @@
 {% extends 'base.html' %}
-{% block title %}İlanları Keşfet — İlan Şehri{% endblock %}
+{% block title %}{{ result_title }} — İlan Şehri{% endblock %}
 {% block content %}
-<section class="market-list-head v12-list-head"><div class="shell">
-  <form class="market-searchbar list-search v12-list-search" method="get" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}">
-    <div class="market-search-main"><span>⌕</span><input name="q" value="{{ active_filters.q }}" placeholder="Ne arıyorsun?" autocomplete="off" data-search-input><div class="search-suggestion-panel" data-search-results hidden></div></div>
-    <div class="market-search-city"><span>⌖</span><select name="city"><option value="">Tüm Türkiye</option>{% for value,label in city_choices %}<option value="{{ value }}" {% if active_filters.city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-    <input class="market-district-input" name="district" value="{{ active_filters.district }}" placeholder="İlçe">
-    {% if active_filters.lat and active_filters.lng %}<input type="hidden" name="lat" value="{{ active_filters.lat }}"><input type="hidden" name="lng" value="{{ active_filters.lng }}"><input type="hidden" name="radius" value="{{ active_filters.radius|default:'25' }}">{% endif %}
-    <button>Ara</button>
-  </form>
-  <div class="market-list-chips"><a href="{% url 'listings:list' %}" class="{% if not active_filters.kind %}active{% endif %}">Tümü</a>{% for value,label in kind_choices %}<a href="{% url 'listings:kind_landing' value %}" class="{% if active_filters.kind == value %}active{% endif %}">{{ label }}</a>{% endfor %}</div>
-  <nav class="v131-mobile-quick-filters" aria-label="Hızlı ilan filtreleri">
-    <button type="button" data-nearby-search data-url="{% url 'listings:list' %}" data-fallback-city="{% firstof active_filters.city user.city '' %}" data-fallback-district="{% firstof active_filters.district user.district '' %}" class="{% if active_filters.lat and active_filters.lng %}active{% endif %}"><span>◎</span> Yakınımda</button>
-    <a href="{% url 'listings:list' %}?sort=newest{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.sort == 'newest' or not active_filters.sort %}active{% endif %}"><span>⚡</span> En yeni</a>
-    <a href="{% url 'listings:list' %}?price_drop=1&sort=price_drop{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.price_drop == '1' %}active{% endif %}"><span>↓</span> Fiyatı düşen</a>
-    <a href="{% url 'listings:list' %}?verified=1{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.verified == '1' %}active{% endif %}"><span>✓</span> Doğrulanmış</a>
-    <a href="{% url 'listings:list' %}?managed=1{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.managed == '1' %}active{% endif %}"><span>🛡</span> Güvenceli</a>
-    {% if user.is_authenticated and user.city %}<a href="{% url 'listings:list' %}?city={{ user.city|urlencode }}" class="{% if active_filters.city == user.city %}active{% endif %}"><span>⌖</span> {{ user.city }}</a>{% endif %}
-  </nav>
-</div></section>
+<section class="market-list-head v12-list-head v121-list-head">
+  <div class="shell">
+    <form class="market-searchbar list-search v12-list-search v121-discovery-search"
+          method="get"
+          data-search-suggest
+          data-search-url="{% url 'listings:search_suggestions' %}"
+          data-v121-location-form
+          data-location-url="{% url 'listings:location_suggestions' %}">
+      <div class="market-search-main">
+        <span aria-hidden="true">⌕</span>
+        <input name="q" value="{{ active_filters.q }}" placeholder="İlan, marka veya model ara" autocomplete="off" data-search-input>
+        <div class="search-suggestion-panel" data-search-results hidden></div>
+      </div>
+      <label class="market-search-city">
+        <span aria-hidden="true">⌖</span>
+        <select name="city" data-v121-city aria-label="Şehir">
+          <option value="">Tüm Türkiye</option>
+          {% for value,label in city_choices %}<option value="{{ value }}" {% if active_filters.city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <input class="market-district-input" name="district" value="{{ active_filters.district }}" placeholder="İlçe" list="list-district-options" data-v121-district autocomplete="address-level2" aria-label="İlçe">
+      <input class="market-neighborhood-input" name="neighborhood" value="{{ active_filters.neighborhood }}" placeholder="Mahalle" list="list-neighborhood-options" data-v121-neighborhood autocomplete="address-level3" aria-label="Mahalle">
+      <datalist id="list-district-options">{% for item in district_suggestions %}<option value="{{ item }}">{% endfor %}</datalist>
+      <datalist id="list-neighborhood-options">{% for item in neighborhood_suggestions %}<option value="{{ item }}">{% endfor %}</datalist>
+      {% if active_filters.kind %}<input type="hidden" name="kind" value="{{ active_filters.kind }}">{% endif %}
+      {% if active_filters.category %}<input type="hidden" name="category" value="{{ active_filters.category }}">{% endif %}
+      {% if active_filters.lat and active_filters.lng %}<input type="hidden" name="lat" value="{{ active_filters.lat }}"><input type="hidden" name="lng" value="{{ active_filters.lng }}"><input type="hidden" name="radius" value="{{ active_filters.radius|default:'25' }}">{% endif %}
+      <button type="submit">Ara</button>
+    </form>
 
-<section class="market-list-layout shell">
-  <aside class="market-filter v12-filter" data-filter-panel>
-    <div class="market-filter-title"><h2>Filtreler</h2><button type="button" class="filter-close" data-filter-close>×</button><a href="{% url 'listings:list' %}">Temizle</a></div>
-    <form method="get">
-      <input type="hidden" name="q" value="{{ active_filters.q }}"><input type="hidden" name="city" value="{{ active_filters.city }}"><input type="hidden" name="district" value="{{ active_filters.district }}">{% if active_filters.lat and active_filters.lng %}<input type="hidden" name="lat" value="{{ active_filters.lat }}"><input type="hidden" name="lng" value="{{ active_filters.lng }}"><input type="hidden" name="radius" value="{{ active_filters.radius|default:'25' }}"><input type="hidden" name="sort" value="nearby">{% endif %}
-      <label>Kategori<select name="category"><option value="">Tüm kategoriler</option>{% for category in category_choices %}<option value="{{ category.pk }}" {% if active_filters.category == category.pk|stringformat:'s' %}selected{% endif %}>{% if category.parent %}{{ category.parent.name }} / {% endif %}{{ category.name }}</option>{% endfor %}</select></label>
-      <label>İlan türü<select name="kind" data-kind-filter><option value="">Tümü</option>{% for value,label in kind_choices %}<option value="{{ value }}" {% if active_filters.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-      <label>İşlem türü<select name="action"><option value="">Tümü</option>{% for value,label in action_choices %}<option value="{{ value }}" {% if active_filters.action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-      <div class="market-filter-group"><b>Fiyat aralığı</b><div class="market-filter-pair"><label>En az<input type="number" name="min_price" value="{{ active_filters.min_price }}" placeholder="0"></label><label>En çok<input type="number" name="max_price" value="{{ active_filters.max_price }}" placeholder="Fiyat"></label></div></div>
-      <label>Marka<input name="brand" value="{{ active_filters.brand }}" placeholder="Örn. Toyota, Apple"></label>
-      <label>Model<input name="model" value="{{ active_filters.model }}" placeholder="Model"></label>
-      <label>Ürün durumu<input name="condition" value="{{ active_filters.condition }}" placeholder="Sıfır, az kullanılmış..."></label>
-      <label>Teslimat<select name="delivery_type"><option value="">Tümü</option>{% for value,label in delivery_choices %}<option value="{{ value }}" {% if active_filters.delivery_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-      <div class="filter-vehicle-fields" data-kind-section="vehicle"><b>Araç filtreleri</b><div class="market-filter-pair"><label>Min. yıl<input type="number" name="min_year" value="{{ active_filters.min_year }}" placeholder="2018"></label><label>Maks. yıl<input type="number" name="max_year" value="{{ active_filters.max_year }}" placeholder="2026"></label></div><label>En fazla kilometre<input type="number" name="max_mileage" value="{{ active_filters.max_mileage }}" placeholder="100000"></label><label>Yakıt<select name="fuel_type"><option value="">Tümü</option>{% for value,label in fuel_choices %}<option value="{{ value }}" {% if active_filters.fuel_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><label>Vites<select name="transmission"><option value="">Tümü</option>{% for value,label in transmission_choices %}<option value="{{ value }}" {% if active_filters.transmission == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></div>
-      <div class="filter-estate-fields" data-kind-section="real_estate"><b>Emlak filtreleri</b><label>Oda sayısı<input name="room_count" value="{{ active_filters.room_count }}" placeholder="3+1"></label><div class="market-filter-pair"><label>Min. m²<input type="number" name="min_area" value="{{ active_filters.min_area }}"></label><label>Maks. m²<input type="number" name="max_area" value="{{ active_filters.max_area }}"></label></div></div>
-      <label class="market-check"><input type="checkbox" name="verified" value="1" {% if active_filters.verified == '1' %}checked{% endif %}> Doğrulanmış satıcı</label>
-      <label class="market-check"><input type="checkbox" name="managed" value="1" {% if active_filters.managed == '1' %}checked{% endif %}> İlan Şehri güvenceli</label>
-      <label class="market-check price-drop-check"><input type="checkbox" name="price_drop" value="1" {% if active_filters.price_drop == '1' %}checked{% endif %}> Fiyatı düşen ilanlar</label>
-      {% if user.is_authenticated %}<label class="market-check"><input type="checkbox" name="following" value="1" {% if active_filters.following == '1' %}checked{% endif %}> Takip ettiğim satıcılar</label>{% endif %}
-      <button class="button full">Sonuçları göster</button>
+    <div class="market-list-chips" aria-label="İlan türleri">
+      <a href="{% url 'listings:list' %}" class="{% if not active_filters.kind %}active{% endif %}">Tümü</a>
+      {% for value,label in kind_choices %}<a href="{% url 'listings:list' %}?kind={{ value }}{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.kind == value %}active{% endif %}">{{ label }}</a>{% endfor %}
+    </div>
+
+    {% if category_shortcuts %}
+      <nav class="v121-category-shortcuts" aria-label="Popüler alt kategoriler">
+        {% for category in category_shortcuts %}<a href="{{ category.url }}" class="{% if active_filters.category == category.id|stringformat:'s' %}active{% endif %}"><span>{{ category.icon }}</span><b>{{ category.name }}</b><small>{{ category.total }}</small></a>{% endfor %}
+      </nav>
+    {% endif %}
+
+    <nav class="v131-mobile-quick-filters" aria-label="Hızlı ilan filtreleri">
+      <button type="button" data-nearby-search data-url="{% url 'listings:list' %}" data-fallback-city="{% firstof active_filters.city user.city '' %}" data-fallback-district="{% firstof active_filters.district user.district '' %}" class="{% if active_filters.lat and active_filters.lng %}active{% endif %}"><span>◎</span> Yakınımda</button>
+      <a href="{% url 'listings:list' %}?sort=newest{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.sort == 'newest' %}active{% endif %}"><span>⚡</span> En yeni</a>
+      <a href="{% url 'listings:list' %}?price_drop=1&sort=price_drop{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.price_drop == '1' %}active{% endif %}"><span>↓</span> Fiyatı düşen</a>
+      <a href="{% url 'listings:list' %}?verified=1{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.verified == '1' %}active{% endif %}"><span>✓</span> Doğrulanmış</a>
+      {% if user.is_authenticated and user.city %}<a href="{% url 'listings:list' %}?city={{ user.city|urlencode }}{% if user.district %}&district={{ user.district|urlencode }}{% endif %}" class="{% if active_filters.city == user.city %}active{% endif %}"><span>⌖</span> Çevrem</a>{% endif %}
+    </nav>
+  </div>
+</section>
+
+<section class="market-list-layout shell v121-list-layout">
+  <aside class="market-filter v12-filter v121-filter-sheet" data-filter-panel aria-label="İlan filtreleri">
+    <div class="market-filter-title">
+      <div><small>SONUÇLARI DARALT</small><h2>Filtreler{% if active_filter_count %}<b>{{ active_filter_count }}</b>{% endif %}</h2></div>
+      <button type="button" class="filter-close" data-filter-close aria-label="Filtreleri kapat">×</button>
+      <a href="{% url 'listings:list' %}">Temizle</a>
+    </div>
+
+    <form method="get"
+          data-v121-filter-form
+          data-v121-location-form
+          data-location-url="{% url 'listings:location_suggestions' %}">
+      <input type="hidden" name="q" value="{{ active_filters.q }}">
+      {% if active_filters.lat and active_filters.lng %}<input type="hidden" name="lat" value="{{ active_filters.lat }}"><input type="hidden" name="lng" value="{{ active_filters.lng }}">{% endif %}
+
+      <section class="v121-filter-group">
+        <h3><span>1</span>Kategori ve işlem</h3>
+        <label>İlan türü
+          <select name="kind" data-kind-filter data-v121-kind-filter>
+            <option value="">Tüm ilan türleri</option>
+            {% for value,label in kind_choices %}<option value="{{ value }}" {% if active_filters.kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Kategori
+          <select name="category" data-v121-category-filter>
+            <option value="">Tüm kategoriler</option>
+            {% for category in category_options %}<option value="{{ category.id }}" data-category-kind="{{ category.kind }}" data-category-leaf="{{ category.is_leaf|yesno:'1,0' }}" {% if active_filters.category == category.id|stringformat:'s' %}selected{% endif %}>{% if category.depth %}— {% endif %}{{ category.path }}{% if not category.is_leaf %} (tümü){% endif %}</option>{% endfor %}
+          </select>
+        </label>
+        <label>İşlem türü
+          <select name="action" data-v121-action-filter>
+            <option value="">Tümü</option>
+            {% for value,label in action_choices %}<option value="{{ value }}" {% if active_filters.action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+      </section>
+
+      <section class="v121-filter-group v121-location-group">
+        <h3><span>2</span>Konum</h3>
+        <label>Şehir
+          <select name="city" data-v121-city><option value="">Tüm Türkiye</option>{% for value,label in city_choices %}<option value="{{ value }}" {% if active_filters.city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+        </label>
+        <label>İlçe<input name="district" value="{{ active_filters.district }}" placeholder="İlçe seçin veya yazın" list="filter-district-options" data-v121-district autocomplete="address-level2"></label>
+        <label>Mahalle<input name="neighborhood" value="{{ active_filters.neighborhood }}" placeholder="Mahalle" list="filter-neighborhood-options" data-v121-neighborhood autocomplete="address-level3"></label>
+        <datalist id="filter-district-options">{% for item in district_suggestions %}<option value="{{ item }}">{% endfor %}</datalist>
+        <datalist id="filter-neighborhood-options">{% for item in neighborhood_suggestions %}<option value="{{ item }}">{% endfor %}</datalist>
+        {% if active_filters.lat and active_filters.lng %}<label>Yakınlık yarıçapı<select name="radius"><option value="5" {% if active_filters.radius == '5' %}selected{% endif %}>5 km</option><option value="10" {% if active_filters.radius == '10' %}selected{% endif %}>10 km</option><option value="25" {% if active_filters.radius == '25' or not active_filters.radius %}selected{% endif %}>25 km</option><option value="50" {% if active_filters.radius == '50' %}selected{% endif %}>50 km</option><option value="100" {% if active_filters.radius == '100' %}selected{% endif %}>100 km</option></select></label>{% endif %}
+      </section>
+
+      <section class="v121-filter-group">
+        <h3><span>3</span>Fiyat</h3>
+        <div class="market-filter-pair"><label>En az<input type="number" min="0" name="min_price" value="{{ active_filters.min_price }}" placeholder="0 TL"></label><label>En çok<input type="number" min="0" name="max_price" value="{{ active_filters.max_price }}" placeholder="Üst sınır"></label></div>
+      </section>
+
+      <section class="v121-filter-group" data-kind-section="product">
+        <h3><span>4</span>Ürün ayrıntıları</h3>
+        <label>Marka<input name="brand" value="{{ active_filters.brand }}" placeholder="Örn. Apple, Bosch"></label>
+        <label>Model<input name="model" value="{{ active_filters.model }}" placeholder="Model"></label>
+        <label>Durum<input name="condition" value="{{ active_filters.condition }}" placeholder="Sıfır, az kullanılmış..."></label>
+        <label>Renk<input name="color" value="{{ active_filters.color }}" placeholder="Renk"></label>
+        <label>Teslimat<select name="delivery_type"><option value="">Tümü</option>{% for value,label in delivery_choices %}<option value="{{ value }}" {% if active_filters.delivery_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      </section>
+
+      <section class="v121-filter-group" data-kind-section="vehicle">
+        <h3><span>4</span>Araç ayrıntıları</h3>
+        <label>Marka<input name="brand" value="{{ active_filters.brand }}" placeholder="Örn. Toyota"></label>
+        <label>Model<input name="model" value="{{ active_filters.model }}" placeholder="Model"></label>
+        <div class="market-filter-pair"><label>Min. yıl<input type="number" name="min_year" value="{{ active_filters.min_year }}" placeholder="2018"></label><label>Maks. yıl<input type="number" name="max_year" value="{{ active_filters.max_year }}" placeholder="2026"></label></div>
+        <label>En fazla kilometre<input type="number" min="0" name="max_mileage" value="{{ active_filters.max_mileage }}" placeholder="100000"></label>
+        <label>Yakıt<select name="fuel_type"><option value="">Tümü</option>{% for value,label in fuel_choices %}<option value="{{ value }}" {% if active_filters.fuel_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label>Vites<select name="transmission"><option value="">Tümü</option>{% for value,label in transmission_choices %}<option value="{{ value }}" {% if active_filters.transmission == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      </section>
+
+      <section class="v121-filter-group" data-kind-section="real_estate">
+        <h3><span>4</span>Emlak ayrıntıları</h3>
+        <label>Oda sayısı<input name="room_count" value="{{ active_filters.room_count }}" placeholder="3+1"></label>
+        <div class="market-filter-pair"><label>Min. m²<input type="number" min="0" name="min_area" value="{{ active_filters.min_area }}"></label><label>Maks. m²<input type="number" min="0" name="max_area" value="{{ active_filters.max_area }}"></label></div>
+        <label>Azami bina yaşı<input type="number" min="0" name="max_building_age" value="{{ active_filters.max_building_age }}" placeholder="10"></label>
+        <label>Bulunduğu kat<input name="floor_location" value="{{ active_filters.floor_location }}" placeholder="Örn. 4. kat"></label>
+        <label>Isıtma<input name="heating_type" value="{{ active_filters.heating_type }}" placeholder="Doğalgaz, merkezi..."></label>
+      </section>
+
+      <section class="v121-filter-group" data-kind-section="service">
+        <h3><span>4</span>Hizmet ayrıntıları</h3>
+        <label>Hizmet bölgesi<input name="service_area" value="{{ active_filters.service_area }}" placeholder="İlçe veya hizmet alanı"></label>
+        <label>Ücret tipi<select name="fee_type"><option value="">Tümü</option>{% for value,label in fee_choices %}<option value="{{ value }}" {% if active_filters.fee_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      </section>
+
+      <section class="v121-filter-group" data-kind-section="job">
+        <h3><span>4</span>İş ayrıntıları</h3>
+        <label>Çalışma şekli<select name="job_type"><option value="">Tümü</option>{% for value,label in job_choices %}<option value="{{ value }}" {% if active_filters.job_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label>Deneyim<input name="experience_level" value="{{ active_filters.experience_level }}" placeholder="Deneyim seviyesi"></label>
+      </section>
+
+      <section class="v121-filter-group v121-trust-filters">
+        <h3><span>5</span>Güven ve fırsatlar</h3>
+        <label class="market-check"><input type="checkbox" name="verified" value="1" {% if active_filters.verified == '1' %}checked{% endif %}> Doğrulanmış satıcı</label>
+        <label class="market-check"><input type="checkbox" name="managed" value="1" {% if active_filters.managed == '1' %}checked{% endif %}> İlan Şehri güvenceli</label>
+        <label class="market-check price-drop-check"><input type="checkbox" name="price_drop" value="1" {% if active_filters.price_drop == '1' %}checked{% endif %}> Fiyatı düşen ilanlar</label>
+        {% if user.is_authenticated %}<label class="market-check"><input type="checkbox" name="following" value="1" {% if active_filters.following == '1' %}checked{% endif %}> Takip ettiğim satıcılar</label>{% endif %}
+      </section>
+
+      <div class="v121-filter-actions">
+        <a href="{% url 'listings:list' %}">Temizle</a>
+        <button class="button" type="submit">{{ paginator.count }} sonucu göster</button>
+      </div>
     </form>
   </aside>
   <div class="filter-overlay" data-filter-overlay></div>
 
   <div class="market-results">
-    <div class="market-results-top"><div><span class="v18-result-kicker">CANLI İLAN AKIŞI</span><h1>{% if active_filters.q %}“{{ active_filters.q }}” ilanları{% elif active_filters.kind %}Filtrelenen ilanlar{% else %}Tüm ilanlar{% endif %}</h1><p><b>{{ paginator.count }}</b> ilan bulundu{% if active_filter_labels %} · <span class="v18-active-count">{{ active_filter_labels|length }} aktif filtre</span>{% endif %}</p></div><div class="result-actions">{% if user.is_authenticated and request.GET %}<details class="save-search-popover"><summary>☆ Aramayı kaydet</summary><form method="post" action="{% url 'listings:save_search' %}">{% csrf_token %}{% for key,value in active_filters.items %}{% if key != 'page' and key != 'sort' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><label>Arama adı<input name="name" maxlength="120" value="{% if active_filters.q %}{{ active_filters.q }}{% elif active_filters.kind %}{{ active_filters.kind }} ilanları{% else %}Kayıtlı aramam{% endif %}" required></label><label>Bildirim sıklığı<select name="alert_frequency"><option value="instant">Anlık bildir</option><option value="daily">Günlük özet</option><option value="off">Bildirim kapalı</option></select></label><button class="button full" type="submit">Kaydet</button><a href="{% url 'listings:saved_searches' %}">Kayıtlı aramalarım →</a></form></details>{% endif %}<button class="mobile-filter-button" type="button" data-filter-open>☰ Filtrele{% if active_filter_labels %} · {{ active_filter_labels|length }}{% endif %}</button><div class="v16-view-switch" aria-label="İlan görünümü"><button type="button" data-result-view="grid" class="active" aria-label="Kart görünümü" aria-pressed="true">▦</button><button type="button" data-result-view="compact" aria-label="Kompakt görünüm" aria-pressed="false">☷</button></div><a class="compare-result-link" href="{% url 'listings:compare' %}">⇄ Karşılaştır{% if compare_count %} ({{ compare_count }}){% endif %}</a><form method="get">{% for key,value in active_filters.items %}{% if key != 'sort' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}<select name="sort" onchange="this.form.submit()">{% if active_filters.lat and active_filters.lng %}<option value="nearby" {% if active_filters.sort == 'nearby' %}selected{% endif %}>Mesafeye göre</option>{% endif %}<option value="newest" {% if active_filters.sort == 'newest' or not active_filters.sort %}selected{% endif %}>En yeni</option><option value="popular" {% if active_filters.sort == 'popular' %}selected{% endif %}>En popüler</option><option value="price_asc" {% if active_filters.sort == 'price_asc' %}selected{% endif %}>Fiyat: düşükten</option><option value="price_desc" {% if active_filters.sort == 'price_desc' %}selected{% endif %}>Fiyat: yüksekten</option><option value="price_drop" {% if active_filters.sort == 'price_drop' %}selected{% endif %}>Son fiyat düşüşleri</option><option value="oldest" {% if active_filters.sort == 'oldest' %}selected{% endif %}>En eski</option></select></form></div></div>
-    <div class="v131-mobile-result-summary" aria-live="polite"><strong>{{ paginator.count }} ilan</strong><span>{% if active_filter_labels %}{{ active_filter_labels|length }} filtre aktif{% else %}En güncel sonuçlar{% endif %}</span></div>
-    {% if active_filter_labels %}<div class="active-filter-row">{% for item in active_filter_labels %}<span><b>{{ item.label }}:</b> {{ item.value }}</span>{% endfor %}<a href="{% url 'listings:list' %}">Tümünü temizle</a></div>{% endif %}
-    <div class="market-card-grid list-grid">{% for listing in listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}<div class="market-empty v18-empty-state"><span>⌕</span><h3>Bu aramaya uygun ilan bulunamadı</h3><p>Fiyat aralığını genişlet, konumu kaldır veya tüm yeni ilanlara göz at.</p><div class="v18-empty-actions"><a href="{% url 'listings:list' %}" class="button">Filtreleri temizle</a><a href="{% url 'listings:list' %}?sort=newest" class="market-secondary-button">Yeni ilanları aç</a><a href="{% url 'listings:create' %}" class="market-secondary-button">Aradığını ilan et</a></div></div>{% endfor %}</div>
-    {% if is_paginated %}<nav class="market-pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}">Sonraki →</a>{% endif %}</nav>{% endif %}
+    <div class="market-results-top v121-results-top">
+      <div>
+        <span class="v18-result-kicker">KONUM ODAKLI İLAN AKIŞI</span>
+        <h1>{{ result_title }}</h1>
+        <p><b>{{ paginator.count }}</b> ilan bulundu{% if location_summary %} · <span>⌖ {{ location_summary }}</span>{% endif %}{% if active_filter_count %} · <span class="v18-active-count">{{ active_filter_count }} aktif filtre</span>{% endif %}</p>
+      </div>
+      <div class="result-actions">
+        {% if user.is_authenticated and active_filter_count %}<details class="save-search-popover"><summary>☆ Aramayı kaydet</summary><form method="post" action="{% url 'listings:save_search' %}">{% csrf_token %}{% for key,value in active_filters.items %}{% if key != 'sort' and value %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><label>Arama adı<input name="name" maxlength="120" value="{{ result_title }}" required></label><label>Bildirim sıklığı<select name="alert_frequency"><option value="instant">Anlık bildir</option><option value="daily">Günlük özet</option><option value="off">Bildirim kapalı</option></select></label><button class="button full" type="submit">Kaydet</button><a href="{% url 'listings:saved_searches' %}">Kayıtlı aramalarım →</a></form></details>{% endif %}
+        <button class="mobile-filter-button" type="button" data-filter-open>☰ Filtrele{% if active_filter_count %}<b>{{ active_filter_count }}</b>{% endif %}</button>
+        <div class="v16-view-switch" aria-label="İlan görünümü"><button type="button" data-result-view="grid" class="active" aria-label="Kart görünümü" aria-pressed="true">▦</button><button type="button" data-result-view="compact" aria-label="Kompakt görünüm" aria-pressed="false">☷</button></div>
+        <a class="compare-result-link" href="{% url 'listings:compare' %}">⇄ Karşılaştır{% if compare_count %} ({{ compare_count }}){% endif %}</a>
+        <form method="get" class="v121-sort-form">{% for key,value in active_filters.items %}{% if key != 'sort' and value %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}<label><span>Sırala</span><select name="sort" onchange="this.form.submit()">{% if active_filters.lat and active_filters.lng %}<option value="nearby" {% if active_filters.sort == 'nearby' %}selected{% endif %}>Mesafeye göre</option>{% endif %}<option value="newest" {% if active_filters.sort == 'newest' %}selected{% endif %}>En yeni</option><option value="popular" {% if active_filters.sort == 'popular' %}selected{% endif %}>En popüler</option><option value="price_asc" {% if active_filters.sort == 'price_asc' %}selected{% endif %}>Fiyat: düşükten</option><option value="price_desc" {% if active_filters.sort == 'price_desc' %}selected{% endif %}>Fiyat: yüksekten</option><option value="price_drop" {% if active_filters.sort == 'price_drop' %}selected{% endif %}>Son fiyat düşüşleri</option><option value="oldest" {% if active_filters.sort == 'oldest' %}selected{% endif %}>En eski</option></select></label></form>
+      </div>
+    </div>
+
+    <div class="v131-mobile-result-summary" aria-live="polite"><strong>{{ paginator.count }} ilan</strong><span>{% if active_filter_count %}{{ active_filter_count }} filtre aktif{% elif location_summary %}{{ location_summary }}{% else %}En güncel sonuçlar{% endif %}</span></div>
+
+    {% if active_filter_labels %}<div class="active-filter-row v121-active-filters" aria-label="Aktif filtreler">{% for item in active_filter_labels %}<a href="{{ item.remove_url }}" title="{{ item.label }} filtresini kaldır"><span><b>{{ item.label }}:</b> {{ item.value }}</span><i aria-hidden="true">×</i></a>{% endfor %}<a class="clear-all" href="{% url 'listings:list' %}">Tümünü temizle</a></div>{% endif %}
+
+    <div class="market-card-grid list-grid">{% for listing in listings %}{% include 'listings/_card.html' with listing=listing %}{% empty %}<div class="market-empty v18-empty-state v121-empty-state"><span>⌕</span><h3>Bu ölçütlerde ilan bulunamadı</h3><p>Önce mahalle veya ilçe filtresini kaldır; ardından fiyat aralığını genişlet.</p><div class="v18-empty-actions"><a href="{% url 'listings:list' %}" class="button">Filtreleri temizle</a>{% if active_filters.city %}<a href="{% url 'listings:list' %}?city={{ active_filters.city|urlencode }}" class="market-secondary-button">Yalnız {{ active_filters.city }} ilanları</a>{% endif %}<a href="{% url 'listings:create' %}" class="market-secondary-button">Aradığını ilan et</a></div></div>{% endfor %}</div>
+
+    {% if is_paginated %}<nav class="market-pagination" aria-label="Sayfalar">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}">Sonraki →</a>{% endif %}</nav>{% endif %}
   </div>
 </section>
 {% endblock %}

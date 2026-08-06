@@ -6,10 +6,12 @@ import re
 from django import forms
 from django.utils import timezone
 
-from .locations import CITY_CHOICES
+from .catalog import category_market_kind, category_matches_kind, category_path
+from .locations import CITY_CHOICES, get_districts, get_neighborhoods
 from .message_safety import analyze_message
 from .models import (
     Appointment,
+    Category,
     Listing,
     ListingReport,
     Message,
@@ -45,7 +47,39 @@ class MultipleFileField(forms.FileField):
         return [single_file_clean(data, initial)] if data else []
 
 
+
+
+class CategorySelect(forms.Select):
+    """Kategori seçeneklerine ilan türü ve yaprak bilgisi ekler."""
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        instance = getattr(value, "instance", None)
+        if instance is not None:
+            option["attrs"]["data-category-kind"] = category_market_kind(instance)
+            children = getattr(instance, "_prefetched_objects_cache", {}).get("children")
+            has_children = any(item.is_active for item in children) if children is not None else instance.children.filter(is_active=True).exists()
+            option["attrs"]["data-category-leaf"] = "0" if has_children else "1"
+            option["attrs"]["data-category-path"] = category_path(instance)
+        return option
+
+
+class CategoryChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        prefix = "— " if obj.parent_id else ""
+        children = getattr(obj, "_prefetched_objects_cache", {}).get("children")
+        has_children = any(item.is_active for item in children) if children is not None else obj.children.filter(is_active=True).exists()
+        suffix = " (tümü)" if has_children else ""
+        return f"{prefix}{category_path(obj)}{suffix}"
+
+
 class ListingForm(forms.ModelForm):
+    category = CategoryChoiceField(
+        queryset=Category.objects.none(),
+        label="Kategori",
+        empty_label="Önce ilan türünü, sonra alt kategoriyi seçin",
+        widget=CategorySelect(attrs={"data-category-select": "true"}),
+    )
     search_tags_text = forms.CharField(
         required=False,
         label="Arama etiketleri",
@@ -196,7 +230,12 @@ class ListingForm(forms.ModelForm):
         current_city = getattr(self.instance, "city", "")
         if current_city and current_city not in dict(self.fields["city"].choices):
             self.fields["city"].choices = (*self.fields["city"].choices, (current_city, current_city))
-        self.fields["category"].queryset = self.fields["category"].queryset.filter(is_active=True)
+        self.fields["category"].queryset = (
+            Category.objects.filter(is_active=True)
+            .select_related("parent", "parent__parent")
+            .prefetch_related("children")
+            .order_by("parent__sort_order", "parent__name", "sort_order", "name")
+        )
         if not self.is_bound and getattr(self.instance, "pk", None):
             self.fields["search_tags_text"].initial = ", ".join(self.instance.search_tags or [])
             self.fields["technical_features_text"].initial = "\n".join(self.instance.technical_features or [])
@@ -258,6 +297,27 @@ class ListingForm(forms.ModelForm):
             self.add_error("latitude", "Geçerli bir enlem değeri gönderilmedi.")
         if longitude is not None and not (-180 <= longitude <= 180):
             self.add_error("longitude", "Geçerli bir boylam değeri gönderilmedi.")
+
+        category = cleaned.get("category")
+        city = (cleaned.get("city") or "").strip()
+        district = " ".join((cleaned.get("district") or "").split())
+        neighborhood = " ".join((cleaned.get("neighborhood") or "").split())
+        cleaned["city"] = city
+        cleaned["district"] = district
+        cleaned["neighborhood"] = neighborhood
+
+        if category:
+            if not category_matches_kind(category, kind):
+                self.add_error("category", "Seçilen kategori ilan türüyle uyuşmuyor.")
+            if category.children.filter(is_active=True).exists():
+                self.add_error("category", "Daha doğru sonuçlar için bir alt kategori seç.")
+
+        known_districts = get_districts(city)
+        if known_districts and district and district.casefold() not in {item.casefold() for item in known_districts}:
+            self.add_error("district", "Bu şehir için listeden geçerli bir ilçe seç veya yazımı kontrol et.")
+        known_neighborhoods = get_neighborhoods(city, district)
+        if known_neighborhoods and neighborhood and neighborhood.casefold() not in {item.casefold() for item in known_neighborhoods}:
+            self.add_error("neighborhood", "Bu ilçe için listeden geçerli bir mahalle seç veya yazımı kontrol et.")
 
         allowed_actions = {
             Listing.Kind.PRODUCT: {Listing.Action.SELL, Listing.Action.RENT, Listing.Action.SWAP, Listing.Action.WANTED},

@@ -32,9 +32,11 @@ from .models import (
     Transaction,
     TransactionEvent,
 )
+from .forms import ListingForm
 from .matching import score_listing_pair, sync_listing_matches
 from .message_safety import analyze_message, safe_notification_preview
 from .pricing import build_price_guide
+from .search_alerts import apply_listing_filters
 from .safety import assess_listing_safety
 from .services import (
     assess_listing_quality,
@@ -1319,6 +1321,147 @@ class TrustSafetyInfrastructureTests(TestCase):
                 event_type=AccountRiskEvent.EventType.MESSAGE,
             ).exists()
         )
+
+
+class DiscoveryV121Tests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="discovery-owner",
+            password="StrongPass_2026",
+            city="Şanlıurfa",
+            district="Karaköprü",
+        )
+        self.product_root = Category.objects.create(
+            name="Ürün / Eşya", slug="urun-esya", sort_order=10
+        )
+        self.phone_category = Category.objects.create(
+            name="Cep Telefonu", slug="cep-telefonu-v121", parent=self.product_root, sort_order=10
+        )
+        self.vehicle_root = Category.objects.create(
+            name="Araç", slug="arac", sort_order=20
+        )
+        self.car_category = Category.objects.create(
+            name="Otomobil", slug="otomobil-v121", parent=self.vehicle_root, sort_order=10
+        )
+        self.phone = Listing.objects.create(
+            owner=self.owner,
+            category=self.phone_category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="Akpıyar test telefonu",
+            description="Kategori, mahalle ve mobil filtre testleri için temiz telefon ilanı.",
+            price=Decimal("25000"),
+            condition="Az kullanılmış",
+            city="Şanlıurfa",
+            district="Karaköprü",
+            neighborhood="Akpıyar",
+            status=Listing.Status.PUBLISHED,
+        )
+        self.other_phone = Listing.objects.create(
+            owner=self.owner,
+            category=self.phone_category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="Atakent test telefonu",
+            description="Mahalle filtresinin kesin sonuç vermesini doğrulayan ikinci ilan.",
+            price=Decimal("22000"),
+            condition="Temiz",
+            city="Şanlıurfa",
+            district="Karaköprü",
+            neighborhood="Atakent",
+            status=Listing.Status.PUBLISHED,
+        )
+
+    def base_form_data(self, **overrides):
+        data = {
+            "kind": Listing.Kind.PRODUCT,
+            "action": Listing.Action.SELL,
+            "management_mode": Listing.ManagementMode.SELF,
+            "category": str(self.phone_category.pk),
+            "title": "Kategori sözleşmesi test ilanı",
+            "description": "Kategori ve konum doğrulamasını güvenli biçimde sınayan yeterli açıklama.",
+            "price": "15000",
+            "condition": "Az kullanılmış",
+            "city": "Şanlıurfa",
+            "district": "Karaköprü",
+            "neighborhood": "Akpıyar",
+        }
+        data.update(overrides)
+        return data
+
+    def test_parent_category_filter_includes_child_listings(self):
+        queryset = apply_listing_filters(
+            Listing.objects.all(),
+            {"category": str(self.product_root.pk)},
+            user=self.owner,
+        )
+        self.assertIn(self.phone, queryset)
+        self.assertIn(self.other_phone, queryset)
+
+    def test_neighborhood_filter_is_exact_and_case_insensitive(self):
+        queryset = apply_listing_filters(
+            Listing.objects.all(),
+            {"city": "Şanlıurfa", "district": "karaköprü", "neighborhood": "akpıyar"},
+            user=self.owner,
+        )
+        self.assertEqual(list(queryset.order_by("pk")), [self.phone])
+
+    def test_listing_form_rejects_category_kind_mismatch(self):
+        form = ListingForm(
+            data=self.base_form_data(category=str(self.car_category.pk))
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("ilan türüyle uyuşmuyor", form.errors["category"][0])
+
+    def test_listing_form_requires_leaf_category(self):
+        form = ListingForm(
+            data=self.base_form_data(category=str(self.product_root.pk))
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("alt kategori", form.errors["category"][0])
+
+    def test_location_suggestions_include_published_marketplace_values(self):
+        Listing.objects.create(
+            owner=self.owner,
+            category=self.phone_category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="Batman konum kataloğu ilanı",
+            description="Katalogda olmayan ilçeyi güvenli öneri olarak sunan yayınlanmış ilan.",
+            price=Decimal("12000"),
+            condition="Temiz",
+            city="Batman",
+            district="Merkez",
+            neighborhood="Kültür",
+            status=Listing.Status.PUBLISHED,
+        )
+        response = self.client.get(
+            reverse("listings:location_suggestions"),
+            {"city": "Batman", "district": "Merkez"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Merkez", response.json()["districts"])
+        self.assertIn("Kültür", response.json()["neighborhoods"])
+
+    def test_listing_page_renders_mobile_filter_contract_and_active_chips(self):
+        response = self.client.get(
+            reverse("listings:list"),
+            {
+                "kind": Listing.Kind.PRODUCT,
+                "category": self.phone_category.pk,
+                "city": "Şanlıurfa",
+                "district": "Karaköprü",
+                "neighborhood": "Akpıyar",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-filter-drawer')
+        self.assertContains(response, 'data-v121-category-filter')
+        self.assertContains(response, 'data-v121-neighborhood')
+        self.assertContains(response, "Cep Telefonu")
+        self.assertContains(response, "Akpıyar")
+        self.assertContains(response, self.phone.title)
+        self.assertNotContains(response, self.other_phone.title)
 
 
 class AppointmentFlowTests(TestCase):

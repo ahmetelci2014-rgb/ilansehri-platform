@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusBox = assistant.querySelector("[data-ai-status]");
   const fileSummary = assistant.querySelector("[data-ai-file-summary]");
   const clearButton = assistant.querySelector("[data-ai-clear-images]");
+  const qualitySummary = assistant.querySelector("[data-photo-quality-summary]");
   const analysisInput = form?.querySelector("[data-ai-analysis-id]");
   const maxImages = Number(assistant.dataset.maxImages || 8);
   const maxImageSizeMb = Number(assistant.dataset.maxImageSize || 8);
@@ -73,6 +74,16 @@ document.addEventListener("DOMContentLoaded", () => {
     liveMedia.replaceChildren(image);
   };
 
+  const updatePhotoQuality = () => {
+    if (!qualitySummary) return;
+    const selected = files();
+    const warnings = preview?.querySelectorAll(".v121-photo-resolution.warning").length || 0;
+    qualitySummary.classList.toggle("warning", warnings > 0);
+    qualitySummary.innerHTML = selected.length
+      ? `<strong>${selected.length} fotoğraf seçildi</strong><span>${warnings ? `${warnings} fotoğraf düşük çözünürlüklü görünüyor.` : "Çözünürlük kontrolü temiz. İlk fotoğraf kapak adayıdır."}</span>`
+      : "<strong>Fotoğraf kontrolü</strong><span>Net, aydınlık ve farklı açılardan fotoğraflar ekle.</span>";
+  };
+
   const renderPreviews = () => {
     if (!preview) return;
     clearPreviewUrls();
@@ -86,9 +97,21 @@ document.addEventListener("DOMContentLoaded", () => {
       item.className = "ai-image-preview-item";
       item.innerHTML = `
         <img src="${url}" alt="Seçilen fotoğraf ${index + 1}">
-        <div><b>${index === 0 ? "Kapak adayı" : `${index + 1}. fotoğraf`}</b><small>${escapeHtml(file.name)}</small></div>
+        <div><b>${index === 0 ? "Kapak adayı" : `${index + 1}. fotoğraf`}</b><small>${escapeHtml(file.name)}</small><em class="v121-photo-resolution">Çözünürlük kontrol ediliyor…</em></div>
         <button type="button" aria-label="${index + 1}. fotoğrafı kaldır" data-ai-remove-image="${index}">×</button>
+        <div class="v121-photo-tools">
+          <button type="button" data-ai-move-image="${index}" data-direction="-1" aria-label="Fotoğrafı sola taşı" ${index === 0 ? "disabled" : ""}>←</button>
+          <button type="button" data-ai-move-image="${index}" data-direction="1" aria-label="Fotoğrafı sağa taşı" ${index === selected.length - 1 ? "disabled" : ""}>→</button>
+        </div>
       `;
+      const image = item.querySelector("img");
+      const resolution = item.querySelector(".v121-photo-resolution");
+      image.addEventListener("load", () => {
+        const lowResolution = image.naturalWidth < 900 || image.naturalHeight < 700;
+        resolution.textContent = `${image.naturalWidth}×${image.naturalHeight}${lowResolution ? " · daha yüksek çözünürlük önerilir" : " · uygun"}`;
+        resolution.classList.toggle("warning", lowResolution);
+        updatePhotoQuality();
+      }, { once: true });
       preview.appendChild(item);
     });
     updateLiveCover(selected[0]);
@@ -101,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector("[data-ai-review-photo-count]")?.replaceChildren(
       document.createTextNode(selected.length ? `${selected.length} fotoğraf hazır.` : "Henüz fotoğraf eklenmedi.")
     );
+    updatePhotoQuality();
   };
 
   const validateFiles = () => {
@@ -306,9 +330,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   preview?.addEventListener("click", (event) => {
     const remove = event.target.closest("[data-ai-remove-image]");
-    if (!remove) return;
-    const index = Number(remove.dataset.aiRemoveImage);
-    syncFileList(files().filter((_file, itemIndex) => itemIndex !== index));
+    if (remove) {
+      const index = Number(remove.dataset.aiRemoveImage);
+      syncFileList(files().filter((_file, itemIndex) => itemIndex !== index));
+      return;
+    }
+    const move = event.target.closest("[data-ai-move-image]");
+    if (!move) return;
+    const index = Number(move.dataset.aiMoveImage);
+    const target = index + Number(move.dataset.direction || 0);
+    const nextFiles = files();
+    if (target < 0 || target >= nextFiles.length) return;
+    [nextFiles[index], nextFiles[target]] = [nextFiles[target], nextFiles[index]];
+    syncFileList(nextFiles);
   });
 
   clearButton?.addEventListener("click", () => syncFileList([]));

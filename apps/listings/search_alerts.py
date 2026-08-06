@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from apps.accounts.models import UserFollow
 
+from .catalog import descendant_category_ids
 from .models import Listing, ListingPriceHistory
 
 
@@ -21,18 +22,24 @@ ALLOWED_SAVED_SEARCH_PARAMS = {
     "q",
     "city",
     "district",
+    "neighborhood",
     "kind",
     "action",
     "category",
     "brand",
     "model",
     "condition",
+    "color",
     "delivery_type",
     "fuel_type",
     "transmission",
     "fee_type",
     "job_type",
     "room_count",
+    "heating_type",
+    "floor_location",
+    "service_area",
+    "experience_level",
     "managed",
     "verified",
     "price_drop",
@@ -44,6 +51,7 @@ ALLOWED_SAVED_SEARCH_PARAMS = {
     "max_mileage",
     "min_area",
     "max_area",
+    "max_building_age",
     "lat",
     "lng",
     "radius",
@@ -54,10 +62,16 @@ MAX_TEXT_LENGTHS = {
     "q": 80,
     "city": 80,
     "district": 80,
+    "neighborhood": 120,
     "brand": 100,
     "model": 100,
     "condition": 50,
+    "color": 60,
     "room_count": 30,
+    "heating_type": 80,
+    "floor_location": 60,
+    "service_area": 160,
+    "experience_level": 80,
 }
 ALLOWED_RADIUS_KM = (5, 10, 25, 50, 100)
 
@@ -102,7 +116,7 @@ def normalize_saved_search_params(params) -> dict[str, str]:
         if key in {"kind", "action", "delivery_type", "fuel_type", "transmission", "fee_type", "job_type"}:
             cleaned[key] = value[:32]
             continue
-        if key in {"category", "min_year", "max_year", "max_mileage", "min_area", "max_area"}:
+        if key in {"category", "min_year", "max_year", "max_mileage", "min_area", "max_area", "max_building_age"}:
             parsed = _safe_int(value)
             if parsed is not None and parsed >= 0:
                 cleaned[key] = str(parsed)
@@ -164,7 +178,6 @@ def apply_listing_filters(qs, params, *, user=None):
         "kind": "kind",
         "action": "action",
         "room_count": "room_count",
-        "category": "category_id",
         "delivery_type": "delivery_type",
         "fuel_type": "fuel_type",
         "transmission": "transmission",
@@ -172,11 +185,21 @@ def apply_listing_filters(qs, params, *, user=None):
         "job_type": "job_type",
     }
     partial_filters = {
-        "district": "district__icontains",
+        "district": "district__iexact",
+        "neighborhood": "neighborhood__iexact",
         "brand": "brand__icontains",
         "model": "model_name__icontains",
         "condition": "condition__icontains",
+        "color": "color__icontains",
+        "heating_type": "heating_type__icontains",
+        "floor_location": "floor_location__icontains",
+        "service_area": "service_area__icontains",
+        "experience_level": "experience_level__icontains",
     }
+    category_id = _safe_int(params.get("category"))
+    if category_id:
+        qs = qs.filter(category_id__in=descendant_category_ids(category_id))
+
     for key, lookup in exact_filters.items():
         value = params.get(key)
         if value:
@@ -194,6 +217,7 @@ def apply_listing_filters(qs, params, *, user=None):
         "max_mileage": ("mileage__lte", _safe_int),
         "min_area": ("area_m2__gte", _safe_int),
         "max_area": ("area_m2__lte", _safe_int),
+        "max_building_age": ("building_age__lte", _safe_int),
     }
     for key, (lookup, parser) in numeric_filters.items():
         if key in params:

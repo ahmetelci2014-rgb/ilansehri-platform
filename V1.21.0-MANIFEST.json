@@ -1,0 +1,58 @@
+{
+  "version": "v1.21.0",
+  "base_version": "v1.20.0",
+  "title": "Kategori, filtre, konum ve mobil keşif",
+  "created_at_utc": "2026-08-06T13:17:04+00:00",
+  "schema_change": false,
+  "migration_required": false,
+  "expected_mobile_audit_pages": 138,
+  "source_test_method_count": 124,
+  "added_files": [
+    "V1.21.0-DENETIM-RAPORU.md",
+    "V1.21.0-YUKLEME.txt",
+    "apps/listings/catalog.py",
+    "docs/DISCOVERY_V121.md",
+    "static/css/v121-discovery.css",
+    "static/js/v121-discovery.js"
+  ],
+  "modified_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/management/commands/seed_categories.py",
+    "apps/core/tests.py",
+    "apps/core/views.py",
+    "apps/listings/forms.py",
+    "apps/listings/search_alerts.py",
+    "apps/listings/tests.py",
+    "apps/listings/views.py",
+    "scripts/check_mobile_contract.py",
+    "scripts/mobile_audit.py",
+    "scripts/start_codespace.sh",
+    "static/js/app.js",
+    "static/js/v112-ai.js",
+    "static/js/v132-mobile-system.js",
+    "templates/base.html",
+    "templates/listings/form.html",
+    "templates/listings/list.html"
+  ],
+  "deleted_files": [],
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_node_check": "passed",
+    "bash_syntax": "passed",
+    "yaml_parse": "passed",
+    "json_parse": "passed",
+    "css_balance": "passed",
+    "template_balance": "passed",
+    "template_static_and_url_contract": "passed",
+    "mobile_contract": "passed",
+    "django_tests": "pending_github_actions",
+    "playwright_mobile_audit": "pending_github_actions"
+  },
+  "notes": [
+    "Mevcut veriler silinmez.",
+    "Kategori kataloğu seed_categories ile idempotent güncellenir.",
+    "Randevu ve görev ortağı modülleri korunur fakat ana keşifte ikincil konumdadır."
+  ]
+}

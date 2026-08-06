@@ -122,7 +122,7 @@
     });
 
     window.__ILANSEHRI_MOBILE_AUDIT__ = {
-      version: "v1.20.0",
+      version: "v1.21.0",
       viewport: { width: viewportWidth, height: window.innerHeight },
       path: window.location.pathname,
       overflows: findings.slice(0, 50),

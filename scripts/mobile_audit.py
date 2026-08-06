@@ -30,6 +30,8 @@ VIEWPORTS = (
 PUBLIC_ROUTES = (
     ("home", "/"),
     ("listings", "/ilanlar/"),
+    ("location-filter", "/ilanlar/?city=%C5%9Eanl%C4%B1urfa&district=Karak%C3%B6pr%C3%BC&neighborhood=Akp%C4%B1yar"),
+    ("category-filter", "/ilanlar/?kind=product&category=2&sort=newest"),
     ("product-category", "/ilanlar/kategori/product/"),
     ("vehicle-category", "/ilanlar/kategori/vehicle/"),
     ("listing-detail", "/ilanlar/demo-telefon/"),
