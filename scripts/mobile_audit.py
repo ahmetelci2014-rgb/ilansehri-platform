@@ -34,6 +34,8 @@ PUBLIC_ROUTES = (
     ("category-filter", "/ilanlar/?kind=product&category=2&sort=newest"),
     ("product-category", "/ilanlar/kategori/product/"),
     ("vehicle-category", "/ilanlar/kategori/vehicle/"),
+    ("real-estate-category", "/ilanlar/kategori/real_estate/"),
+    ("service-category", "/ilanlar/kategori/service/"),
     ("listing-detail", "/ilanlar/demo-telefon/"),
     ("compare", "/ilanlar/karsilastir/"),
     ("login", "/hesap/login/"),

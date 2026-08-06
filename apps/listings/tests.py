@@ -1461,7 +1461,17 @@ class DiscoveryV121Tests(TestCase):
         self.assertContains(response, "Cep Telefonu")
         self.assertContains(response, "Akpıyar")
         self.assertContains(response, self.phone.title)
+        self.assertContains(response, 'data-market-card')
+        self.assertContains(response, 'v122-card-category')
         self.assertNotContains(response, self.other_phone.title)
+
+    def test_listing_form_renders_v122_progress_and_review_contract(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("listings:create"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-v122-wizard-progress')
+        self.assertContains(response, 'data-v122-review-checklist')
+        self.assertContains(response, 'data-v122-check="photo"')
 
 
 class AppointmentFlowTests(TestCase):

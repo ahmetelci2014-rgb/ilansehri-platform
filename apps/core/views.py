@@ -13,7 +13,8 @@ from django.views.generic import TemplateView
 
 from apps.accounts.models import AccountClosureRequest, AccountRiskEvent, User, UserFollow, UserReport
 from apps.ai_listing.models import AIAnalysis, AISettings
-from apps.listings.models import Favorite, Listing, ListingPriceHistory, ListingReport, Offer, Review, Transaction
+from apps.listings.catalog import category_market_kind
+from apps.listings.models import Category, Favorite, Listing, ListingPriceHistory, ListingReport, Offer, Review, Transaction
 from apps.managed_services.models import ManagedRequest
 from apps.partners.models import PartnerProfile, Task
 from apps.support_center.models import StaffActionLog, SupportTicket
@@ -44,10 +45,18 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         published = _listing_queryset()
         preferred_city = (self.request.GET.get("city") or "").strip()
-        if not preferred_city and self.request.user.is_authenticated:
-            preferred_city = self.request.user.city.strip()
+        preferred_district = (self.request.GET.get("district") or "").strip()
+        if self.request.user.is_authenticated:
+            if not preferred_city:
+                preferred_city = self.request.user.city.strip()
+            if not preferred_district:
+                preferred_district = self.request.user.district.strip()
 
         nearby = published.filter(city__iexact=preferred_city) if preferred_city else published
+        if preferred_district:
+            district_nearby = nearby.filter(district__iexact=preferred_district)
+            if district_nearby.exists():
+                nearby = district_nearby
         if preferred_city and not nearby.exists():
             nearby = published
 
@@ -94,9 +103,48 @@ class HomeView(TemplateView):
             row["kind"]: row["total"]
             for row in published.order_by().values("kind").annotate(total=Count("id"))
         }
+        category_counts = {
+            row["category_id"]: row["total"]
+            for row in published.order_by().values("category_id").annotate(total=Count("id"))
+        }
+        category_shortcuts: dict[str, list[dict]] = {kind: [] for kind, _label in Listing.Kind.choices}
+        category_rows = (
+            Category.objects.filter(is_active=True)
+            .select_related("parent", "parent__parent")
+            .annotate(active_child_count=Count("children", filter=Q(children__is_active=True)))
+        )
+        for category in category_rows:
+            kind = category_market_kind(category)
+            if not kind or category.active_child_count:
+                continue
+            category_shortcuts.setdefault(kind, []).append(
+                {
+                    "id": category.pk,
+                    "label": category.name,
+                    "count": category_counts.get(category.pk, 0),
+                    "sort_order": category.sort_order,
+                }
+            )
+        for kind, rows in category_shortcuts.items():
+            rows.sort(key=lambda row: (-row["count"], row["sort_order"], row["label"].casefold()))
+            category_shortcuts[kind] = rows[:3]
+
+        category_tiles = [
+            {"kind": Listing.Kind.PRODUCT, "label": "Ürün & Eşya", "icon": "📱"},
+            {"kind": Listing.Kind.VEHICLE, "label": "Araç", "icon": "🚗"},
+            {"kind": Listing.Kind.REAL_ESTATE, "label": "Emlak", "icon": "🏠"},
+            {"kind": Listing.Kind.SERVICE, "label": "Hizmet", "icon": "🛠️"},
+            {"kind": Listing.Kind.JOB, "label": "İş", "icon": "💼"},
+            {"kind": Listing.Kind.NEED, "label": "Arıyorum", "icon": "📣"},
+        ]
+        for tile in category_tiles:
+            tile["count"] = kind_counts.get(tile["kind"], 0)
+            tile["shortcuts"] = category_shortcuts.get(tile["kind"], [])
+
         context.update(
             {
                 "preferred_city": preferred_city,
+                "preferred_district": preferred_district,
                 "latest_listings": latest,
                 "popular_listings": popular,
                 "vehicle_listings": vehicles,
@@ -107,17 +155,10 @@ class HomeView(TemplateView):
                 "recently_viewed": recently_viewed,
                 "favorite_ids": favorite_ids,
                 "compare_ids": set(self.request.session.get("compare_listing_ids", [])),
-                "category_tiles": [
-                    {"kind": Listing.Kind.PRODUCT, "label": "Ürün & Eşya", "icon": "📱", "count": kind_counts.get(Listing.Kind.PRODUCT, 0)},
-                    {"kind": Listing.Kind.VEHICLE, "label": "Araç", "icon": "🚗", "count": kind_counts.get(Listing.Kind.VEHICLE, 0)},
-                    {"kind": Listing.Kind.REAL_ESTATE, "label": "Emlak", "icon": "🏠", "count": kind_counts.get(Listing.Kind.REAL_ESTATE, 0)},
-                    {"kind": Listing.Kind.SERVICE, "label": "Hizmet", "icon": "🛠️", "count": kind_counts.get(Listing.Kind.SERVICE, 0)},
-                    {"kind": Listing.Kind.JOB, "label": "İş", "icon": "💼", "count": kind_counts.get(Listing.Kind.JOB, 0)},
-                    {"kind": Listing.Kind.NEED, "label": "Arıyorum", "icon": "📣", "count": kind_counts.get(Listing.Kind.NEED, 0)},
-                ],
+                "category_tiles": category_tiles,
                 "listing_count": published.count(),
                 "member_count": User.objects.filter(is_active=True).count(),
-                "partner_count": PartnerProfile.objects.filter(status=PartnerProfile.Status.ACTIVE).count(),
+                "active_city_count": published.order_by().exclude(city="").values("city").distinct().count(),
                 "review_count": Review.objects.filter(is_visible=True).count(),
             }
         )
@@ -321,7 +362,7 @@ def manifest(request):
 def service_worker(request):
     script = r'''
 const CACHE = "ilansehri-v__CACHE__";
-const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/css/v111-operations.css", "/static/css/v112-ai.css", "/static/css/v113-mobile-market.css", "/static/css/v132-mobile-system.css", "/static/css/v14-matching.css", "/static/css/v141-price-guide.css", "/static/css/v15-message-safety.css", "/static/css/v117-search-alerts.css", "/static/css/v118-trust-safety.css", "/static/css/v119-transactions.css", "/static/css/v120-appointments.css", "/static/css/v121-discovery.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/js/v111-operations.js", "/static/js/v112-ai.js", "/static/js/v113-mobile-market.js", "/static/js/v132-mobile-system.js", "/static/js/v141-price-guide.js", "/static/js/v15-message-safety.js", "/static/js/v116-location-discovery.js", "/static/js/v121-discovery.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
+const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/css/v111-operations.css", "/static/css/v112-ai.css", "/static/css/v113-mobile-market.css", "/static/css/v132-mobile-system.css", "/static/css/v14-matching.css", "/static/css/v141-price-guide.css", "/static/css/v15-message-safety.css", "/static/css/v117-search-alerts.css", "/static/css/v118-trust-safety.css", "/static/css/v119-transactions.css", "/static/css/v120-appointments.css", "/static/css/v121-discovery.css", "/static/css/v122-market-polish.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/js/v111-operations.js", "/static/js/v112-ai.js", "/static/js/v113-mobile-market.js", "/static/js/v132-mobile-system.js", "/static/js/v141-price-guide.js", "/static/js/v15-message-safety.js", "/static/js/v116-location-discovery.js", "/static/js/v121-discovery.js", "/static/js/v122-market-polish.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
 const PRIVATE_PREFIXES = ["/hesap/", "/yardim/talep/", "/yardim/taleplerim/", "/yardim/ekip/", "/ilanlar/favorilerim/", "/ilanlar/aramalarim/", "/ilanlar/taslaklarim/", "/ilanlar/yapay-zeka/", "/ilanlar/fiyat-rehberi/", "/ilanlar/mesajlar/", "/ilanlar/randevularim/", "/ilanlar/randevu/", "/ilanlar/bildirimler/", "/ilanlar/eslesmelerim/", "/ilanlar/tekliflerim/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));

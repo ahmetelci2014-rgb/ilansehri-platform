@@ -1,16 +1,15 @@
 # İlan Şehri
 
-## v1.21 Kategori, filtre, konum ve mobil keşif
+## v1.22 Mobil görsel düzen ve ilan kalitesi
 
-- Profesyonel kök/alt kategori kataloğu ve ilan türü–kategori uyumluluk kontrolü eklendi.
-- Kök kategori aramaları bütün aktif alt kategorileri kapsar.
-- Mahalle, renk, ısıtma, kat, hizmet bölgesi, deneyim ve bina yaşı ortak filtre motoruna bağlandı.
-- Şehir–ilçe–mahalle önerileri katalog ve yayındaki ilan konumlarıyla birlikte çalışır.
-- Mobil filtre paneli, aktif filtre etiketleri, kategori kısayolları ve konum özeti yenilendi.
-- Yeni fotoğraflarda sıralama, kaldırma, kapak adayı ve çözünürlük uyarısı eklendi.
-- Randevu ve görev ortağı bağlantıları ana ilan deneyimini kalabalıklaştırmayacak biçimde ikincil konuma alındı.
+- Ana sayfa kategori alanı, alt kategori kısayolları bulunan profesyonel kategori merkezine dönüştürüldü.
+- Ana vitrindeki görev ortağı sayacı kaldırıldı; aktif şehir ve ilan pazarı verileri öne çıkarıldı.
+- İlan kartlarında kategori, pazarlık, fotoğraf, satıcı ve mahalle bilgileri daha dengeli gösteriliyor.
+- İlan verme ekranına gerçek zamanlı ilerleme göstergesi ve yayın öncesi eksik kontrol listesi eklendi.
+- Ana sayfa araması şehir yanında ilçe girişini de destekliyor.
+- Mobil kart, kategori, fotoğraf ve ilan verme düzeni 360–430 px ekranlar için yeniden dengelendi.
 
-> Güncel sürüm: **v1.21.0** — kategori, filtre, konum ve mobil ilan keşfi güçlendirildi.
+> Güncel sürüm: **v1.22.0** — mobil görsel düzen, ilan kartı ve ilan verme kalitesi güçlendirildi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 

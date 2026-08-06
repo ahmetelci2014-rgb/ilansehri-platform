@@ -87,6 +87,10 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "js/v132-mobile-system.js")
         self.assertContains(response, "css/v121-discovery.css")
         self.assertContains(response, "js/v121-discovery.js")
+        self.assertContains(response, "css/v122-market-polish.css")
+        self.assertContains(response, "js/v122-market-polish.js")
+        self.assertContains(response, "data-v122-category-hub")
+        self.assertContains(response, "aktif şehir")
         self.assertContains(response, "css/v14-matching.css")
         self.assertContains(response, "css/v141-price-guide.css")
         self.assertContains(response, "js/v141-price-guide.js")
@@ -130,6 +134,8 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "/static/css/v120-appointments.css")
         self.assertContains(response, "/static/css/v121-discovery.css")
         self.assertContains(response, "/static/js/v121-discovery.js")
+        self.assertContains(response, "/static/css/v122-market-polish.css")
+        self.assertContains(response, "/static/js/v122-market-polish.js")
 
 
 class MobileSystemContractTests(TestCase):

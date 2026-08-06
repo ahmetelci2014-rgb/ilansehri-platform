@@ -70,6 +70,7 @@
       <nav class="v16-stepper" aria-label="İlan oluşturma adımları" data-ai-wizard-start>
         <button type="button" data-v16-step="1"><span>1</span>Tür</button><button type="button" data-v16-step="2"><span>2</span>Temel bilgiler</button><button type="button" data-v16-step="3"><span>3</span>Ayrıntılar</button><button type="button" data-v16-step="4"><span>4</span>Konum</button><button type="button" data-v16-step="5"><span>5</span>Kontrol</button>
       </nav>
+      <div class="v122-wizard-progress" data-v122-wizard-progress aria-live="polite"><div><i data-v122-wizard-progress-bar></i></div><span data-v122-wizard-progress-text>İlan hazırlığı başladı</span></div>
 
       <section class="v16-wizard-section" data-v16-section="1">
         <div class="v16-step-head"><span>01</span><div><h2>Ne ilanı veriyorsun?</h2><p>AI önerisini kontrol et veya doğru tür ve kategoriyi kendin seç.</p></div></div>
@@ -118,6 +119,16 @@
           </div>
         {% endif %}
         {% if object and object.images.exists %}<div class="v16-existing-images" data-sortable-images>{% for image in object.images.all %}<article data-image-id="{{ image.pk }}"><img src="{{ image.image.url }}" alt="{{ image.alt_text }}"><span>{% if image.is_cover %}Kapak fotoğrafı{% else %}{{ forloop.counter }}. fotoğraf{% endif %}</span><div><button type="submit" formaction="{% url 'listings:set_cover_image' object.slug image.pk %}" formmethod="post" formnovalidate>Kapak yap</button><button type="submit" formaction="{% url 'listings:delete_image' object.slug image.pk %}" formmethod="post" formnovalidate class="danger-link">Sil</button></div></article>{% endfor %}</div><input type="hidden" name="image_order" data-image-order><button type="submit" class="button secondary image-order-save" formaction="{% url 'listings:reorder_images' object.slug %}" formmethod="post" formnovalidate data-image-order-submit>Fotoğraf sırasını kaydet</button>{% endif %}
+        <div class="v122-review-checklist" data-v122-review-checklist>
+          <div><b>Yayın öncesi ilan kontrolü</b><small>Eksik maddeleri tamamladığında ilan daha hızlı incelenir.</small></div>
+          <ul>
+            <li data-v122-check="category"><span>○</span>Doğru alt kategori seçildi</li>
+            <li data-v122-check="title"><span>○</span>Açıklayıcı başlık ve açıklama hazır</li>
+            <li data-v122-check="price"><span>○</span>Fiyat veya teklif seçeneği belirlendi</li>
+            <li data-v122-check="location"><span>○</span>Şehir ve ilçe tamamlandı</li>
+            <li data-v122-check="photo"><span>○</span>En az bir ilan fotoğrafı hazır</li>
+          </ul>
+        </div>
         <div class="v16-choice-help"><b>Yayın öncesi kontrol:</b> Yanıltıcı, yasaklı veya başka kişilere ait içerikler yayınlanmaz. Yapay zekâ önerileri ilan sahibinin sorumluluğunu ortadan kaldırmaz.</div>
       </section>
 

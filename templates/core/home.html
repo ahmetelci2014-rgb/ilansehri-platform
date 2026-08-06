@@ -8,9 +8,10 @@
       <span class="v16-eyebrow"><i></i> Şehrindeki gerçek ilan pazarı</span>
       <h1>Yakınındaki ilanları <span>hızlıca keşfet.</span></h1>
       <p>İkinci el ürün, araç, emlak, hizmet ve iş ilanlarını tek yerde ara; satıcıyla doğrudan mesajlaş, teklif ver ve güvenli biçimde anlaş.</p>
-      <form class="v16-search-card" action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}">
+      <form class="v16-search-card v122-home-search" action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}">
         <div class="v16-search-field"><span>⌕</span><input name="q" placeholder="Telefon, otomobil, ev, koltuk, usta ara..." autocomplete="off" data-search-input><div class="search-suggestion-panel" data-search-results hidden></div></div>
-        <div class="v16-search-field location"><span>⌖</span><input name="city" value="{{ preferred_city }}" placeholder="Şehir"></div>
+        <div class="v16-search-field location"><span>⌖</span><input name="city" value="{{ preferred_city }}" placeholder="Şehir" autocomplete="address-level1" aria-label="Şehir"></div>
+        <div class="v16-search-field location v122-district-field"><span>◎</span><input name="district" value="{{ preferred_district }}" placeholder="İlçe" autocomplete="address-level2" aria-label="İlçe"></div>
         <button type="submit">İlan ara</button>
       </form>
       <div class="v16-hero-chips"><span>Popüler aramalar</span><a href="{% url 'listings:list' %}?q=telefon">Telefon</a><a href="{% url 'listings:list' %}?kind=vehicle">Otomobil</a><a href="{% url 'listings:list' %}?kind=real_estate&action=rent">Kiralık ev</a><a href="{% url 'listings:list' %}?kind=service">Usta</a><a href="{% url 'listings:list' %}?price_drop=1">Fiyatı düşenler</a></div>
@@ -52,11 +53,20 @@
 <section class="v16-category-zone">
   <div class="shell v16-section-shell">
     <div class="v16-section-heading"><div><h2>Ne arıyorsun?</h2><p>Kategorini seç, doğrudan ilanlara ulaş.</p></div><a href="{% url 'listings:list' %}">Tüm ilanlar →</a></div>
-    <div class="v16-category-grid">
-      {% for tile in category_tiles %}<a class="v16-category-card {{ tile.kind }}" href="{% url 'listings:kind_landing' tile.kind %}"><span class="v16-category-icon">{{ tile.icon }}</span><b>{{ tile.label }}</b><small>{{ tile.count }} aktif ilan</small></a>{% endfor %}
+    <div class="v16-category-grid v122-category-hub" data-v122-category-hub>
+      {% for tile in category_tiles %}
+        <article class="v122-category-card {{ tile.kind }}">
+          <a class="v122-category-main" href="{% url 'listings:kind_landing' tile.kind %}">
+            <span class="v16-category-icon">{{ tile.icon }}</span>
+            <span class="v122-category-copy"><b>{{ tile.label }}</b><small>{{ tile.count }} aktif ilan</small></span>
+            <i aria-hidden="true">→</i>
+          </a>
+          {% if tile.shortcuts %}<div class="v122-category-shortcuts" aria-label="{{ tile.label }} alt kategorileri">{% for shortcut in tile.shortcuts %}<a href="{% url 'listings:list' %}?kind={{ tile.kind }}&category={{ shortcut.id }}">{{ shortcut.label }}{% if shortcut.count %}<small>{{ shortcut.count }}</small>{% endif %}</a>{% endfor %}</div>{% else %}<a class="v122-category-empty" href="{% url 'listings:create' %}">Bu kategoride ilk ilanı ver</a>{% endif %}
+        </article>
+      {% endfor %}
     </div>
-    <div class="v16-home-stats">
-      <div><b>{{ listing_count }}</b><span>aktif ilan</span></div><div><b>{{ member_count }}</b><span>kayıtlı üye</span></div><div><b>{{ partner_count }}</b><span>görev ortağı</span></div><div><b>{{ review_count }}</b><span>değerlendirme</span></div>
+    <div class="v16-home-stats v122-home-stats">
+      <div><b>{{ listing_count }}</b><span>aktif ilan</span></div><div><b>{{ member_count }}</b><span>kayıtlı üye</span></div><div><b>{{ active_city_count }}</b><span>aktif şehir</span></div><div><b>{{ review_count }}</b><span>doğrulanmış değerlendirme</span></div>
       <a href="{% url 'listings:create' %}"><i>＋</i><div><b>Ücretsiz ilan ver</b><span>Fotoğrafını ekle, birkaç adımda yayınla</span></div></a>
     </div>
   </div>

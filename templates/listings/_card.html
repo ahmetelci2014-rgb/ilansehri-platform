@@ -1,10 +1,10 @@
 {% with price_change=listing.latest_price_change %}
-<article data-listing-kind="{{ listing.kind }}" class="market-card{% if listing.is_featured %} is-featured{% endif %}{% if price_change and price_change.is_drop %} has-price-drop{% endif %}">
+<article data-market-card data-listing-kind="{{ listing.kind }}" class="market-card{% if listing.is_featured %} is-featured{% endif %}{% if price_change and price_change.is_drop %} has-price-drop{% endif %}">
   <a class="market-card-link" href="{{ listing.get_absolute_url }}" aria-label="{{ listing.title }}">
     <div class="market-card-media">
       {% with cover=listing.cover_image %}
-        {% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}" loading="lazy">
-        {% else %}<div class="market-card-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}
+        {% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}" loading="lazy" decoding="async">
+        {% else %}<div class="market-card-placeholder kind-{{ listing.kind }}"><span>{% if listing.kind == 'vehicle' %}🚘{% elif listing.kind == 'real_estate' %}🏠{% elif listing.kind == 'service' %}🛠️{% elif listing.kind == 'job' %}💼{% elif listing.kind == 'need' %}📣{% else %}📦{% endif %}</span><small>Fotoğraf bekleniyor</small></div>{% endif %}
       {% endwith %}
       <div class="market-card-badges">
         <span class="market-card-action">{{ listing.get_action_display }}</span>
@@ -12,10 +12,10 @@
         {% if listing.is_featured %}<span class="market-card-featured">Öne çıkan</span>{% endif %}
         {% if listing.management_mode == 'full' %}<span class="market-card-managed">✓ Güvenceli</span>{% endif %}
       </div>
-      <span class="v131-card-kind">{{ listing.get_kind_display }}</span>
       {% if listing.images.count %}<span class="market-card-photo">▣ {{ listing.images.count }}</span>{% endif %}
     </div>
     <div class="market-card-body">
+      <div class="v122-card-category"><span>{{ listing.category.name }}</span>{% if listing.is_negotiable %}<em>Pazarlık olur</em>{% endif %}</div>
       <div class="market-price-line">
         <strong class="market-card-price">{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>
         {% if price_change and price_change.is_drop %}<del>{{ price_change.old_price|floatformat:"0g" }} TL</del>{% endif %}
@@ -24,15 +24,17 @@
       <div class="market-card-specs">
         {% if listing.kind == 'vehicle' %}{% if listing.model_year %}<span>{{ listing.model_year }}</span>{% endif %}{% if listing.mileage %}<span>{{ listing.mileage }} km</span>{% endif %}{% if listing.transmission %}<span>{{ listing.get_transmission_display }}</span>{% endif %}
         {% elif listing.kind == 'real_estate' %}{% if listing.room_count %}<span>{{ listing.room_count }}</span>{% endif %}{% if listing.area_m2 %}<span>{{ listing.area_m2 }} m²</span>{% endif %}{% if listing.floor_location %}<span>{{ listing.floor_location }}</span>{% endif %}
+        {% elif listing.kind == 'service' %}{% if listing.service_area %}<span>{{ listing.service_area }}</span>{% endif %}{% if listing.fee_type %}<span>{{ listing.get_fee_type_display }}</span>{% endif %}
+        {% elif listing.kind == 'job' %}{% if listing.job_type %}<span>{{ listing.get_job_type_display }}</span>{% endif %}{% if listing.experience_level %}<span>{{ listing.experience_level }}</span>{% endif %}
         {% else %}{% if listing.brand %}<span>{{ listing.brand }}</span>{% endif %}{% if listing.condition %}<span>{{ listing.condition }}</span>{% endif %}{% if listing.delivery_type %}<span>{{ listing.get_delivery_type_display }}</span>{% endif %}{% endif %}
       </div>
       <div class="market-card-seller"><span>{% if listing.owner.is_phone_verified %}✓{% else %}●{% endif %}</span><small>{{ listing.owner.display_name|truncatechars:24 }}</small>{% if listing.owner.rating_count %}<em>★ {{ listing.owner.average_rating }}</em>{% endif %}</div>
-      <div class="market-card-meta"><span>{{ listing.city }}{% if listing.district %}, {{ listing.district }}{% endif %}{% if listing.distance_km or listing.distance_km == 0 %}<b class="v16-distance-badge">◎ {{ listing.distance_km }} km</b>{% endif %}</span><time>{{ listing.created_at|timesince }} önce</time></div>
+      <div class="market-card-meta"><span>{{ listing.city }}{% if listing.district %}, {{ listing.district }}{% endif %}{% if listing.neighborhood %}<small>{{ listing.neighborhood }}</small>{% endif %}{% if listing.distance_km or listing.distance_km == 0 %}<b class="v16-distance-badge">◎ {{ listing.distance_km }} km</b>{% endif %}</span><time>{{ listing.created_at|timesince }} önce</time></div>
     </div>
   </a>
   <div class="market-card-tools">
-    {% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="market-card-tool{% if listing.pk in favorite_ids %} active{% endif %}" aria-label="Favori">{% if listing.pk in favorite_ids %}♥{% else %}♡{% endif %}</button></form>{% else %}<a class="market-card-tool" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="Giriş yap ve favoriye ekle">♡</a>{% endif %}
-    <form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="market-card-tool compare-tool{% if listing.pk in compare_ids %} active{% endif %}" aria-label="Karşılaştır">⇄</button></form>
+    {% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="market-card-tool{% if listing.pk in favorite_ids %} active{% endif %}" aria-label="{% if listing.pk in favorite_ids %}Favorilerden çıkar{% else %}Favoriye ekle{% endif %}" title="Favori">{% if listing.pk in favorite_ids %}♥{% else %}♡{% endif %}</button></form>{% else %}<a class="market-card-tool" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="Giriş yap ve favoriye ekle" title="Favori">♡</a>{% endif %}
+    <form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="market-card-tool compare-tool{% if listing.pk in compare_ids %} active{% endif %}" aria-label="{% if listing.pk in compare_ids %}Karşılaştırmadan çıkar{% else %}Karşılaştırmaya ekle{% endif %}" title="Karşılaştır">⇄</button></form>
   </div>
 </article>
 {% endwith %}

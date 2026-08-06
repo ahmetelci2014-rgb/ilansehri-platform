@@ -1,5 +1,18 @@
 # Değişiklik Günlüğü
 
+## v1.22.0 — Mobil görsel düzen ve ilan kalitesi
+
+- Ana sayfa kategori alanı, her ilan türü için en güçlü alt kategori kısayollarını gösteren profesyonel kategori merkezine dönüştürüldü.
+- Ana sayfa aramasına ilçe alanı eklendi; giriş yapan kullanıcının şehir ve ilçe tercihi arama akışına taşındı.
+- Görev ortağı sayacı ana vitrinden kaldırıldı; aktif şehir sayısı daha temel bir pazar göstergesi olarak öne çıkarıldı.
+- İlan kartları kategori adı, pazarlık bilgisi, fotoğraf durumu, kategoriye özel özellikler, satıcı güveni ve mahalle bilgisiyle yeniden düzenlendi.
+- Fotoğrafsız ilan kartları kategoriye uygun, açıklayıcı boş görsel durumu kullanır.
+- İlan verme sihirbazına adım/kalite ilerleme çubuğu ve kategori, metin, fiyat, konum ve fotoğraf kontrol listesi eklendi.
+- Codespaces başlangıç mesajı sabit sürüm yerine `VERSION` dosyasını kullanır.
+- Mobil Görsel Denetim emlak ve hizmet kategori açılışlarıyla 144 ekran kombinasyonuna genişletildi.
+- v1.22 statik varlıkları service worker önbelleğine, mobil sözleşme kontrolüne ve regresyon testlerine bağlandı.
+- Veritabanı şema değişikliği yapılmadı.
+
 ## v1.21.0 — Kategori, filtre, konum ve mobil keşif
 
 - Kök kategori slug'larını ilan türleriyle eşleyen ortak kategori sözleşmesi eklendi.

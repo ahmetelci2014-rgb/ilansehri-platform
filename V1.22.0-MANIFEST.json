@@ -1,0 +1,51 @@
+{
+  "version": "v1.22.0",
+  "base_version": "v1.21.0.1",
+  "title": "Mobil görsel düzen ve ilan kalitesi",
+  "created_at_utc": "2026-08-06T13:51:10+00:00",
+  "schema_change": false,
+  "migration_required": false,
+  "expected_mobile_audit_pages": 144,
+  "source_test_method_count": 139,
+  "added_files": [
+    "V1.22.0-DENETIM-RAPORU.md",
+    "V1.22.0-MANIFEST.json",
+    "V1.22.0-YUKLEME.txt",
+    "docs/MARKET_POLISH_V122.md",
+    "static/css/v122-market-polish.css",
+    "static/js/v122-market-polish.js"
+  ],
+  "modified_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/tests.py",
+    "apps/core/views.py",
+    "apps/listings/tests.py",
+    "scripts/check_mobile_contract.py",
+    "scripts/mobile_audit.py",
+    "scripts/start_codespace.sh",
+    "static/js/v132-mobile-system.js",
+    "templates/base.html",
+    "templates/core/home.html",
+    "templates/listings/_card.html",
+    "templates/listings/form.html"
+  ],
+  "deleted_files": [],
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_node_check": "passed",
+    "bash_syntax": "passed",
+    "json_parse": "passed",
+    "css_balance": "passed",
+    "template_balance": "passed",
+    "mobile_contract": "passed",
+    "django_tests": "pending_github_actions",
+    "playwright_mobile_audit": "pending_github_actions"
+  },
+  "notes": [
+    "Mevcut veriler silinmez ve migration gerekmez.",
+    "Görev ortağı sayacı ana vitrinden çıkarılmış; sistem hesap ve footer bağlantılarında korunmuştur.",
+    "Randevu modülü korunur fakat ana ilan keşfinin önüne geçirilmez."
+  ]
+}

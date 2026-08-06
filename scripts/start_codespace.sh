@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+RELEASE_VERSION="$(tr -d '\r\n' < VERSION)"
+
 if [ ! -f .env ]; then
   cp .env.example .env
 fi
@@ -24,9 +26,9 @@ python manage.py collectstatic --noinput
 python manage.py check
 
 if pgrep -f "python manage.py runserver 0.0.0.0:8000" >/dev/null 2>&1; then
-  echo "İlan Şehri v1.21.0 sunucusu zaten çalışıyor."
+  echo "İlan Şehri ${RELEASE_VERSION} sunucusu zaten çalışıyor."
   exit 0
 fi
 
 nohup python manage.py runserver 0.0.0.0:8000 > /tmp/ilansehri-django.log 2>&1 &
-echo "İlan Şehri v1.21.0 başlatıldı: port 8000"
+echo "İlan Şehri ${RELEASE_VERSION} başlatıldı: port 8000"
