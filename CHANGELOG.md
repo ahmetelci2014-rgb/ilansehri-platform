@@ -1,3 +1,17 @@
+# v1.13.0 — Mobil İlan Odaklı Deneyim
+
+- Masaüstü görünümü korunurken 780 piksel ve altında ayrı mobil tasarım katmanı eklendi.
+- Mobil üst alana hızlı ilan araması ve sayfaya göre akıllı görünürlük eklendi.
+- Alt navigasyon tek elle kullanım, güvenli alan ve aktif sayfa vurgusuyla güçlendirildi.
+- Ana sayfa mobilde daha kısa kahraman alanı, yatay kategori şeridi ve ilan akışına daha erken erişim sunuyor.
+- İlan sonuçlarında kompakt liste mobil varsayılanı oldu; kart yazıları, fiyat, konum ve fotoğraf dengesi iyileştirildi.
+- Filtre paneli soldan gelen dar menü yerine alttan açılan, büyük dokunma alanlı mobil sayfaya dönüştürüldü.
+- İlan detayında fiyat özeti fotoğraf galerisinden önce gösteriliyor; galeri, detay sekmeleri ve sabit iletişim çubuğu yenilendi.
+- İlan verme sihirbazında mobil önizleme kaldırıldı, adımlar yataylaştırıldı, alanlar ve alt işlem düğmeleri büyütüldü.
+- Mobil ve masaüstü ilan görünümü tercihleri ayrı saklanıyor; masaüstü tercihi mobil seçimden etkilenmiyor.
+- Yeni CSS/JavaScript dosyaları PWA önbelleğine eklendi; cache sürümü `ilansehri-v1130` olarak yenilendi.
+- Model veya veritabanı değişikliği yapılmadı; migration gerektirmez.
+
 # v1.12.2.4 — AI Şablon Etiketi Düzeltmesi
 
 - `ai_listing_config` etiketi, Django şablon kalıtımında çalışması için `content` bloğunun içine taşındı.

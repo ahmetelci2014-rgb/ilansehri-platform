@@ -18,6 +18,14 @@
     <div class="v16-detail-heading-actions"><button class="v16-circle-action" type="button" title="Paylaş" data-share-listing data-share-title="{{ listing.title }}" data-share-url="{{ canonical_url }}">↗</button><button class="v16-circle-action" type="button" title="Bağlantıyı kopyala" data-copy-listing data-copy-url="{{ canonical_url }}">⧉</button><form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_compared %} active{% endif %}" title="Karşılaştır">⇄</button></form>{% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_favorite %} active{% endif %}" title="Favori">{% if is_favorite %}♥{% else %}♡{% endif %}</button></form>{% endif %}</div>
   </header>
 
+  <div class="v113-mobile-price-summary" aria-label="İlan fiyat özeti">
+    <div>
+      <strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>
+      <small>{{ listing.location_text }} · {{ listing.created_at|timesince }} önce</small>
+    </div>
+    {% if listing.is_negotiable %}<span>Pazarlık var</span>{% elif listing.management_mode == 'full' %}<span>Güvenceli</span>{% else %}<span>{{ listing.get_action_display }}</span>{% endif %}
+  </div>
+
   <section class="v16-detail-grid">
     <div>
       <div class="v16-gallery-shell">

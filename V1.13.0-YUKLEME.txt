@@ -1,0 +1,40 @@
+İLAN ŞEHRİ v1.13.0 — MOBİL İLAN ODAKLI DENEYİM
+
+Bu sürüm masaüstü görünümünü korur. Yeni tasarım 780px ve altındaki
+telefon/tablet ekranlarında devreye girer.
+
+YÜKLEME
+1. Güncelleme ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Mevcut dosyaları değiştirmeyi kabul edin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.13.0 mobil ilan deneyimi
+5. Commit to main ve Push origin.
+6. GitHub Actions sonucunu bekleyin.
+7. Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+8. Telefonda veya mobil görünümde Ctrl + Shift + R yapın.
+9. Eski görünüm kalırsa:
+   F12 > Application > Service Workers > Unregister
+   Application > Storage > Clear site data
+
+ANA YENİLİKLER
+- Mobil hızlı ilan araması
+- Güçlendirilmiş sabit alt navigasyon
+- Daha kısa ve ilan odaklı mobil ana sayfa
+- Mobilde varsayılan kompakt ilan listesi
+- Alttan açılan büyük filtre ekranı
+- Daha okunaklı fiyat, başlık, konum ve özellik kartları
+- İlan detayında fotoğraftan önce fiyat özeti
+- Kenardan kenara mobil galeri ve sabit mesaj/teklif çubuğu
+- Mobil ilan verme ekranında sade fotoğraf/AI alanı ve büyük form kontrolleri
+- Mobil ve masaüstü görünüm tercihlerinin ayrı saklanması
+
+TEKNİK
+- Yeni migration yoktur.
+- Gemini/AI ayarları değiştirilmez.
+- Masaüstü CSS kuralları değiştirilmez; yeni katman mobil medya sorgularındadır.
+- PWA cache sürümü: ilansehri-v1130

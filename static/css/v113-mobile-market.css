@@ -1,0 +1,857 @@
+/* İlan Şehri v1.13 — mobil ilan odaklı deneyim */
+:root{
+  --v113-mobile-nav:68px;
+  --v113-mobile-header:60px;
+  --v113-mobile-search:52px;
+}
+
+.mobile-market-search{display:none}
+.v113-mobile-price-summary{display:none}
+
+@media(max-width:780px){
+  html{scroll-padding-top:76px}
+  body.marketplace-body{
+    padding-bottom:calc(var(--v113-mobile-nav) + env(safe-area-inset-bottom));
+    overflow-x:hidden;
+    background:#f4f6f8;
+  }
+  body.marketplace-body.menu-open{touch-action:none}
+  body.marketplace-body .shell{width:calc(100% - 24px)}
+
+  /* Mobil üst alan: marka, menü ve ilan araması */
+  body.marketplace-body .market-header{
+    border-bottom:1px solid #e2e8f0;
+    box-shadow:0 8px 24px rgba(15,23,42,.08);
+  }
+  body.marketplace-body .market-header-row{
+    min-height:var(--v113-mobile-header);
+    gap:10px;
+  }
+  body.marketplace-body .market-brand{gap:8px}
+  body.marketplace-body .market-brand>span{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+    font-size:13px;
+  }
+  body.marketplace-body .market-brand>b{
+    font-size:18px;
+    letter-spacing:-.55px;
+  }
+  body.marketplace-body .menu-toggle{
+    width:42px;
+    height:42px;
+    border-radius:13px;
+    border-color:#dbe3ec;
+    box-shadow:0 4px 12px rgba(15,23,42,.05);
+  }
+  .mobile-market-search{
+    display:none;
+    padding:0 12px 10px;
+    background:#fff;
+  }
+  body.page-home .mobile-market-search,
+  body.page-list .mobile-market-search,
+  body.page-kind_landing .mobile-market-search,
+  body.page-favorites .mobile-market-search{
+    display:block;
+  }
+  .mobile-market-search form{
+    position:relative;
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    align-items:center;
+    height:42px;
+    border:1px solid #d8e1eb;
+    border-radius:14px;
+    background:#f8fafc;
+    overflow:hidden;
+    box-shadow:0 5px 15px rgba(15,23,42,.045);
+  }
+  .mobile-market-search span{
+    padding-left:13px;
+    color:#2563eb;
+    font-size:21px;
+  }
+  .mobile-market-search input{
+    min-width:0;
+    height:40px;
+    border:0;
+    outline:0;
+    background:transparent;
+    padding:0 9px;
+    color:#0f172a;
+    font-size:15px;
+  }
+  .mobile-market-search button{
+    align-self:stretch;
+    min-width:54px;
+    border:0;
+    background:#2563eb;
+    color:#fff;
+    font-weight:900;
+    font-size:12px;
+  }
+  body.page-home .mobile-menu,
+  body.page-list .mobile-menu,
+  body.page-kind_landing .mobile-menu,
+  body.page-favorites .mobile-menu{top:calc(var(--v113-mobile-header) + var(--v113-mobile-search))}
+  body.marketplace-body .mobile-menu-inner{
+    max-height:calc(100dvh - 120px);
+    overflow-y:auto;
+    padding:12px 18px calc(22px + env(safe-area-inset-bottom));
+  }
+  body.marketplace-body .mobile-menu a,
+  body.marketplace-body .mobile-logout{
+    min-height:46px;
+    display:flex;
+    align-items:center;
+    padding:10px 8px;
+    font-size:14px;
+  }
+
+  /* Alt menü tek elle kullanım için daha belirgin */
+  body.marketplace-body .market-mobile-nav{
+    height:calc(var(--v113-mobile-nav) + env(safe-area-inset-bottom));
+    padding:4px 8px env(safe-area-inset-bottom);
+    border-top:1px solid #dbe3ec;
+    background:rgba(255,255,255,.97);
+    backdrop-filter:blur(16px);
+    box-shadow:0 -10px 30px rgba(15,23,42,.13);
+  }
+  body.marketplace-body .market-mobile-nav a{
+    position:relative;
+    min-width:0;
+    gap:2px;
+    border-radius:12px;
+    font-weight:750;
+  }
+  body.marketplace-body .market-mobile-nav a.is-current:not(.mobile-post){
+    color:#1d4ed8;
+    background:#eff6ff;
+  }
+  body.marketplace-body .market-mobile-nav a.is-current:not(.mobile-post)::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:1px;
+    width:22px;
+    height:3px;
+    transform:translateX(-50%);
+    border-radius:999px;
+    background:#2563eb;
+  }
+  body.marketplace-body .market-mobile-nav span{font-size:21px;line-height:1}
+  body.marketplace-body .market-mobile-nav small{font-size:9.5px;line-height:1.1}
+  body.marketplace-body .market-mobile-nav .mobile-post{
+    color:#fff;
+    background:transparent;
+    box-shadow:none;
+  }
+  body.marketplace-body .market-mobile-nav .mobile-post span{
+    width:48px;
+    height:48px;
+    margin-top:-23px;
+    border:4px solid #fff;
+    background:linear-gradient(145deg,#f97316,#ea580c);
+    box-shadow:0 10px 22px rgba(234,88,12,.3);
+  }
+  body.marketplace-body .market-mobile-nav .mobile-post small{
+    margin-top:-2px;
+    color:#c2410c;
+    font-weight:900;
+  }
+
+  /* Ana sayfa: vitrin değil ilan akışı öncelikli */
+  body.page-home .v16-home-hero{border-bottom:1px solid #dbeafe}
+  body.page-home .v16-home-hero-grid{padding:21px 0 23px}
+  body.page-home .v16-home-copy{max-width:none}
+  body.page-home .v16-eyebrow{font-size:10px;padding:6px 9px}
+  body.page-home .v16-home-copy h1{
+    margin:13px 0 10px;
+    font-size:30px;
+    line-height:1.05;
+    letter-spacing:-1.35px;
+  }
+  body.page-home .v16-home-copy>p{
+    margin-bottom:14px;
+    font-size:13px;
+    line-height:1.55;
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  body.page-home .v16-search-card{display:none}
+  body.page-home .v16-hero-chips{
+    display:flex;
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    gap:7px;
+    margin-top:4px;
+    padding-bottom:4px;
+    scrollbar-width:none;
+  }
+  body.page-home .v16-hero-chips::-webkit-scrollbar{display:none}
+  body.page-home .v16-hero-chips>span{display:none}
+  body.page-home .v16-hero-chips a{
+    flex:0 0 auto;
+    padding:7px 10px;
+    border:1px solid #dbeafe;
+    border-radius:999px;
+    background:#fff;
+    font-size:11px;
+    font-weight:800;
+    color:#1e40af;
+  }
+  body.page-home .v16-hero-benefits{
+    display:flex;
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    gap:8px;
+    margin-top:12px;
+    padding-bottom:2px;
+  }
+  body.page-home .v16-hero-benefits span{
+    flex:0 0 auto;
+    padding:7px 9px;
+    border-radius:10px;
+    background:rgba(255,255,255,.82);
+    border:1px solid rgba(191,219,254,.85);
+    font-size:10px;
+  }
+  body.page-home .v18-market-shortcuts{
+    width:calc(100% - 24px);
+    margin:10px auto 0;
+    padding-bottom:2px;
+  }
+  body.page-home .v18-market-shortcuts>a{
+    min-width:226px;
+    min-height:72px;
+    padding:12px;
+    border-radius:16px;
+  }
+  body.page-home .v16-category-zone{border-top:0}
+  body.page-home .v16-section-shell{padding-top:20px;padding-bottom:16px}
+  body.page-home .v16-section-heading{margin-bottom:12px}
+  body.page-home .v16-section-heading h2{font-size:20px}
+  body.page-home .v16-section-heading p{display:none}
+  body.page-home .v16-section-heading>a{
+    padding:7px 9px;
+    border-radius:999px;
+    background:#eff6ff;
+    font-size:10px;
+    white-space:nowrap;
+  }
+  body.page-home .v16-category-grid{
+    display:flex;
+    overflow-x:auto;
+    gap:8px;
+    padding-bottom:5px;
+    scroll-snap-type:x mandatory;
+    scrollbar-width:none;
+  }
+  body.page-home .v16-category-grid::-webkit-scrollbar{display:none}
+  body.page-home .v16-category-card{
+    min-width:105px;
+    min-height:101px;
+    flex:0 0 105px;
+    scroll-snap-align:start;
+    padding:12px 10px;
+    border-radius:16px;
+  }
+  body.page-home .v16-category-card::before{width:72px;height:72px}
+  body.page-home .v16-category-icon{width:38px;height:38px;font-size:18px}
+  body.page-home .v16-category-card b{margin-top:9px;font-size:12px}
+  body.page-home .v16-category-card small{font-size:9px}
+  body.page-home .v16-home-stats{
+    grid-template-columns:1fr;
+    padding:10px 0 0;
+  }
+  body.page-home .v16-home-stats>div{display:none}
+  body.page-home .v16-home-stats>a{
+    grid-column:auto;
+    min-height:66px;
+    border-radius:17px;
+  }
+  body.page-home .v16-feed{padding-top:22px;padding-bottom:24px}
+  body.page-home .v16-feed .v16-section-heading{align-items:center;margin-bottom:12px}
+  body.page-home .v16-feed .v16-section-heading h2{font-size:19px}
+  body.page-home .v16-feed .v16-section-heading p{display:none}
+  body.page-home .v16-feed .v16-feed-label{margin-bottom:4px;font-size:9px}
+  body.page-home .v16-feed .v16-section-heading>a{
+    font-size:10px;
+    padding:7px 9px;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid #dbeafe;
+  }
+  body.page-home .horizontal-mobile{
+    gap:10px;
+    padding:2px 1px 8px;
+    scroll-padding-left:1px;
+  }
+  body.page-home .horizontal-mobile>.market-card{
+    min-width:min(76vw,290px);
+    scroll-snap-align:start;
+  }
+  body.page-home .v16-market-banner{
+    margin:6px 0 10px;
+    padding:19px 17px;
+    border-radius:19px;
+  }
+  body.page-home .v16-market-banner h3{font-size:19px}
+  body.page-home .v16-market-banner p{font-size:12px;line-height:1.45}
+  body.page-home .market-trust-strip{
+    margin-bottom:18px;
+    padding:16px;
+    border-radius:18px;
+  }
+
+  /* İlan sonuçları: arama ve filtre birinci sınıf mobil akış */
+  body.page-list .market-list-head,
+  body.page-kind_landing .market-list-head{
+    position:sticky;
+    top:calc(var(--v113-mobile-header) + var(--v113-mobile-search));
+    z-index:95;
+    padding:0;
+    background:#fff;
+    box-shadow:0 7px 18px rgba(15,23,42,.055);
+  }
+  body.page-list .market-list-head .list-search,
+  body.page-kind_landing .market-list-head .list-search{display:none}
+  body.page-list .market-list-chips,
+  body.page-kind_landing .market-list-chips{
+    gap:7px;
+    margin:0;
+    padding:9px 0 10px;
+    scrollbar-width:none;
+  }
+  body.page-list .market-list-chips::-webkit-scrollbar,
+  body.page-kind_landing .market-list-chips::-webkit-scrollbar{display:none}
+  body.page-list .market-list-chips a,
+  body.page-kind_landing .market-list-chips a{
+    min-height:34px;
+    display:inline-flex;
+    align-items:center;
+    padding:0 11px;
+    border-radius:11px;
+    font-size:11px;
+    font-weight:800;
+  }
+  body.page-list .market-list-layout,
+  body.page-kind_landing .market-list-layout{
+    width:100%;
+    padding:12px 12px 28px;
+  }
+  body.page-list .market-results-top,
+  body.page-kind_landing .market-results-top{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:10px;
+    margin-bottom:10px;
+    padding:0 1px;
+  }
+  body.page-list .market-results-top h1,
+  body.page-kind_landing .market-results-top h1{
+    font-size:21px;
+    line-height:1.15;
+    letter-spacing:-.55px;
+  }
+  body.page-list .market-results-top p,
+  body.page-kind_landing .market-results-top p{font-size:11px}
+  body.page-list .result-actions,
+  body.page-kind_landing .result-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:auto auto minmax(0,1fr);
+    gap:7px;
+    justify-content:stretch;
+  }
+  body.page-list .result-actions>.mobile-filter-button,
+  body.page-kind_landing .result-actions>.mobile-filter-button{
+    min-width:88px;
+    height:42px;
+    padding:0 12px;
+    border-color:#93c5fd;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border-radius:12px;
+    font-size:12px;
+  }
+  body.page-list .result-actions>.v16-view-switch,
+  body.page-kind_landing .result-actions>.v16-view-switch{
+    height:42px;
+    padding:4px;
+    border-radius:12px;
+  }
+  body.page-list .result-actions>.compare-result-link,
+  body.page-kind_landing .result-actions>.compare-result-link{display:none}
+  body.page-list .result-actions>form,
+  body.page-kind_landing .result-actions>form{min-width:0}
+  body.page-list .result-actions select,
+  body.page-kind_landing .result-actions select{
+    width:100%;
+    max-width:none;
+    height:42px;
+    border-radius:12px;
+    font-size:11px;
+  }
+  body.page-list .save-search-popover,
+  body.page-kind_landing .save-search-popover{grid-column:1/-1;order:5}
+  body.page-list .active-filter-row,
+  body.page-kind_landing .active-filter-row{
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    margin:0 0 10px;
+    padding:1px 0 4px;
+    scrollbar-width:none;
+  }
+  body.page-list .active-filter-row::-webkit-scrollbar,
+  body.page-kind_landing .active-filter-row::-webkit-scrollbar{display:none}
+  body.page-list .active-filter-row span,
+  body.page-kind_landing .active-filter-row span{flex:0 0 auto;font-size:10px;padding:6px 9px}
+
+  /* Filtre mobilde alttan açılan sayfa */
+  body.marketplace-body .v12-filter{
+    display:block;
+    position:fixed;
+    left:0;
+    right:0;
+    top:auto;
+    bottom:0;
+    width:100%;
+    max-height:88dvh;
+    z-index:500;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    transform:translateY(105%);
+    transition:transform .25s ease;
+    border:0;
+    border-radius:24px 24px 0 0;
+    padding:9px 16px calc(20px + env(safe-area-inset-bottom));
+    box-shadow:0 -24px 60px rgba(15,23,42,.25);
+  }
+  body.marketplace-body .v12-filter::before{
+    content:"";
+    display:block;
+    width:42px;
+    height:4px;
+    margin:0 auto 10px;
+    border-radius:999px;
+    background:#cbd5e1;
+  }
+  body.marketplace-body .v12-filter.is-open{transform:translateY(0)}
+  body.marketplace-body .market-filter-title{
+    position:sticky;
+    top:-9px;
+    z-index:2;
+    min-height:52px;
+    margin:0 -16px 12px;
+    padding:9px 16px;
+    background:#fff;
+    border-bottom:1px solid #e2e8f0;
+  }
+  body.marketplace-body .market-filter-title h2{font-size:19px}
+  body.marketplace-body .filter-close{
+    order:3;
+    width:38px;
+    height:38px;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:#f1f5f9;
+    color:#0f172a;
+  }
+  body.marketplace-body .market-filter-title>a{margin-left:auto;margin-right:8px;font-size:11px}
+  body.marketplace-body .market-filter form{gap:12px}
+  body.marketplace-body .market-filter label{font-size:12px}
+  body.marketplace-body .market-filter input,
+  body.marketplace-body .market-filter select{
+    min-height:46px;
+    border-radius:12px;
+    font-size:16px;
+  }
+  body.marketplace-body .market-filter .button.full{
+    position:sticky;
+    bottom:0;
+    min-height:50px;
+    border-radius:14px;
+    box-shadow:0 -8px 20px rgba(255,255,255,.92),0 10px 24px rgba(37,99,235,.22);
+  }
+  body.marketplace-body .filter-overlay{
+    background:rgba(15,23,42,.58);
+    backdrop-filter:blur(3px);
+  }
+
+  /* Kartlar mobilde daha büyük yazı ve daha az gürültü */
+  body.marketplace-body .market-card{
+    border-radius:16px;
+    border-color:#dce4ec;
+    box-shadow:0 6px 18px rgba(15,23,42,.065);
+  }
+  body.marketplace-body .market-card:hover{transform:none}
+  body.marketplace-body .market-card-body{padding:11px}
+  body.marketplace-body .market-card-price{font-size:17px;line-height:1.15}
+  body.marketplace-body .market-card h3{
+    min-height:auto;
+    margin:6px 0 7px;
+    font-size:13px;
+    line-height:1.32;
+  }
+  body.marketplace-body .market-card-specs{min-height:0;gap:4px}
+  body.marketplace-body .market-card-specs span{
+    padding:4px 6px;
+    font-size:8.5px;
+    border-radius:6px;
+  }
+  body.marketplace-body .market-card-meta{
+    margin-top:7px;
+    padding-top:6px;
+    font-size:9px;
+    border-top:1px solid #edf2f7;
+  }
+  body.marketplace-body .market-card-seller{display:none}
+  body.marketplace-body .market-card-tool{
+    width:34px;
+    height:34px;
+    font-size:18px;
+  }
+  body.marketplace-body .market-card-featured,
+  body.marketplace-body .market-card-managed{display:none}
+
+  /* Sonuç listesinde varsayılan kompakt ilan akışı */
+  body.page-list .market-card-grid.list-grid.v16-compact-view,
+  body.page-kind_landing .market-card-grid.list-grid.v16-compact-view{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  body.page-list .list-grid.v16-compact-view .market-card,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card{
+    display:grid;
+    grid-template-columns:132px minmax(0,1fr);
+    min-height:142px;
+    overflow:hidden;
+  }
+  body.page-list .list-grid.v16-compact-view .market-card-link,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card-link{display:contents}
+  body.page-list .list-grid.v16-compact-view .market-card-media,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card-media{
+    grid-column:1;
+    grid-row:1;
+    width:132px;
+    height:100%;
+    min-height:142px;
+    aspect-ratio:auto;
+  }
+  body.page-list .list-grid.v16-compact-view .market-card-body,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card-body{
+    grid-column:2;
+    grid-row:1;
+    min-width:0;
+    padding:12px 11px;
+  }
+  body.page-list .list-grid.v16-compact-view .market-card h3,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card h3{
+    font-size:13.5px;
+    -webkit-line-clamp:2;
+  }
+  body.page-list .list-grid.v16-compact-view .market-card-tools,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card-tools{
+    left:92px;
+    right:auto;
+    top:7px;
+  }
+  body.page-list .list-grid.v16-compact-view .market-card-tools form:nth-child(2),
+  body.page-kind_landing .list-grid.v16-compact-view .market-card-tools form:nth-child(2){display:none}
+  body.page-list .list-grid:not(.v16-compact-view),
+  body.page-kind_landing .list-grid:not(.v16-compact-view){
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  body.page-list .list-grid:not(.v16-compact-view) .market-card-media,
+  body.page-kind_landing .list-grid:not(.v16-compact-view) .market-card-media{height:auto;aspect-ratio:1/1}
+  body.page-list .list-grid:not(.v16-compact-view) .market-card-tools form:nth-child(2),
+  body.page-kind_landing .list-grid:not(.v16-compact-view) .market-card-tools form:nth-child(2){display:none}
+
+  /* İlan detayında fiyat ve fotoğraf önce */
+  body.page-detail .v16-detail{width:100%;padding:8px 12px 112px}
+  body.page-detail .market-breadcrumb{margin:3px 0 8px;font-size:10px}
+  body.page-detail .v16-detail-heading{gap:9px;padding:8px 0 10px}
+  body.page-detail .v16-detail-heading h1{
+    margin:7px 52px 6px 0;
+    font-size:22px;
+    line-height:1.15;
+    letter-spacing:-.55px;
+  }
+  body.page-detail .v16-detail-kickers{gap:5px}
+  body.page-detail .v16-detail-kickers span{padding:5px 7px;font-size:9px}
+  body.page-detail .v16-detail-meta{gap:7px 11px;font-size:10px}
+  body.page-detail .v16-detail-meta span:nth-child(n+4){display:none}
+  body.page-detail .v16-detail-heading-actions{right:13px;top:78px;gap:5px}
+  body.page-detail .v16-circle-action{width:38px;height:38px;border-radius:12px}
+  .v113-mobile-price-summary{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 0 10px;
+    padding:13px 14px;
+    border:1px solid #bfdbfe;
+    border-radius:16px;
+    background:linear-gradient(135deg,#eff6ff,#fff7ed);
+  }
+  .v113-mobile-price-summary>div{min-width:0}
+  .v113-mobile-price-summary strong{
+    display:block;
+    color:#0f172a;
+    font-size:24px;
+    line-height:1;
+    letter-spacing:-.7px;
+  }
+  .v113-mobile-price-summary small{
+    display:block;
+    margin-top:6px;
+    color:#64748b;
+    font-size:10px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .v113-mobile-price-summary span{
+    flex:0 0 auto;
+    padding:6px 8px;
+    border-radius:999px;
+    background:#fff;
+    color:#c2410c;
+    font-size:9px;
+    font-weight:900;
+  }
+  body.page-detail .v16-gallery-shell{
+    margin:0 -12px;
+    padding:0;
+    border-left:0;
+    border-right:0;
+    border-radius:0;
+    box-shadow:none;
+    background:#0f172a;
+  }
+  body.page-detail .v16-gallery-main{
+    height:min(78vw,430px);
+    border-radius:0;
+    background:#0f172a;
+  }
+  body.page-detail .v16-thumbs{
+    order:2;
+    padding:7px 12px 9px;
+    background:#fff;
+  }
+  body.page-detail .v16-detail-nav{
+    top:var(--v113-mobile-header);
+    margin:10px -12px 0;
+    padding:8px 12px;
+    border-radius:0;
+    background:rgba(255,255,255,.97);
+    backdrop-filter:blur(14px);
+    box-shadow:0 5px 15px rgba(15,23,42,.07);
+    scrollbar-width:none;
+  }
+  body.page-detail .v16-detail-nav::-webkit-scrollbar{display:none}
+  body.page-detail .v16-detail-nav a{flex:0 0 auto;padding:7px 10px;font-size:10px}
+  body.page-detail .v16-detail-panels{gap:10px}
+  body.page-detail .v16-detail-panel{padding:16px;border-radius:17px}
+  body.page-detail .v16-detail-panel h2{font-size:18px}
+  body.page-detail .v16-detail-panel p{font-size:13px;line-height:1.65}
+  body.page-detail .v16-summary-card{margin-top:10px;padding:15px;border-radius:18px}
+  body.page-detail .v16-summary-price{display:none}
+  body.page-detail .v16-seller-card{padding:12px}
+  body.page-detail .mobile-contact-bar{
+    bottom:calc(var(--v113-mobile-nav) + env(safe-area-inset-bottom));
+    grid-template-columns:1.12fr .88fr;
+    gap:8px;
+    padding:9px 12px;
+    border-top:1px solid #dbe3ec;
+    box-shadow:0 -10px 28px rgba(15,23,42,.14);
+  }
+  body.page-detail .mobile-contact-bar a,
+  body.page-detail .mobile-contact-bar button{
+    height:46px;
+    border-radius:13px;
+    font-size:13px;
+  }
+
+  /* İlan verme: telefonda fotoğraf ve adımlar sade */
+  body.page-create .v16-wizard-page,
+  body.page-update .v16-wizard-page{padding:15px 10px 130px}
+  body.page-create .v16-wizard-intro,
+  body.page-update .v16-wizard-intro{padding:0 3px}
+  body.page-create .v16-wizard-intro h1,
+  body.page-update .v16-wizard-intro h1{font-size:25px;line-height:1.12}
+  body.page-create .v16-wizard-intro p,
+  body.page-update .v16-wizard-intro p{font-size:12px;line-height:1.5}
+  body.page-create .v16-wizard-card,
+  body.page-update .v16-wizard-card{border-radius:19px;overflow:visible}
+  body.page-create .v16-wizard-preview,
+  body.page-update .v16-wizard-preview{display:none}
+  body.page-create .ai-quick-start,
+  body.page-update .ai-quick-start{padding:16px;border-radius:18px}
+  body.page-create .ai-quick-heading,
+  body.page-update .ai-quick-heading{grid-template-columns:auto minmax(0,1fr);gap:10px}
+  body.page-create .ai-provider-chip,
+  body.page-update .ai-provider-chip{grid-column:1/-1;justify-self:start}
+  body.page-create .ai-quick-heading h2,
+  body.page-update .ai-quick-heading h2{font-size:18px}
+  body.page-create .ai-quick-heading p,
+  body.page-update .ai-quick-heading p{font-size:11px}
+  body.page-create .ai-upload-target,
+  body.page-update .ai-upload-target{min-height:148px;padding:18px 12px}
+  body.page-create .ai-upload-target strong,
+  body.page-update .ai-upload-target strong{font-size:14px;text-align:center}
+  body.page-create .v16-stepper,
+  body.page-update .v16-stepper{
+    position:sticky;
+    top:var(--v113-mobile-header);
+    z-index:20;
+    display:flex;
+    overflow-x:auto;
+    gap:6px;
+    margin:0 -1px;
+    padding:8px;
+    border-radius:14px;
+    background:rgba(255,255,255,.98);
+    box-shadow:0 8px 20px rgba(15,23,42,.08);
+    scrollbar-width:none;
+  }
+  body.page-create .v16-stepper::-webkit-scrollbar,
+  body.page-update .v16-stepper::-webkit-scrollbar{display:none}
+  body.page-create .v16-stepper button,
+  body.page-update .v16-stepper button{
+    flex:0 0 auto;
+    min-width:84px;
+    min-height:40px;
+    padding:5px 8px;
+    border-radius:10px;
+    font-size:9px;
+  }
+  body.page-create .v16-wizard-section,
+  body.page-update .v16-wizard-section{padding:17px 14px}
+  body.page-create .v16-step-head,
+  body.page-update .v16-step-head{gap:10px}
+  body.page-create .v16-step-head>span,
+  body.page-update .v16-step-head>span{width:36px;height:36px;flex-basis:36px}
+  body.page-create .v16-step-head h2,
+  body.page-update .v16-step-head h2{font-size:18px}
+  body.page-create .v16-step-head p,
+  body.page-update .v16-step-head p{font-size:11px}
+  body.page-create .v16-field-grid input:not([type=checkbox]):not([type=file]),
+  body.page-create .v16-field-grid select,
+  body.page-create .v16-field-grid textarea,
+  body.page-update .v16-field-grid input:not([type=checkbox]):not([type=file]),
+  body.page-update .v16-field-grid select,
+  body.page-update .v16-field-grid textarea{
+    min-height:48px;
+    border-radius:12px;
+    font-size:16px;
+  }
+  body.page-create .v16-choice-help,
+  body.page-update .v16-choice-help{font-size:10.5px;line-height:1.5}
+  body.page-create .v16-wizard-footer,
+  body.page-update .v16-wizard-footer{
+    bottom:calc(var(--v113-mobile-nav) + env(safe-area-inset-bottom));
+    display:grid;
+    grid-template-columns:.8fr 1.2fr;
+    gap:8px;
+    padding:10px;
+    border-radius:16px 16px 0 0;
+    box-shadow:0 -12px 30px rgba(15,23,42,.16);
+  }
+  body.page-create .v16-wizard-footer button,
+  body.page-update .v16-wizard-footer button{
+    width:100%;
+    min-width:0;
+    min-height:46px;
+    border-radius:12px;
+  }
+  body.page-create .v16-wizard-footer .v19-save-draft,
+  body.page-update .v16-wizard-footer .v19-save-draft{
+    grid-column:1/-1;
+    order:5;
+    min-height:38px;
+    margin:0;
+    padding:7px;
+    font-size:10px;
+  }
+  body.page-create .v16-wizard-footer .v16-wizard-submit,
+  body.page-update .v16-wizard-footer .v16-wizard-submit{grid-column:1/-1}
+
+  /* Genel mobil ergonomi */
+  body.marketplace-body input,
+  body.marketplace-body select,
+  body.marketplace-body textarea{font-size:16px}
+  body.marketplace-body .message-stack{left:12px;right:12px;top:72px}
+  body.marketplace-body .compare-floating{right:12px;bottom:calc(var(--v113-mobile-nav) + 12px);max-width:calc(100% - 24px)}
+  body.marketplace-body .v18-scroll-top{bottom:calc(var(--v113-mobile-nav) + 13px)}
+}
+
+@media(max-width:520px){
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile),
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile){
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile) .market-card,
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile) .market-card{
+    display:grid;
+    grid-template-columns:42% minmax(0,1fr);
+    min-height:138px;
+    overflow:hidden;
+  }
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile) .market-card-link,
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile) .market-card-link{display:contents}
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile) .market-card-media,
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile) .market-card-media{
+    grid-column:1;
+    height:100%;
+    min-height:138px;
+    aspect-ratio:auto;
+  }
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile) .market-card-body,
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile) .market-card-body{
+    grid-column:2;
+    padding:11px;
+  }
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile) .market-card-tools,
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile) .market-card-tools{
+    left:calc(42% - 40px);
+    right:auto;
+  }
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile) .market-card-tools form:nth-child(2),
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile) .market-card-tools form:nth-child(2){display:none}
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile) .market-card h3,
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile) .market-card h3{font-size:13.5px}
+  body.page-home .v16-feed>.market-card-grid:not(.horizontal-mobile) .market-card-specs span:nth-child(n+3),
+  body.page-home .v16-feed>.shell>.market-card-grid:not(.horizontal-mobile) .market-card-specs span:nth-child(n+3){display:none}
+  body.page-list .list-grid.v16-compact-view .market-card,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card{grid-template-columns:122px minmax(0,1fr)}
+  body.page-list .list-grid.v16-compact-view .market-card-media,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card-media{width:122px}
+  body.page-list .list-grid.v16-compact-view .market-card-tools,
+  body.page-kind_landing .list-grid.v16-compact-view .market-card-tools{left:84px}
+}
+
+@media(max-width:380px){
+  body.page-home .v16-home-copy h1{font-size:27px}
+  body.page-list .result-actions,
+  body.page-kind_landing .result-actions{grid-template-columns:auto minmax(0,1fr)}
+  body.page-list .result-actions>.v16-view-switch,
+  body.page-kind_landing .result-actions>.v16-view-switch{display:none}
+  body.page-list .list-grid:not(.v16-compact-view),
+  body.page-kind_landing .list-grid:not(.v16-compact-view){grid-template-columns:1fr}
+  body.page-list .list-grid:not(.v16-compact-view) .market-card,
+  body.page-kind_landing .list-grid:not(.v16-compact-view) .market-card{display:block}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .v12-filter{transition:none!important}
+}

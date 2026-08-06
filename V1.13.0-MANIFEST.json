@@ -1,0 +1,34 @@
+{
+  "version": "v1.13.0",
+  "name": "Mobil İlan Odaklı Deneyim",
+  "base_version": "v1.12.2.4",
+  "changed_file_count": 13,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/tests.py",
+    "apps/core/views.py",
+    "docs/MOBILE_V113.md",
+    "scripts/start_codespace.sh",
+    "static/css/v113-mobile-market.css",
+    "static/js/v113-mobile-market.js",
+    "static/js/v16-premium.js",
+    "templates/base.html",
+    "templates/listings/detail.html",
+    "templates/listings/list.html"
+  ],
+  "database_migration_required": false,
+  "desktop_behavior": "Korundu; yeni görünüm max-width:780px altında etkin.",
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "css_brace_balance": "passed",
+    "template_tag_balance": "passed",
+    "expected_changed_files": "passed",
+    "pwa_asset_registration": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload; local package index lacked the pinned Django build"
+  }
+}

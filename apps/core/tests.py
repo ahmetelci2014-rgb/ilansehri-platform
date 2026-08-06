@@ -58,3 +58,42 @@ class PublicDiscoveryTests(TestCase):
         self.assertContains(response, 'application/ld+json')
         self.assertContains(response, 'property="og:type" content="product"')
         self.assertContains(response, "İLAN BİLGİ KALİTESİ")
+
+
+class MobileMarketplaceExperienceTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="mobile-owner", password="StrongPass_2026")
+        self.category = Category.objects.create(name="Mobil Telefon", slug="mobil-telefon-v113")
+        self.listing = Listing.objects.create(
+            owner=self.owner,
+            category=self.category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="Mobil görünüm test ilanı",
+            description="Mobil ilan kartı ve detay fiyat özeti için örnek açıklama.",
+            price=12500,
+            city="Şanlıurfa",
+            district="Karaköprü",
+            status=Listing.Status.PUBLISHED,
+        )
+
+    def test_home_loads_mobile_market_assets_and_search(self):
+        response = self.client.get(reverse("core:home"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "css/v113-mobile-market.css")
+        self.assertContains(response, "js/v113-mobile-market.js")
+        self.assertContains(response, "data-mobile-market-search")
+        self.assertContains(response, "page-home")
+
+    def test_listing_detail_contains_mobile_price_summary(self):
+        response = self.client.get(self.listing.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "v113-mobile-price-summary")
+        self.assertContains(response, "12.500 TL")
+
+    def test_service_worker_uses_mobile_release_cache(self):
+        response = self.client.get(reverse("core:service_worker"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'const CACHE = "ilansehri-v1130";')
+        self.assertContains(response, "/static/css/v113-mobile-market.css")
+        self.assertContains(response, "/static/js/v113-mobile-market.js")

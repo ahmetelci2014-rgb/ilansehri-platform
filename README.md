@@ -1,12 +1,13 @@
 # İlan Şehri
 
-> Güncel sürüm: **v1.12.2.4** — Gemini aktif olduğu hâlde ilan sayfasında pasif görünmesine neden olan şablon kalıtımı hatası düzeltildi.
+> Güncel sürüm: **v1.13.0** — masaüstü korunarak mobil arayüz ilan odaklı, daha okunaklı ve tek elle kullanılabilir hâle getirildi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
 ## Çalışan ana modüller
 
 - Konum ve kategori odaklı fotoğraflı marketplace akışı
+- Mobilde kompakt ilan akışı, alttan açılan filtreler, hızlı arama ve sabit tek el navigasyonu
 - Fotoğrafla başlayan yapay zekâ ilan hazırlama, güvenli görsel analiz ve kullanıcı onayı
 - Kategoriye özel gelişmiş arama, filtreleme, sıralama ve ilan karşılaştırma
 - Favoriler, kayıtlı aramalar, son görüntülenenler ve fiyat düşüşü takibi

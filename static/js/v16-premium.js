@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultGrid = document.querySelector(".market-card-grid.list-grid");
   const viewButtons = document.querySelectorAll("[data-result-view]");
   if (resultGrid && viewButtons.length) {
+    const mobileResults = window.matchMedia("(max-width: 780px)").matches;
+    const viewStorageKey = mobileResults ? "ilansehri-mobile-result-view" : "ilansehri-result-view";
     const applyView = (view) => {
       const compact = view === "compact";
       resultGrid.classList.toggle("v16-compact-view", compact);
@@ -11,10 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
         button.classList.toggle("active", active);
         button.setAttribute("aria-pressed", String(active));
       });
-      try { window.localStorage.setItem("ilansehri-result-view", view); } catch (_error) {}
+      try { window.localStorage.setItem(viewStorageKey, view); } catch (_error) {}
     };
-    let saved = "grid";
-    try { saved = window.localStorage.getItem("ilansehri-result-view") || "grid"; } catch (_error) {}
+    let saved = mobileResults ? "compact" : "grid";
+    try { saved = window.localStorage.getItem(viewStorageKey) || saved; } catch (_error) {}
     applyView(saved === "compact" ? "compact" : "grid");
     viewButtons.forEach((button) => button.addEventListener("click", () => applyView(button.dataset.resultView)));
   }
