@@ -1,28 +1,25 @@
 
-## v1.15 Güvenli mesajlaşma
-
-- Mesaj metni tarayıcıda anlık, sunucuda kesin olarak güvenlik analizinden geçirilir.
-- Şifre/doğrulama kodu, kimlik-kart görüntüsü, uzaktan erişim, ön ödeme, kısaltılmış bağlantı ve platform dışı iletişim sinyalleri açıklanır.
-- Yüksek riskli mesajlar, kullanıcı açıkça güvenlik onayı vermeden gönderilmez.
-- Alıcı, riskli mesajın üzerinde seviye, gerekçe ve güvenli işlem önerisini görür.
-- Bildirim önizlemesi yüksek riskli metni tekrar göstermek yerine güvenlik uyarısı kullanır.
-- Analiz yerel ve kural tabanlıdır; mesaj içeriği harici yapay zekâ servisine gönderilmez.
-
 # İlan Şehri
 
-> Güncel sürüm: **v1.16.0** — kullanıcı izniyle yaklaşık mesafe hesaplayan Yakındaki İlanlar keşfi ve ilan formunda isteğe bağlı konum işaretleme eklendi.
+## v1.17 Akıllı arama takibi
+
+- Kullanıcı filtrelerini kaydeder; uygun yeni ilanlar için anlık veya günlük özet bildirimi alır.
+- Aynı ilan için tekrar uyarı gönderilmez ve her aramanın bildirim sıklığı ayrı yönetilir.
+- Yakındaki ilanlar yaklaşık konumla filtrelenir; izin reddinde şehir–ilçe yedeği kullanılır.
+- Mesaj güvenliği, akıllı eşleştirme, fiyat rehberi ve mevcut mobil yapı korunur.
+
+> Güncel sürüm: **v1.17.0** — konum tabanlı yakınlık keşfi ile anlık/günlük kayıtlı arama bildirimleri eklendi; aynı ilan için tekrar uyarı engellendi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
 ## Çalışan ana modüller
 
-- Yakındaki ilanlar: 5–200 km yarıçap, mesafe sıralaması ve şehir/ilçe yedeği
 - Konum ve kategori odaklı fotoğraflı marketplace akışı
 - Arıyorum–Satıyorum akıllı eşleştirme, iki taraflı eşleşme merkezi ve bildirimler
 - Site genelinde ortak mobil ekran sistemi, kompakt ilan akışı, alttan açılan filtreler ve sabit tek el navigasyonu
 - Fotoğrafla başlayan yapay zekâ ilan hazırlama, güvenli görsel analiz ve kullanıcı onayı
 - Kategoriye özel gelişmiş arama, filtreleme, sıralama ve ilan karşılaştırma
-- Favoriler, kayıtlı aramalar, son görüntülenenler ve fiyat düşüşü takibi
+- Favoriler, düzenlenebilir kayıtlı aramalar, anlık/günlük ilan alarmları, son görüntülenenler ve fiyat düşüşü takibi
 - Satıcı takip sistemi ve takip edilen satıcılardan yeni ilan akışı
 - Teklif, karşı teklif, pazarlık geçmişi ve güvenli işlem kaydı
 - Gelişmiş mesaj kutusu, alış/satış görüşmesi filtreleri ve görsel mesajlar
@@ -43,15 +40,6 @@
 - Yeni eşleşmeler uygulama içi ve isteğe bağlı e-posta bildirimi oluşturur.
 - Engellenen kullanıcılar ve yayında olmayan ilanlar sonuçlara alınmaz.
 - Mevcut ilanlar `python manage.py rebuild_listing_matches` komutuyla yeniden taranır.
-
-## v1.16 Yakındaki ilanlar
-
-- Kullanıcı konum iznini yalnız kendi isteğiyle verir.
-- Koordinatı olan ilanlar yaklaşık kilometreye göre sıralanır.
-- Koordinatsız ilanlar aynı şehir veya ilçede ise ikincil sonuç olarak sunulur.
-- İlan sahibi konumunu işaretleyebilir; tam koordinatlar ilan sayfasında gösterilmez.
-- Geçici arama koordinatları URL yerine oturumda tutulur ve kayıtlı aramalara kaydedilmez.
-- Büyük ölçek için ileride PostGIS coğrafi indeksine geçiş planlanmıştır.
 
 ## Codespaces ile çalıştırma
 
@@ -92,7 +80,9 @@ Bu bilinen şifrelerle oluşturulan hesaplar canlı ortamda kullanılmamalıdır
 python manage.py marketplace_maintenance
 ```
 
-Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler ve kayıtlı arama bildirimlerini üretir.
+Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler ve günlük kayıtlı arama özetlerini üretir. Anlık kayıtlı arama bildirimleri ilan yayınlandığında otomatik oluşur.
+
+Canlı sunucuda günlük özetlerin otomatik oluşması için hosting zamanlayıcısında `bash scripts/run_daily_maintenance.sh` komutunu günde bir kez çalıştırın.
 
 ## Canlıya geçişte gerekli dış ayarlar
 

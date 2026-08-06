@@ -75,6 +75,18 @@ class ListingForm(forms.ModelForm):
             }
         ),
     )
+    latitude = forms.DecimalField(
+        required=False,
+        max_digits=9,
+        decimal_places=6,
+        widget=forms.HiddenInput(attrs={"data-listing-latitude": "true"}),
+    )
+    longitude = forms.DecimalField(
+        required=False,
+        max_digits=9,
+        decimal_places=6,
+        widget=forms.HiddenInput(attrs={"data-listing-longitude": "true"}),
+    )
     neighborhood = forms.CharField(
         required=False,
         label="Mahalle",
@@ -173,8 +185,6 @@ class ListingForm(forms.ModelForm):
             "heating_type": forms.TextInput(attrs={"placeholder": "Örn. Doğalgaz kombi"}),
             "service_area": forms.TextInput(attrs={"placeholder": "Örn. Karaköprü ve Haliliye"}),
             "experience_level": forms.TextInput(attrs={"placeholder": "Örn. En az 2 yıl"}),
-            "latitude": forms.HiddenInput(attrs={"data-listing-latitude": "true"}),
-            "longitude": forms.HiddenInput(attrs={"data-listing-longitude": "true"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -234,6 +244,16 @@ class ListingForm(forms.ModelForm):
         cleaned = super().clean()
         kind = cleaned.get("kind")
         action = cleaned.get("action")
+        latitude = cleaned.get("latitude")
+        longitude = cleaned.get("longitude")
+
+        if (latitude is None) != (longitude is None):
+            self.add_error("latitude", "Konum koordinatları birlikte gönderilmelidir.")
+            self.add_error("longitude", "Konum koordinatları birlikte gönderilmelidir.")
+        if latitude is not None and not (-90 <= latitude <= 90):
+            self.add_error("latitude", "Geçerli bir enlem değeri gönderilmedi.")
+        if longitude is not None and not (-180 <= longitude <= 180):
+            self.add_error("longitude", "Geçerli bir boylam değeri gönderilmedi.")
 
         allowed_actions = {
             Listing.Kind.PRODUCT: {Listing.Action.SELL, Listing.Action.RENT, Listing.Action.SWAP, Listing.Action.WANTED},
@@ -245,16 +265,6 @@ class ListingForm(forms.ModelForm):
         }
         if kind and action and action not in allowed_actions.get(kind, set()):
             self.add_error("action", "Seçilen ilan türü için uygun bir işlem seç.")
-
-        latitude = cleaned.get("latitude")
-        longitude = cleaned.get("longitude")
-        if (latitude is None) != (longitude is None):
-            self.add_error("latitude", "Konum kaydı için enlem ve boylam birlikte gerekli.")
-            self.add_error("longitude", "Konum kaydı için enlem ve boylam birlikte gerekli.")
-        if latitude is not None and not (-90 <= latitude <= 90):
-            self.add_error("latitude", "Geçerli bir enlem değeri kullan.")
-        if longitude is not None and not (-180 <= longitude <= 180):
-            self.add_error("longitude", "Geçerli bir boylam değeri kullan.")
 
         price_optional_actions = {
             Listing.Action.WANTED,
@@ -441,5 +451,17 @@ class TransactionDisputeForm(forms.ModelForm):
 class SavedSearchForm(forms.ModelForm):
     class Meta:
         model = SavedSearch
-        fields = ("name", "alert_enabled")
-        labels = {"name": "Arama adı", "alert_enabled": "Yeni uygun ilanlarda bildirim gönder"}
+        fields = ("name", "alert_frequency")
+        labels = {"name": "Arama adı", "alert_frequency": "Bildirim sıklığı"}
+        widgets = {"alert_frequency": forms.Select(attrs={"class": "saved-search-frequency"})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and not self.instance.alert_enabled:
+            self.initial["alert_frequency"] = SavedSearch.AlertFrequency.OFF
+
+    def clean_name(self):
+        name = (self.cleaned_data.get("name") or "").strip()
+        if len(name) < 2:
+            raise forms.ValidationError("Arama adı en az 2 karakter olmalıdır.")
+        return name[:120]

@@ -1,21 +1,16 @@
-# v1.16.0 Yakındaki İlanlar ve Konum Tabanlı Keşif
+# İlan Şehri v1.16.0 — Yakındaki İlanlar ve Konum Tabanlı Keşif
 
-## Amaç
-Kullanıcının izin verdiği konumu kullanarak koordinatı bulunan ilanları yaklaşık mesafeye göre göstermek; koordinatı bulunmayan ilanları ise kullanıcının şehir/ilçe bilgisine göre ikincil sonuç olarak sunmak.
+## Kullanıcı akışı
 
-## Çalışma biçimi
-- Tarayıcı konumu yalnız kullanıcı `Konumumu kullan` düğmesine bastığında ister.
-- Arama yarıçapı 5, 10, 25, 50, 100 veya 200 km olabilir.
-- Önce veritabanında yaklaşık bir koordinat kutusu uygulanır, ardından Haversine hesabıyla gerçek dairesel mesafe kontrol edilir.
-- Koordinatı olmayan ilanlar, kullanıcının profilindeki veya filtresindeki şehir/ilçeyle eşleşiyorsa sonuçların sonunda `Aynı bölgede` etiketiyle gösterilir.
-- Geçici arama koordinatları URL yerine Django oturumunda tutulur ve kayıtlı aramalara yazılmaz.
-- İlan sahibi isterse ilan formunda konumunu işaretler. Koordinatlar yaklaşık 10 metre hassasiyete yuvarlanır ve ilan detayında gösterilmez.
+- Ana sayfa ve ilan sonuçlarında **Yakınımda** düğmesi bulunur.
+- Tarayıcı konum izni verirse koordinatlar yalnız arama URL'sinde kullanılır.
+- İlanlar seçilen 25 km yarıçapta kesin Haversine mesafesiyle filtrelenir ve yakından uzağa sıralanır.
+- İlan kartında yaklaşık mesafe kilometre olarak gösterilir.
+- Konum izni reddedilirse profil veya seçili şehir–ilçe filtresine güvenli biçimde geri dönülür.
+- Kullanıcının anlık koordinatları profil alanlarına veya ayrı bir konum geçmişine yazılmaz.
 
-## Ölçekleme notu
-Bu sürüm SQLite ve standart PostgreSQL ile çalışan sınırlı aday kutusu + Haversine yaklaşımını kullanır. İlan sayısı çok büyüdüğünde PostGIS ve coğrafi indeks geçişi önerilir.
+## Teknik yaklaşım
 
-## Gizlilik
-- Konum izni zorunlu değildir.
-- Kullanıcının arama konumu yalnız oturum verisinde geçici tutulur; hesap profiline kaydedilmez.
-- İlan koordinatı yalnız ilan sahibi açıkça `Konumumu işaretle` dediğinde ilan kaydına yazılır.
-- Tam adres, enlem veya boylam halka açık şablonlarda gösterilmez.
+PostGIS zorunluluğu getirilmedi. Önce veritabanında güvenli bir koordinat sınır kutusu uygulanır; kalan adaylarda kesin küresel mesafe Python tarafında hesaplanır. Bu yaklaşım SQLite geliştirme ortamı ile PostgreSQL canlı ortamında aynı sonucu verir.
+
+- Gizlilik için konum koordinatları yaklaşık 100 metre hassasiyete yuvarlanır; açık adres kaydedilmez.

@@ -24,6 +24,8 @@ from .models import (
     Offer,
     OfferEvent,
     Review,
+    SavedSearch,
+    SavedSearchMatch,
     Transaction,
 )
 
@@ -268,14 +270,62 @@ def notify_followers_new_listing(listing: Listing) -> int:
     return created
 
 
+
+def notify_saved_searches_new_listing(listing: Listing) -> int:
+    """Yeni yayınlanan ilan için anlık kayıtlı arama bildirimlerini üret."""
+    if listing.status != Listing.Status.PUBLISHED:
+        return 0
+    from .search_alerts import listing_matches_saved_search
+
+    created_count = 0
+    searches = (
+        SavedSearch.objects.filter(
+            alert_enabled=True,
+            alert_frequency=SavedSearch.AlertFrequency.INSTANT,
+            user__is_active=True,
+        )
+        .exclude(user_id=listing.owner_id)
+        .select_related("user")
+    )
+    for saved in searches.iterator():
+        if SavedSearchMatch.objects.filter(saved_search=saved, listing=listing).exists():
+            continue
+        if not listing_matches_saved_search(saved, listing):
+            continue
+        match, was_created = SavedSearchMatch.objects.get_or_create(
+            saved_search=saved,
+            listing=listing,
+        )
+        if not was_created:
+            continue
+        notification = create_notification(
+            user=saved.user,
+            actor=listing.owner,
+            listing=listing,
+            notification_type=Notification.Type.SEARCH_ALERT,
+            title=f"{saved.name} aramana uygun yeni ilan",
+            body=listing.title[:320],
+            link=listing.get_absolute_url(),
+        )
+        if notification is not None:
+            notified_at = timezone.now()
+            match.notified_at = notified_at
+            match.save(update_fields=["notified_at"])
+            saved.last_notified_at = notified_at
+            saved.save(update_fields=["last_notified_at", "updated_at"])
+            created_count += 1
+    return created_count
+
 def notify_listing_publication(listing: Listing) -> dict:
     """Run every non-blocking publication notification and matching hook once."""
     follower_count = notify_followers_new_listing(listing)
+    saved_search_count = notify_saved_searches_new_listing(listing)
     from .matching import sync_listing_matches
 
     match_result = sync_listing_matches(listing, notify=True)
     return {
         "followers": follower_count,
+        "saved_search_alerts": saved_search_count,
         "matches_created": match_result["created"],
         "matches_updated": match_result["updated"],
     }

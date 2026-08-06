@@ -1,0 +1,62 @@
+{
+  "version": "v1.17.0",
+  "base_package": "ilansehri-django-v1.15.0-tam.zip",
+  "cumulative_versions": [
+    "v1.16.0",
+    "v1.17.0"
+  ],
+  "title": "Yakındaki İlanlar ve Akıllı Kayıtlı Arama Bildirimleri",
+  "database_changes": [
+    "SavedSearch.alert_frequency",
+    "SavedSearch.last_checked_at",
+    "SavedSearch.updated_at",
+    "SavedSearchMatch modeli",
+    "Notification.Type.SEARCH_ALERT seçeneği"
+  ],
+  "changed_or_added_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "V1.17.0-DENETIM-RAPORU.md",
+    "V1.17.0-MANIFEST.json",
+    "V1.17.0-YUKLEME.txt",
+    "VERSION",
+    "apps/core/management/commands/marketplace_maintenance.py",
+    "apps/core/tests.py",
+    "apps/core/views.py",
+    "apps/listings/admin.py",
+    "apps/listings/forms.py",
+    "apps/listings/models.py",
+    "apps/listings/search_alerts.py",
+    "apps/listings/services.py",
+    "apps/listings/tests.py",
+    "apps/listings/urls.py",
+    "apps/listings/views.py",
+    "docs/NEARBY_DISCOVERY_V116.md",
+    "docs/SMART_SEARCH_ALERTS_V117.md",
+    "scripts/check_mobile_contract.py",
+    "scripts/mobile_audit.py",
+    "scripts/run_daily_maintenance.sh",
+    "scripts/start_codespace.sh",
+    "static/css/v117-search-alerts.css",
+    "static/js/v116-location-discovery.js",
+    "static/js/v132-mobile-system.js",
+    "templates/base.html",
+    "templates/core/home.html",
+    "templates/listings/_card.html",
+    "templates/listings/form.html",
+    "templates/listings/list.html",
+    "templates/listings/saved_searches.html"
+  ],
+  "local_checks": [
+    "python compileall",
+    "duplicate class method scan",
+    "node --check all JavaScript",
+    "bash -n all shell scripts",
+    "mobile contract",
+    "JSON and GitHub Actions YAML parse",
+    "template delimiter and static reference scan",
+    "secret pattern scan",
+    "package hygiene scan"
+  ],
+  "full_django_tests": "GitHub Actions Django Kontrol workflow is required after push because Django is unavailable in the packaging environment."
+}

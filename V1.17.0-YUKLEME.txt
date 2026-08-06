@@ -1,0 +1,45 @@
+İLAN ŞEHRİ v1.17.0 — KAYITLI ARAMALAR VE AKILLI İLAN BİLDİRİMLERİ
+
+Bu paket v1.16.0 Yakındaki İlanlar özelliğini ve v1.17.0 Akıllı Arama
+Bildirimlerini birlikte içerir.
+
+Öne çıkanlar:
+- Konum izniyle 5/10/25/50/100 km yakınlık filtresi ve mesafe sıralaması
+- İzin reddinde şehir–ilçe yedeği
+- Kayıtlı aramalarda Anlık / Günlük özet / Kapalı seçimi
+- Aynı ilan için tekrar bildirim engeli
+- Kayıtlı arama düzenleme, güvenli filtre beyaz listesi ve kopya engeli
+- Liste ekranı ile bildirim işinin ortak filtre motoru
+- PWA özel sayfa ve robots gizlilik düzeltmeleri
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. GitHub Desktop Summary:
+   İlan Şehri v1.17.0 akıllı arama bildirimleri
+4. Commit to main ve Push origin.
+5. Django Kontrol workflow'unun yeşil olmasını bekleyin.
+6. Yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. İlanlarda filtre uygulayıp “Aramayı kaydet” ile Anlık veya Günlük özet seçin.
+8. Ana sayfadaki “Yakınımdaki ilanlar” düğmesini konum izni açık ve kapalı
+   senaryolarda kontrol edin.
+9. Canlı hosting zamanlayıcısına günde bir kez şu komutu ekleyin:
+   bash scripts/run_daily_maintenance.sh
+   Bu adım Günlük özet seçeneğinin otomatik çalışması için gereklidir.
+
+Veritabanı notu:
+- SavedSearch alanları genişledi ve SavedSearchMatch modeli eklendi.
+- scripts/start_codespace.sh / bootstrap_production.sh makemigrations ve migrate
+  adımlarını çalıştırdığı için ayrıca elle migration komutu gerekmez.
+
+Kontroller:
+- Python derleme, JavaScript, Bash, URL referans taraması, şablon dengesi,
+  mobil sözleşme ve ZIP bütünlüğü yerel olarak kontrol edildi.
+- Bu çalışma ortamında Django paketi indirilemediği için tam Django testleri
+  GitHub Actions üzerindeki Django Kontrol workflow'unda çalışacaktır.
+
+- Gizlilik için konum koordinatları yaklaşık 100 metre hassasiyete yuvarlanır; açık adres kaydedilmez.

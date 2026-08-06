@@ -55,6 +55,7 @@ from .models import (
     OfferEvent,
     Review,
     SavedSearch,
+    SavedSearchMatch,
     Transaction,
 )
 from .services import (
@@ -74,8 +75,14 @@ from .services import (
 )
 from .matching import blocked_owner_ids, refresh_user_matches, sync_listing_matches
 from .message_safety import safe_notification_preview
-from .nearby import ALLOWED_RADII_KM, attach_distance, bounding_box, parse_origin, sort_nearby_listings
 from .pricing import build_price_guide
+from .search_alerts import (
+    apply_listing_filters,
+    attach_nearby_distances,
+    normalize_saved_search_params,
+    parse_nearby_params,
+    saved_search_result_params,
+)
 
 
 def _safe_int(value):
@@ -269,18 +276,28 @@ class SavedSearchListView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        searches = list(SavedSearch.objects.filter(user=self.request.user))
+        searches = list(
+            SavedSearch.objects.filter(user=self.request.user).annotate(
+                pending_match_count=Count("matches", filter=Q(matches__notified_at__isnull=True))
+            )
+        )
         label_map = {
             "q": "Arama", "city": "Şehir", "district": "İlçe", "kind": "İlan türü",
-            "action": "İşlem", "brand": "Marka", "model": "Model", "min_price": "En az",
-            "max_price": "En çok", "price_drop": "Fiyat düşüşü", "verified": "Doğrulanmış",
+            "action": "İşlem", "category": "Kategori", "brand": "Marka", "model": "Model",
+            "condition": "Durum", "delivery_type": "Teslimat", "fuel_type": "Yakıt",
+            "transmission": "Vites", "fee_type": "Ücret", "job_type": "İş türü",
+            "room_count": "Oda", "min_price": "En az", "max_price": "En çok",
+            "min_year": "Min. yıl", "max_year": "Maks. yıl", "max_mileage": "Azami km",
+            "min_area": "Min. m²", "max_area": "Maks. m²", "price_drop": "Fiyat düşüşü",
+            "verified": "Doğrulanmış", "managed": "Güvenceli", "following": "Takip edilen",
+            "radius": "Yakınlık",
         }
         for saved in searches:
-            saved.query_string = urlencode(saved.query_params or {}, doseq=True)
+            saved.query_string = urlencode(saved_search_result_params(saved.query_params or {}), doseq=True)
             saved.filter_summary = [
                 {"label": label_map.get(key, key.replace("_", " ").title()), "value": value}
                 for key, value in (saved.query_params or {}).items()
-                if value
+                if value and key not in {"lat", "lng"}
             ]
         context["saved_searches"] = searches
         return context
@@ -359,26 +376,6 @@ def search_suggestions(request):
     return JsonResponse({"results": results[:10]})
 
 
-@require_POST
-def set_nearby_location(request):
-    if not consume_rate_limit(request, "nearby_location", limit=30, period=300):
-        return JsonResponse({"ok": False, "message": "Çok sık konum isteği yapıldı. Birkaç dakika sonra tekrar dene."}, status=429)
-
-    origin = parse_origin(request.POST.get("latitude"), request.POST.get("longitude"), request.POST.get("radius"))
-    if origin is None:
-        return JsonResponse({"ok": False, "message": "Geçerli bir konum alınamadı."}, status=400)
-
-    request.session["nearby_origin"] = {
-        "latitude": round(origin.latitude, 4),
-        "longitude": round(origin.longitude, 4),
-        "radius_km": origin.radius_km,
-        "area_city": request.POST.get("area_city", "").strip()[:80],
-        "area_district": request.POST.get("area_district", "").strip()[:80],
-    }
-    request.session.modified = True
-    return JsonResponse({"ok": True, "radius_km": origin.radius_km})
-
-
 @login_required
 @require_GET
 def price_guide(request):
@@ -433,16 +430,6 @@ class ListingListView(ListView):
     paginate_by = 24
 
     def get_queryset(self):
-        self.nearby_state = {
-            "requested": False,
-            "active": False,
-            "invalid": False,
-            "radius_km": None,
-            "exact_count": 0,
-            "fallback_count": 0,
-            "area_city": "",
-            "area_district": "",
-        }
         latest_price_history = ListingPriceHistory.objects.filter(
             listing_id=OuterRef("pk")
         ).order_by("-created_at")
@@ -457,161 +444,8 @@ class ListingListView(ListView):
             .prefetch_related("images", "price_history")
         )
         params = self.request.GET
-        q = params.get("q", "").strip()
-        city = params.get("city", "").strip()
-        district = params.get("district", "").strip()
-        kind = params.get("kind", "").strip()
-        action = params.get("action", "").strip()
-        brand = params.get("brand", "").strip()
-        model_name = params.get("model", "").strip()
-        room_count = params.get("room_count", "").strip()
-        category_id = params.get("category", "").strip()
-        condition = params.get("condition", "").strip()
-        delivery_type = params.get("delivery_type", "").strip()
-        fuel_type = params.get("fuel_type", "").strip()
-        transmission = params.get("transmission", "").strip()
-        fee_type = params.get("fee_type", "").strip()
-        job_type = params.get("job_type", "").strip()
-        nearby_requested = params.get("nearby") == "1"
-        sort = params.get("sort", "").strip() or ("distance" if nearby_requested else "newest")
-
-        if q:
-            qs = qs.filter(
-                Q(title__icontains=q)
-                | Q(description__icontains=q)
-                | Q(category__name__icontains=q)
-                | Q(brand__icontains=q)
-                | Q(model_name__icontains=q)
-                | Q(color__icontains=q)
-            )
-        if city:
-            qs = qs.filter(city__iexact=city)
-        if district:
-            qs = qs.filter(district__icontains=district)
-        if kind:
-            qs = qs.filter(kind=kind)
-        if action:
-            qs = qs.filter(action=action)
-        if brand:
-            qs = qs.filter(brand__icontains=brand)
-        if model_name:
-            qs = qs.filter(model_name__icontains=model_name)
-        if room_count:
-            qs = qs.filter(room_count=room_count)
-        if category_id:
-            qs = qs.filter(category_id=category_id)
-        if condition:
-            qs = qs.filter(condition__icontains=condition)
-        if delivery_type:
-            qs = qs.filter(delivery_type=delivery_type)
-        if fuel_type:
-            qs = qs.filter(fuel_type=fuel_type)
-        if transmission:
-            qs = qs.filter(transmission=transmission)
-        if fee_type:
-            qs = qs.filter(fee_type=fee_type)
-        if job_type:
-            qs = qs.filter(job_type=job_type)
-        if params.get("managed") == "1":
-            qs = qs.filter(management_mode=Listing.ManagementMode.FULL)
-        if params.get("verified") == "1":
-            qs = qs.filter(owner__is_phone_verified=True)
-        if params.get("price_drop") == "1":
-            qs = qs.filter(latest_price_old__gt=F("latest_price_new"))
-        if params.get("following") == "1" and self.request.user.is_authenticated:
-            followed_ids = UserFollow.objects.filter(follower=self.request.user).values_list("seller_id", flat=True)
-            qs = qs.filter(owner_id__in=followed_ids)
-
-        min_price = _safe_decimal(params.get("min_price"))
-        max_price = _safe_decimal(params.get("max_price"))
-        min_year = _safe_int(params.get("min_year"))
-        max_year = _safe_int(params.get("max_year"))
-        max_mileage = _safe_int(params.get("max_mileage"))
-        min_area = _safe_int(params.get("min_area"))
-        max_area = _safe_int(params.get("max_area"))
-        if min_price is not None:
-            qs = qs.filter(price__gte=min_price)
-        if max_price is not None:
-            qs = qs.filter(price__lte=max_price)
-        if min_year:
-            qs = qs.filter(model_year__gte=min_year)
-        if max_year:
-            qs = qs.filter(model_year__lte=max_year)
-        if max_mileage is not None:
-            qs = qs.filter(mileage__lte=max_mileage)
-        if min_area:
-            qs = qs.filter(area_m2__gte=min_area)
-        if max_area:
-            qs = qs.filter(area_m2__lte=max_area)
-
-        if nearby_requested:
-            self.nearby_state["requested"] = True
-            stored_origin = self.request.session.get("nearby_origin", {})
-            origin = parse_origin(
-                params.get("lat") or stored_origin.get("latitude"),
-                params.get("lon") or stored_origin.get("longitude"),
-                params.get("radius") or stored_origin.get("radius_km"),
-            )
-            if origin is None:
-                self.nearby_state["invalid"] = True
-            else:
-                area_city = (
-                    params.get("area_city", "").strip()
-                    or str(stored_origin.get("area_city", "")).strip()
-                    or city
-                )
-                area_district = (
-                    params.get("area_district", "").strip()
-                    or str(stored_origin.get("area_district", "")).strip()
-                    or district
-                )
-                if self.request.user.is_authenticated:
-                    area_city = area_city or self.request.user.city.strip()
-                    area_district = area_district or self.request.user.district.strip()
-
-                min_lat, max_lat, min_lon, max_lon = bounding_box(origin)
-                exact_candidates = list(
-                    qs.order_by()
-                    .filter(
-                        latitude__isnull=False,
-                        longitude__isnull=False,
-                        latitude__gte=min_lat,
-                        latitude__lte=max_lat,
-                        longitude__gte=min_lon,
-                        longitude__lte=max_lon,
-                    )[:600]
-                )
-                exact_items = []
-                for listing in exact_candidates:
-                    distance = attach_distance(listing, origin)
-                    if distance is not None and distance <= origin.radius_km:
-                        exact_items.append(listing)
-
-                fallback_items = []
-                if area_city:
-                    fallback_qs = qs.order_by().filter(
-                        Q(latitude__isnull=True) | Q(longitude__isnull=True),
-                        city__iexact=area_city,
-                    )
-                    if area_district:
-                        fallback_qs = fallback_qs.filter(district__iexact=area_district)
-                    for listing in fallback_qs[:120]:
-                        attach_distance(listing, origin)
-                        fallback_items.append(listing)
-
-                nearby_items = sort_nearby_listings([*exact_items, *fallback_items], sort)
-                self.nearby_state.update(
-                    {
-                        "active": True,
-                        "radius_km": origin.radius_km,
-                        "exact_count": len(exact_items),
-                        "fallback_count": len(fallback_items),
-                        "area_city": area_city,
-                        "area_district": area_district,
-                    }
-                )
-                return nearby_items
-
+        qs = apply_listing_filters(qs, params, user=self.request.user)
+        sort = params.get("sort", "newest")
         ordering = {
             "newest": ("-is_featured", "-published_at", "-created_at"),
             "price_asc": ("price", "-is_featured"),
@@ -619,8 +453,16 @@ class ListingListView(ListView):
             "popular": ("-view_count", "-favorite_count", "-created_at"),
             "oldest": ("created_at",),
             "price_drop": ("-latest_price_changed_at", "-created_at"),
+            "nearby": ("-is_featured", "-published_at", "-created_at"),
         }.get(sort, ("-is_featured", "-published_at", "-created_at"))
-        return qs.order_by(*ordering)
+        qs = qs.order_by(*ordering)
+
+        if parse_nearby_params(params):
+            items = attach_nearby_distances(qs, params)
+            if sort == "nearby":
+                items.sort(key=lambda item: (item.distance_km, not item.is_featured, -item.pk))
+            return items
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -644,14 +486,9 @@ class ListingListView(ListView):
             value = self.request.GET.get(key, "").strip()
             if value:
                 active_labels.append({"key": key, "label": label, "value": value})
-        if self.nearby_state.get("active"):
-            active_labels.append(
-                {
-                    "key": "nearby",
-                    "label": "Yakınlık",
-                    "value": f"{self.nearby_state['radius_km']} km çevre",
-                }
-            )
+        nearby = parse_nearby_params(self.request.GET)
+        if nearby:
+            active_labels.append({"key": "radius", "label": "Yakınlık", "value": f"{nearby[2]} km"})
         context.update(
             {
                 "kind_choices": Listing.Kind.choices,
@@ -666,8 +503,6 @@ class ListingListView(ListView):
                 "active_filters": self.request.GET,
                 "active_filter_labels": active_labels,
                 "favorite_ids": favorite_ids,
-                "nearby_state": self.nearby_state,
-                "nearby_radius_choices": ALLOWED_RADII_KM,
                 "compare_ids": set(_compare_ids(self.request)),
                 "saved_search_form": SavedSearchForm(),
             }
@@ -1785,23 +1620,68 @@ def mark_all_notifications_read(request):
 @login_required
 @require_POST
 def save_search(request):
-    form = SavedSearchForm(request.POST)
+    if not consume_rate_limit(request, "save_search", limit=12, period=3600):
+        messages.error(request, "Çok fazla arama kaydedildi. Bir süre sonra tekrar dene.")
+        return redirect(_safe_next_url(request, reverse("listings:list")))
+
+    post_data = request.POST.copy()
+    if not post_data.get("alert_frequency"):
+        post_data["alert_frequency"] = (
+            SavedSearch.AlertFrequency.INSTANT
+            if post_data.get("alert_enabled")
+            else SavedSearch.AlertFrequency.OFF
+        )
+    form = SavedSearchForm(post_data)
+    query_params = normalize_saved_search_params(request.POST)
+    if not query_params:
+        messages.error(request, "Kaydetmek için en az bir arama veya filtre seçmelisin.")
+        return redirect(_safe_next_url(request, reverse("listings:list")))
+
     if form.is_valid():
-        saved = form.save(commit=False)
-        saved.user = request.user
-        saved.query_params = {
-            key: value
-            for key, value in request.POST.items()
-            if key not in {
-                "csrfmiddlewaretoken", "name", "alert_enabled", "next", "page", "sort",
-                "nearby", "lat", "lon", "radius", "area_city", "area_district",
-            } and value
-        }
-        saved.save()
-        messages.success(request, "Araman kaydedildi.")
+        existing = next(
+            (
+                item
+                for item in SavedSearch.objects.filter(user=request.user)
+                if (item.query_params or {}) == query_params
+            ),
+            None,
+        )
+        if existing:
+            previous_frequency = existing.effective_alert_frequency
+            existing.name = form.cleaned_data["name"]
+            existing.alert_frequency = form.cleaned_data["alert_frequency"]
+            if previous_frequency != existing.alert_frequency and existing.alert_frequency == SavedSearch.AlertFrequency.DAILY:
+                existing.last_checked_at = timezone.now()
+            existing.save()
+            messages.success(request, "Bu arama daha önce kayıtlıydı; adı ve bildirim ayarı güncellendi.")
+        elif SavedSearch.objects.filter(user=request.user).count() >= 30:
+            messages.error(request, "En fazla 30 arama kaydedebilirsin. Önce kullanmadığın bir aramayı sil.")
+        else:
+            saved = form.save(commit=False)
+            saved.user = request.user
+            saved.query_params = query_params
+            saved.save()
+            messages.success(request, "Araman kaydedildi.")
     else:
-        messages.error(request, "Arama kaydedilemedi.")
+        messages.error(request, "Arama kaydedilemedi. Arama adını ve bildirim sıklığını kontrol et.")
     return redirect(_safe_next_url(request, reverse("listings:list")))
+
+
+@login_required
+@require_POST
+def update_saved_search(request, pk):
+    saved = get_object_or_404(SavedSearch, pk=pk, user=request.user)
+    previous_frequency = saved.effective_alert_frequency
+    form = SavedSearchForm(request.POST, instance=saved)
+    if form.is_valid():
+        updated = form.save(commit=False)
+        if previous_frequency != updated.alert_frequency and updated.alert_frequency == SavedSearch.AlertFrequency.DAILY:
+            updated.last_checked_at = timezone.now()
+        updated.save()
+        messages.success(request, "Kayıtlı arama güncellendi.")
+    else:
+        messages.error(request, "Arama güncellenemedi. Alanları kontrol et.")
+    return redirect(_safe_next_url(request, reverse("listings:saved_searches")))
 
 
 @login_required
@@ -1816,8 +1696,12 @@ def delete_saved_search(request, pk):
 @require_POST
 def toggle_saved_search_alert(request, pk):
     saved = get_object_or_404(SavedSearch, pk=pk, user=request.user)
-    saved.alert_enabled = not saved.alert_enabled
-    saved.save(update_fields=["alert_enabled"])
+    saved.alert_frequency = (
+        SavedSearch.AlertFrequency.OFF
+        if saved.alert_enabled
+        else SavedSearch.AlertFrequency.INSTANT
+    )
+    saved.save()
     messages.success(
         request,
         "Arama bildirimi açıldı." if saved.alert_enabled else "Arama bildirimi kapatıldı.",

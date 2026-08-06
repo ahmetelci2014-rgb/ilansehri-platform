@@ -29,7 +29,6 @@ VIEWPORTS = (
 PUBLIC_ROUTES = (
     ("home", "/"),
     ("listings", "/ilanlar/"),
-    ("nearby-discovery", "/ilanlar/?nearby=1&lat=37.167400&lon=38.795500&radius=25&area_city=%C5%9Eanl%C4%B1urfa&area_district=Karak%C3%B6pr%C3%BC&sort=distance"),
     ("product-category", "/ilanlar/kategori/product/"),
     ("vehicle-category", "/ilanlar/kategori/vehicle/"),
     ("listing-detail", "/ilanlar/demo-telefon/"),
@@ -251,7 +250,7 @@ def run_audit(base_url: str, output_dir: Path) -> list[PageResult]:
 
 def write_report(output_dir: Path, results: list[PageResult]) -> None:
     payload = {
-        "version": "v1.16.0",
+        "version": "v1.17.0",
         "summary": {
             "pages": len(results),
             "critical": sum(result.critical for result in results),

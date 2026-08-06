@@ -26,8 +26,8 @@ def require(text: str, needle: str, source: str) -> None:
 
 def main() -> int:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if version != "v1.16.0":
-        fail(f"VERSION v1.16.0 olmalı, bulundu: {version}")
+    if version != "v1.17.0":
+        fail(f"VERSION v1.17.0 olmalı, bulundu: {version}")
 
     base = (ROOT / "templates/base.html").read_text(encoding="utf-8")
     views = (ROOT / "apps/core/views.py").read_text(encoding="utf-8")
@@ -37,49 +37,42 @@ def main() -> int:
     listing_form = (ROOT / "templates/listings/form.html").read_text(encoding="utf-8")
     listing_detail = (ROOT / "templates/listings/detail.html").read_text(encoding="utf-8")
     pricing = (ROOT / "apps/listings/pricing.py").read_text(encoding="utf-8")
-    nearby = (ROOT / "apps/listings/nearby.py").read_text(encoding="utf-8")
-    nearby_css = (ROOT / "static/css/v116-nearby.css").read_text(encoding="utf-8")
-    nearby_js = (ROOT / "static/js/v116-nearby.js").read_text(encoding="utf-8")
-    listing_list = (ROOT / "templates/listings/list.html").read_text(encoding="utf-8")
-    listing_views = (ROOT / "apps/listings/views.py").read_text(encoding="utf-8")
-    listing_urls = (ROOT / "apps/listings/urls.py").read_text(encoding="utf-8")
+    search_alerts = (ROOT / "apps/listings/search_alerts.py").read_text(encoding="utf-8")
+    saved_searches = (ROOT / "templates/listings/saved_searches.html").read_text(encoding="utf-8")
+    location_js = (ROOT / "static/js/v116-location-discovery.js").read_text(encoding="utf-8")
+    maintenance_script = (ROOT / "scripts/run_daily_maintenance.sh").read_text(encoding="utf-8")
 
     require(base, "css/v132-mobile-system.css", "templates/base.html")
     require(base, "js/v132-mobile-system.js", "templates/base.html")
-    require(base, "v1.16.0", "templates/base.html")
-    require(views, 'const CACHE = "ilansehri-v1160";', "apps/core/views.py")
+    require(base, "v1.17.0", "templates/base.html")
+    require(views, 'const CACHE = "ilansehri-v1170";', "apps/core/views.py")
     require(views, "/static/css/v132-mobile-system.css", "apps/core/views.py")
     require(base, "css/v14-matching.css", "templates/base.html")
     require(base, "css/v141-price-guide.css", "templates/base.html")
     require(base, "js/v141-price-guide.js", "templates/base.html")
     require(base, "css/v15-message-safety.css", "templates/base.html")
     require(base, "js/v15-message-safety.js", "templates/base.html")
-    require(base, "css/v116-nearby.css", "templates/base.html")
-    require(base, "js/v116-nearby.js", "templates/base.html")
+    require(base, "css/v117-search-alerts.css", "templates/base.html")
+    require(base, "js/v116-location-discovery.js", "templates/base.html")
     require(views, "/static/css/v14-matching.css", "apps/core/views.py")
     require(views, "/static/css/v141-price-guide.css", "apps/core/views.py")
     require(views, "/static/js/v141-price-guide.js", "apps/core/views.py")
     require(views, "/static/css/v15-message-safety.css", "apps/core/views.py")
     require(views, "/static/js/v15-message-safety.js", "apps/core/views.py")
-    require(views, "/static/css/v116-nearby.css", "apps/core/views.py")
-    require(views, "/static/js/v116-nearby.js", "apps/core/views.py")
+    require(views, "/static/css/v117-search-alerts.css", "apps/core/views.py")
+    require(views, "/static/js/v116-location-discovery.js", "apps/core/views.py")
     require(views, "/static/js/v132-mobile-system.js", "apps/core/views.py")
-    require(views, '"version": "1.16.0"', "apps/core/views.py")
+    require(views, '"version": "1.17.0"', "apps/core/views.py")
     require(listing_form, "data-price-guide-assistant", "templates/listings/form.html")
+    require(listing_form, "data-listing-location-capture", "templates/listings/form.html")
+    require(location_js, "data-listing-latitude", "static/js/v116-location-discovery.js")
+    require(saved_searches, 'name="alert_frequency"', "templates/listings/saved_searches.html")
+    require(search_alerts, "def apply_listing_filters", "apps/listings/search_alerts.py")
+    require(search_alerts, "def saved_search_result_params", "apps/listings/search_alerts.py")
+    require(maintenance_script, "marketplace_maintenance", "scripts/run_daily_maintenance.sh")
     require(listing_detail, "listings/_price_guide.html", "templates/listings/detail.html")
     require(pricing, "def build_price_guide", "apps/listings/pricing.py")
     require(pricing, "_remove_outliers", "apps/listings/pricing.py")
-    require(nearby, "def haversine_km", "apps/listings/nearby.py")
-    require(nearby, "def bounding_box", "apps/listings/nearby.py")
-    require(nearby, "def sort_nearby_listings", "apps/listings/nearby.py")
-    require(nearby_css, ".v116-nearby-panel", "static/css/v116-nearby.css")
-    require(nearby_js, "navigator.geolocation", "static/js/v116-nearby.js")
-    require(listing_form, "data-listing-location-capture", "templates/listings/form.html")
-    require(listing_list, "data-nearby-discovery", "templates/listings/list.html")
-    require(listing_list, "data-nearby-session-form", "templates/listings/list.html")
-    require(listing_views, "def set_nearby_location", "apps/listings/views.py")
-    require(listing_views, 'request.session["nearby_origin"]', "apps/listings/views.py")
-    require(listing_urls, 'path("yakindaki/konum/", set_nearby_location', "apps/listings/urls.py")
 
     required_css_groups = (
         "body.page-dashboard .v16-account-layout",
@@ -136,7 +129,7 @@ def main() -> int:
     if offenders:
         fail("Mobil taşma riski taşıyan inline genişlikler: " + ", ".join(offenders))
 
-    print("Mobil sözleşme kontrolü başarılı: v1.16.0")
+    print("Mobil sözleşme kontrolü başarılı: v1.17.0")
     return 0
 
 

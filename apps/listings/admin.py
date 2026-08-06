@@ -18,6 +18,7 @@ from .models import (
     OfferEvent,
     Review,
     SavedSearch,
+    SavedSearchMatch,
     Transaction,
 )
 from .matching import sync_listing_matches
@@ -137,7 +138,24 @@ admin.site.register(Category)
 admin.site.register(ListingImage)
 admin.site.register(Offer)
 admin.site.register(Favorite)
-admin.site.register(SavedSearch)
+
+
+@admin.register(SavedSearch)
+class SavedSearchAdmin(admin.ModelAdmin):
+    list_display = ("name", "user", "alert_frequency", "alert_enabled", "last_checked_at", "last_notified_at", "created_at")
+    list_filter = ("alert_frequency", "alert_enabled")
+    search_fields = ("name", "user__username", "user__email")
+    readonly_fields = ("alert_enabled", "created_at", "updated_at", "last_checked_at", "last_notified_at")
+
+
+@admin.register(SavedSearchMatch)
+class SavedSearchMatchAdmin(admin.ModelAdmin):
+    list_display = ("saved_search", "listing", "notified_at", "created_at")
+    list_filter = ("notified_at",)
+    search_fields = ("saved_search__name", "saved_search__user__username", "listing__title")
+    readonly_fields = ("created_at", "notified_at")
+
+
 admin.site.register(Conversation)
 admin.site.register(Message)
 admin.site.register(Notification)

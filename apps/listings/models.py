@@ -466,18 +466,60 @@ class Favorite(models.Model):
 
 
 class SavedSearch(models.Model):
+    class AlertFrequency(models.TextChoices):
+        OFF = "off", "Kapalı"
+        INSTANT = "instant", "Anlık"
+        DAILY = "daily", "Günlük özet"
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="saved_searches", on_delete=models.CASCADE)
     name = models.CharField(max_length=120)
     query_params = models.JSONField(default=dict)
     alert_enabled = models.BooleanField(default=True)
+    alert_frequency = models.CharField(
+        max_length=12,
+        choices=AlertFrequency.choices,
+        default=AlertFrequency.INSTANT,
+    )
+    last_checked_at = models.DateTimeField(null=True, blank=True)
     last_notified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=["alert_enabled", "alert_frequency", "last_checked_at"])]
+
+    def save(self, *args, **kwargs):
+        self.name = (self.name or "").strip()[:120]
+        self.alert_enabled = self.alert_frequency != self.AlertFrequency.OFF
+        super().save(*args, **kwargs)
+
+    @property
+    def effective_alert_frequency(self):
+        return self.alert_frequency if self.alert_enabled else self.AlertFrequency.OFF
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.name}"
+
+
+class SavedSearchMatch(models.Model):
+    saved_search = models.ForeignKey(SavedSearch, related_name="matches", on_delete=models.CASCADE)
+    listing = models.ForeignKey(Listing, related_name="saved_search_matches", on_delete=models.CASCADE)
+    notified_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=("saved_search", "listing"),
+                name="unique_saved_search_listing_match",
+            )
+        ]
+        indexes = [models.Index(fields=["saved_search", "notified_at", "-created_at"])]
 
     def __str__(self) -> str:
-        return f"{self.user} · {self.name}"
+        return f"{self.saved_search} · {self.listing}"
 
 
 class ListingMatch(models.Model):
@@ -626,6 +668,7 @@ class Notification(models.Model):
         PRICE_DROP = "price_drop", "Fiyat düşüşü"
         FOLLOW = "follow", "Satıcı takibi"
         MATCH = "match", "Akıllı eşleşme"
+        SEARCH_ALERT = "search_alert", "Kayıtlı arama"
         SYSTEM = "system", "Sistem"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="notifications", on_delete=models.CASCADE)

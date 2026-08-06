@@ -20,7 +20,7 @@
 
   <div class="v16-wizard-card">
     <form method="post" enctype="multipart/form-data" class="v16-wizard-main" data-v16-wizard data-listing-form {% if not object and not server_draft %}data-v18-draft-key="listing-create-v18"{% endif %} data-location-url="{% url 'listings:location_suggestions' %}">
-      {% csrf_token %}{{ form.non_field_errors }}
+      {% csrf_token %}{{ form.non_field_errors }}{{ form.latitude }}{{ form.longitude }}
       <input type="hidden" name="ai_analysis_id" value="{{ request.POST.ai_analysis_id|default:'' }}" data-ai-analysis-id>
       {% if server_draft %}<input type="hidden" name="draft_id" value="{{ server_draft.pk }}">{% endif %}
 
@@ -96,13 +96,8 @@
       <section class="v16-wizard-section" data-v16-section="4">
         <div class="v16-step-head"><span>04</span><div><h2>Fiyat ve konumu sen tamamla</h2><p>Yapay zekâ fiyat veya açık adres tahmini yapmaz.</p></div></div>
         <div class="v16-field-grid">{% for field in form %}{% if field.name in 'city district neighborhood' %}<div class="field">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div><datalist id="district-options"></datalist><datalist id="neighborhood-options"></datalist>
-        {{ form.latitude }}{{ form.longitude }}
+        <div class="v116-listing-location"><button type="button" data-listing-location-capture>◎ Yaklaşık konumumu ekle</button><div><b data-listing-location-status>{% if object.latitude and object.longitude %}Yaklaşık konum kayıtlı{% else %}Mesafe tabanlı keşif için isteğe bağlıdır{% endif %}</b><small>Açık adres paylaşılmaz. Yalnız yaklaşık mesafe sıralaması için koordinat kaydedilir.</small></div></div>
         {% for error in form.latitude.errors %}<div class="field-error">{{ error }}</div>{% endfor %}{% for error in form.longitude.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-        <section class="v116-listing-location{% if form.latitude.value and form.longitude.value %} is-set{% endif %}" data-listing-location-box>
-          <span class="v116-listing-location-icon">⌖</span>
-          <div><b>İlanı mesafeye göre bulunabilir yap</b><p>Konum izni verirsen yalnız yaklaşık mesafe hesabı için koordinat kaydedilir. Tam adres ve koordinatlar ilan sayfasında gösterilmez.</p><small data-listing-location-status aria-live="polite">{% if form.latitude.value and form.longitude.value %}Konum işaretlendi. İlanın yakındaki sonuçlarda mesafeyle gösterilebilir.{% else %}Konum işaretlenmedi; ilan şehir ve ilçe bilgisiyle bulunmaya devam eder.{% endif %}</small></div>
-          <div class="v116-listing-location-actions"><button type="button" data-listing-location-capture>{% if form.latitude.value and form.longitude.value %}Konumu yenile{% else %}Konumumu işaretle{% endif %}</button><button type="button" data-listing-location-clear {% if not form.latitude.value or not form.longitude.value %}hidden{% endif %}>Konumu kaldır</button></div>
-        </section>
         <div class="v16-choice-help"><b>Güvenlik:</b> Ev numarası veya tam açık adres yazma. Mahalle bilgisi ilan için yeterlidir.</div>
       </section>
 

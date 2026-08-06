@@ -1,5 +1,4 @@
 from datetime import timedelta
-from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
 from django.core.management.base import BaseCommand
@@ -8,12 +7,13 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import VerificationCode
-from apps.listings.models import Listing, Notification, SavedSearch
+from apps.listings.models import Listing, Notification, SavedSearch, SavedSearchMatch
+from apps.listings.search_alerts import apply_listing_filters, attach_nearby_distances, saved_search_result_params
 from apps.listings.services import create_notification
 
 
 class Command(BaseCommand):
-    help = "Süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler ve kayıtlı arama uyarılarını üretir."
+    help = "Süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler ve günlük arama özetlerini üretir."
 
     def handle(self, *args, **options):
         now = timezone.now()
@@ -28,80 +28,72 @@ class Command(BaseCommand):
         ).delete()
 
         alert_count = 0
-        searches = SavedSearch.objects.filter(alert_enabled=True).select_related("user")
+        match_count = 0
+        due_before = now - timedelta(hours=23)
+        searches = (
+            SavedSearch.objects.filter(
+                alert_enabled=True,
+                alert_frequency=SavedSearch.AlertFrequency.DAILY,
+                user__is_active=True,
+            )
+            .filter(Q(last_checked_at__isnull=True) | Q(last_checked_at__lte=due_before))
+            .select_related("user")
+        )
         for saved in searches.iterator():
             params = saved.query_params or {}
-            since = saved.last_notified_at or saved.created_at
-            qs = Listing.objects.filter(
-                status=Listing.Status.PUBLISHED,
-                created_at__gt=since,
-            ).exclude(owner=saved.user)
-
-            q = str(params.get("q", "")).strip()
-            if q:
-                qs = qs.filter(
-                    Q(title__icontains=q)
-                    | Q(description__icontains=q)
-                    | Q(category__name__icontains=q)
-                    | Q(brand__icontains=q)
-                    | Q(model_name__icontains=q)
+            since = saved.last_checked_at or saved.created_at
+            qs = (
+                Listing.objects.filter(
+                    status=Listing.Status.PUBLISHED,
                 )
-            exact_filters = {"city": "city", "kind": "kind", "action": "action", "room_count": "room_count"}
-            partial_filters = {"district": "district__icontains", "brand": "brand__icontains", "model": "model_name__icontains"}
-            for key, lookup in exact_filters.items():
-                value = str(params.get(key, "")).strip()
-                if value:
-                    qs = qs.filter(**{lookup: value})
-            for key, lookup in partial_filters.items():
-                value = str(params.get(key, "")).strip()
-                if value:
-                    qs = qs.filter(**{lookup: value})
+                .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+                .filter(Q(published_at__gt=since) | Q(published_at__isnull=True, created_at__gt=since))
+                .exclude(owner=saved.user)
+                .select_related("owner", "category")
+            )
+            qs = apply_listing_filters(qs, params, user=saved.user)
+            candidates = attach_nearby_distances(qs, params)
 
-            decimal_filters = {"min_price": "price__gte", "max_price": "price__lte"}
-            for key, lookup in decimal_filters.items():
-                value = str(params.get(key, "")).strip()
-                if value:
-                    try:
-                        qs = qs.filter(**{lookup: Decimal(value)})
-                    except (InvalidOperation, ValueError):
-                        pass
-            integer_filters = {
-                "min_year": "model_year__gte",
-                "max_year": "model_year__lte",
-                "max_mileage": "mileage__lte",
-                "min_area": "area_m2__gte",
-                "max_area": "area_m2__lte",
-            }
-            for key, lookup in integer_filters.items():
-                value = str(params.get(key, "")).strip()
-                if value:
-                    try:
-                        qs = qs.filter(**{lookup: int(value)})
-                    except ValueError:
-                        pass
-            if str(params.get("verified", "")) == "1":
-                qs = qs.filter(owner__is_phone_verified=True)
-            if str(params.get("managed", "")) == "1":
-                qs = qs.filter(management_mode=Listing.ManagementMode.FULL)
+            new_matches = []
+            for listing in candidates:
+                match, created = SavedSearchMatch.objects.get_or_create(
+                    saved_search=saved,
+                    listing=listing,
+                )
+                if created:
+                    new_matches.append(match)
 
-            match_count = qs.count()
-            if match_count:
-                create_notification(
+            if new_matches:
+                result_url = reverse("listings:list")
+                query_string = urlencode(saved_search_result_params(params))
+                if query_string:
+                    result_url += "?" + query_string
+                notification = create_notification(
                     user=saved.user,
-                    notification_type=Notification.Type.SYSTEM,
-                    title=f"{saved.name} aramana uygun yeni ilanlar var",
-                    body=f"{match_count} yeni ilan bulundu. Sonuçları görmek için dokun.",
-                    link=reverse("listings:list") + "?" + urlencode(
-                        {key: value for key, value in params.items() if value}
-                    ),
+                    notification_type=Notification.Type.SEARCH_ALERT,
+                    title=f"{saved.name} günlük arama özeti",
+                    body=f"{len(new_matches)} yeni ilan bulundu. Sonuçları görmek için dokun.",
+                    link=result_url,
                 )
-                alert_count += 1
-            saved.last_notified_at = now
-            saved.save(update_fields=["last_notified_at"])
+                if notification is not None:
+                    notified_at = timezone.now()
+                    SavedSearchMatch.objects.filter(pk__in=[item.pk for item in new_matches]).update(
+                        notified_at=notified_at
+                    )
+                    saved.last_notified_at = notified_at
+                    alert_count += 1
+                    match_count += len(new_matches)
+
+            saved.last_checked_at = now
+            update_fields = ["last_checked_at", "updated_at"]
+            if saved.last_notified_at:
+                update_fields.append("last_notified_at")
+            saved.save(update_fields=update_fields)
 
         self.stdout.write(
             self.style.SUCCESS(
                 f"Bakım tamamlandı: {expired_count} ilan kapatıldı, "
-                f"{deleted_codes} doğrulama kaydı temizlendi, {alert_count} arama uyarısı üretildi."
+                f"{deleted_codes} doğrulama kaydı temizlendi, "
+                f"{alert_count} günlük arama özeti ve {match_count} tekil eşleşme üretildi."
             )
         )

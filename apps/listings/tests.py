@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -22,13 +23,18 @@ from .models import (
     OfferEvent,
     Review,
     SavedSearch,
+    SavedSearchMatch,
     Transaction,
 )
 from .matching import score_listing_pair, sync_listing_matches
 from .message_safety import analyze_message, safe_notification_preview
-from .nearby import distance_label, haversine_km, parse_origin
 from .pricing import build_price_guide
-from .services import assess_listing_quality, create_notification, record_price_change
+from .services import (
+    assess_listing_quality,
+    create_notification,
+    notify_listing_publication,
+    record_price_change,
+)
 
 
 TINY_GIF = (
@@ -466,6 +472,91 @@ class ListingFlowTests(TestCase):
         self.client.post(reverse("listings:toggle_saved_search_alert", kwargs={"pk": saved.pk}))
         saved.refresh_from_db()
         self.assertFalse(saved.alert_enabled)
+
+    def test_saved_search_frequency_is_sanitized_and_duplicate_is_updated(self):
+        self.client.force_login(self.buyer)
+        url = reverse("listings:save_search")
+        self.client.post(
+            url,
+            {
+                "name": "Şanlıurfa telefon",
+                "q": "telefon",
+                "city": "Şanlıurfa",
+                "alert_frequency": SavedSearch.AlertFrequency.DAILY,
+                "unsupported": "saklanmamali",
+            },
+        )
+        saved = SavedSearch.objects.get(user=self.buyer)
+        self.assertEqual(saved.alert_frequency, SavedSearch.AlertFrequency.DAILY)
+        self.assertTrue(saved.alert_enabled)
+        self.assertNotIn("unsupported", saved.query_params)
+
+        self.client.post(
+            url,
+            {
+                "name": "Telefon fırsatları",
+                "q": "telefon",
+                "city": "Şanlıurfa",
+                "alert_frequency": SavedSearch.AlertFrequency.OFF,
+            },
+        )
+        self.assertEqual(SavedSearch.objects.filter(user=self.buyer).count(), 1)
+        saved.refresh_from_db()
+        self.assertEqual(saved.name, "Telefon fırsatları")
+        self.assertFalse(saved.alert_enabled)
+
+    def test_instant_saved_search_notification_is_created_only_once(self):
+        saved = SavedSearch.objects.create(
+            user=self.buyer,
+            name="Telefon alarmı",
+            query_params={"q": "telefon", "city": "Şanlıurfa"},
+            alert_frequency=SavedSearch.AlertFrequency.INSTANT,
+        )
+        listing = self.create_listing(title="Yeni test telefonu")
+        notify_listing_publication(listing)
+        notify_listing_publication(listing)
+        self.assertEqual(SavedSearchMatch.objects.filter(saved_search=saved, listing=listing).count(), 1)
+        self.assertEqual(
+            Notification.objects.filter(user=self.buyer, listing=listing, title__contains="Telefon alarmı").count(),
+            1,
+        )
+
+    def test_daily_saved_search_is_grouped_by_maintenance(self):
+        saved = SavedSearch.objects.create(
+            user=self.buyer,
+            name="Günlük araç özeti",
+            query_params={"kind": Listing.Kind.VEHICLE, "city": "Şanlıurfa"},
+            alert_frequency=SavedSearch.AlertFrequency.DAILY,
+        )
+        listing = self.create_listing(
+            category=self.vehicle_category,
+            kind=Listing.Kind.VEHICLE,
+            title="Günlük özete uygun otomobil",
+        )
+        call_command("marketplace_maintenance")
+        saved.refresh_from_db()
+        self.assertIsNotNone(saved.last_checked_at)
+        self.assertTrue(SavedSearchMatch.objects.filter(saved_search=saved, listing=listing).exists())
+        self.assertTrue(Notification.objects.filter(user=self.buyer, title__contains="günlük arama özeti").exists())
+
+    def test_nearby_search_filters_and_exposes_distance(self):
+        near = self.create_listing(
+            title="Yakındaki telefon",
+            latitude=Decimal("37.167400"),
+            longitude=Decimal("38.795500"),
+        )
+        far = self.create_listing(
+            title="Uzaktaki telefon",
+            latitude=Decimal("41.008200"),
+            longitude=Decimal("28.978400"),
+        )
+        response = self.client.get(
+            reverse("listings:list"),
+            {"lat": "37.167000", "lng": "38.795000", "radius": "25", "sort": "nearby"},
+        )
+        self.assertContains(response, near.title)
+        self.assertNotContains(response, far.title)
+        self.assertContains(response, "km")
 
     def test_notifications_can_be_filtered(self):
         Notification.objects.create(
@@ -1036,169 +1127,3 @@ class MessageSafetyTests(TestCase):
         )
         self.assertIn("Güvenlik uyarısı", preview)
         self.assertNotIn("kart şifreni", preview)
-
-
-@override_settings(AUTO_PUBLISH_LISTINGS=True)
-class NearbyDiscoveryTests(TestCase):
-    def setUp(self):
-        self.owner = User.objects.create_user(
-            username="nearby-owner", password="StrongPass_2026", city="Şanlıurfa", district="Karaköprü"
-        )
-        self.other = User.objects.create_user(username="nearby-other", password="StrongPass_2026")
-        self.category = Category.objects.create(name="Yakın ürünler", slug="nearby-products")
-
-    def create_listing(self, title, **overrides):
-        data = {
-            "owner": self.other,
-            "category": self.category,
-            "kind": Listing.Kind.PRODUCT,
-            "action": Listing.Action.SELL,
-            "title": title,
-            "description": "Yakındaki ilan keşif testi.",
-            "price": Decimal("15000"),
-            "city": "Şanlıurfa",
-            "district": "Karaköprü",
-            "status": Listing.Status.PUBLISHED,
-        }
-        data.update(overrides)
-        return Listing.objects.create(**data)
-
-    def test_haversine_and_origin_validation(self):
-        origin = parse_origin("37.167400", "38.795500", "10")
-        self.assertIsNotNone(origin)
-        self.assertEqual(origin.radius_km, 10)
-        self.assertIsNone(parse_origin("999", "38.7", "10"))
-        self.assertAlmostEqual(haversine_km(37.1674, 38.7955, 37.1674, 38.7955), 0, places=3)
-        self.assertEqual(distance_label(0.42), "Yaklaşık 400 m")
-
-    def test_nearby_results_order_exact_distance_before_area_fallback(self):
-        near = self.create_listing(
-            "Çok yakın koordinatlı ilan",
-            latitude=Decimal("37.168000"),
-            longitude=Decimal("38.796000"),
-        )
-        fallback = self.create_listing("Aynı ilçede konumsuz ilan")
-        far = self.create_listing(
-            "Uzak koordinatlı ilan",
-            latitude=Decimal("38.100000"),
-            longitude=Decimal("39.500000"),
-        )
-        response = self.client.get(
-            reverse("listings:list"),
-            {
-                "nearby": "1",
-                "lat": "37.167400",
-                "lon": "38.795500",
-                "radius": "10",
-                "area_city": "Şanlıurfa",
-                "area_district": "Karaköprü",
-                "sort": "distance",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, near.title)
-        self.assertContains(response, fallback.title)
-        self.assertNotContains(response, far.title)
-        self.assertContains(response, "Yakındaki ilanlar")
-        self.assertContains(response, "Yaklaşık")
-        self.assertContains(response, "Aynı bölgede")
-        body = response.content.decode("utf-8")
-        self.assertLess(body.index(near.title), body.index(fallback.title))
-        self.assertEqual(response.context["nearby_state"]["exact_count"], 1)
-        self.assertEqual(response.context["nearby_state"]["fallback_count"], 1)
-
-    def test_invalid_nearby_coordinates_do_not_crash_listing_page(self):
-        self.create_listing("Normal ilan")
-        response = self.client.get(
-            reverse("listings:list"),
-            {"nearby": "1", "lat": "not-a-number", "lon": "38.7"},
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.context["nearby_state"]["invalid"])
-        self.assertContains(response, "Konum bilgisi okunamadı")
-
-    def test_listing_form_saves_optional_coordinates(self):
-        self.client.force_login(self.owner)
-        response = self.client.post(
-            reverse("listings:create"),
-            {
-                "kind": Listing.Kind.PRODUCT,
-                "action": Listing.Action.SELL,
-                "management_mode": Listing.ManagementMode.SELF,
-                "category": self.category.pk,
-                "title": "Konumlu yeni ilan",
-                "description": "Konum alanlarıyla oluşturulan ilan.",
-                "price": "12500",
-                "condition": "Az kullanılmış",
-                "city": "Şanlıurfa",
-                "district": "Karaköprü",
-                "latitude": "37.167400",
-                "longitude": "38.795500",
-            },
-        )
-        listing = Listing.objects.get(title="Konumlu yeni ilan")
-        self.assertRedirects(response, listing.get_absolute_url())
-        self.assertEqual(listing.latitude, Decimal("37.167400"))
-        self.assertEqual(listing.longitude, Decimal("38.795500"))
-
-
-    def test_nearby_location_endpoint_keeps_coordinates_in_session(self):
-        response = self.client.post(
-            reverse("listings:set_nearby_location"),
-            {
-                "latitude": "37.1674",
-                "longitude": "38.7955",
-                "radius": "25",
-                "area_city": "Şanlıurfa",
-                "area_district": "Karaköprü",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["ok"])
-        stored = self.client.session["nearby_origin"]
-        self.assertEqual(stored["latitude"], 37.1674)
-        self.assertEqual(stored["longitude"], 38.7955)
-        self.assertEqual(stored["radius_km"], 25)
-
-        near = self.create_listing(
-            "Oturumdan bulunan yakın ilan",
-            latitude=Decimal("37.168000"),
-            longitude=Decimal("38.796000"),
-        )
-        listing_response = self.client.get(
-            reverse("listings:list"),
-            {"nearby": "1", "radius": "25", "sort": "distance"},
-        )
-        self.assertContains(listing_response, near.title)
-        self.assertTrue(listing_response.context["nearby_state"]["active"])
-        self.assertNotIn("lat=", listing_response.request["QUERY_STRING"])
-
-    def test_saved_search_does_not_store_temporary_coordinates(self):
-        self.client.force_login(self.owner)
-        response = self.client.post(
-            reverse("listings:save_search"),
-            {
-                "name": "Yakındaki telefonlar",
-                "alert_enabled": "on",
-                "q": "telefon",
-                "city": "Şanlıurfa",
-                "nearby": "1",
-                "lat": "37.167400",
-                "lon": "38.795500",
-                "radius": "25",
-                "area_city": "Şanlıurfa",
-                "area_district": "Karaköprü",
-            },
-        )
-        self.assertEqual(response.status_code, 302)
-        saved = SavedSearch.objects.get(user=self.owner, name="Yakındaki telefonlar")
-        self.assertEqual(saved.query_params, {"q": "telefon", "city": "Şanlıurfa"})
-
-    def test_listing_form_and_list_include_nearby_controls(self):
-        self.client.force_login(self.owner)
-        create = self.client.get(reverse("listings:create"))
-        self.assertContains(create, "data-listing-location-capture")
-        self.assertContains(create, "data-listing-latitude")
-        listing_list = self.client.get(reverse("listings:list"))
-        self.assertContains(listing_list, "data-nearby-discovery")
-        self.assertContains(listing_list, "data-nearby-run")

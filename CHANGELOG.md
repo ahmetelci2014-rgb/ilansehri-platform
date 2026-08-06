@@ -1,16 +1,23 @@
 # Değişiklik Günlüğü
 
+## v1.17.0 — Kayıtlı aramalar ve akıllı ilan bildirimleri
+
+- Kayıtlı aramalara Anlık, Günlük özet ve Kapalı bildirim sıklığı eklendi.
+- Aynı arama–ilan çifti için tekrar bildirim üretilmesini engelleyen `SavedSearchMatch` modeli eklendi.
+- Yeni ilan yayınlandığında anlık arama eşleşmeleri; bakım komutunda günlük toplu özetler üretilir.
+- Liste ekranı ve bildirim görevi ortak filtre motoruna bağlandı; eksik kategori, teslimat, araç, emlak, takip ve fiyat düşüşü filtreleri düzeltildi.
+- Kayıtlı arama düzenleme, kopya engelleme, güvenli parametre beyaz listesi ve kullanıcı başına sınır eklendi.
+- v1.16.0 yakınlık keşfi kümülatif pakete dahil edildi; konum izninde mesafe, izin reddinde şehir–ilçe yedeği kullanılır.
+- PWA özel sayfa listesi ve robots kuralları kayıtlı aramalar/favoriler için sıkılaştırıldı.
+- Yeni model ve alanlar nedeniyle migration gerekir.
+
 ## v1.16.0 — Yakındaki ilanlar ve konum tabanlı keşif
 
-- Kullanıcı izniyle çalışan `Konumumu kullan` keşif paneli eklendi.
-- 5–200 km arasında seçilebilir arama yarıçapı ve yaklaşık mesafe etiketi eklendi.
-- Koordinatlı ilanlar Haversine hesabıyla mesafeye göre sıralanır.
-- Koordinatı olmayan ilanlar aynı şehir/ilçeden ikincil sonuç olarak gösterilir.
-- Geçici arama koordinatları URL yerine oturumda tutuldu ve kayıtlı aramalara yazılması engellendi.
-- İlan formuna isteğe bağlı `Konumumu işaretle` alanı eklendi; tam koordinatlar halka açık sayfada gösterilmez.
-- Demo ilanlara yakınlık akışını gösterecek örnek koordinatlar eklendi.
-- Mobil/PWA varlıkları, otomatik testler ve mobil denetim rotaları güncellendi.
-- Yeni migration yoktur; mevcut `latitude` ve `longitude` alanları kullanılır.
+- Ana sayfa ve ilan sonuçlarına Yakınımda düğmesi eklendi.
+- Koordinatlı ilanlar seçilen yarıçapta kesin mesafeyle filtrelenir ve sıralanır.
+- İlan kartlarında yaklaşık kilometre gösterimi eklendi.
+- Konum izni reddedildiğinde profil veya seçili şehir–ilçe filtresine dönülür.
+- Anlık koordinatlar kullanıcı profiline veya konum geçmişine kaydedilmez.
 
 ## v1.15.0 — Güvenli mesajlaşma ve dolandırıcılık uyarısı
 
