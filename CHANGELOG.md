@@ -1,12 +1,25 @@
-# İlan Şehri Değişiklik Günlüğü
+# Değişiklik Günlüğü
+
+## v1.24.0 — Satıcı Merkezi ve ilan yönetimi
+
+- Kullanıcıya ait bütün ilanları ayrı bir Satıcı Merkezi'nde listeleyen `/ilanlar/ilanlarim/` ekranı eklendi.
+- İlanlar yayın durumu, metin araması ve görüntülenme/favori/teklif/görüşme/süre sıralamasıyla yönetilebilir hale getirildi.
+- Toplam görüntülenme, favori, görüşme, teklif, yayındaki ilan ve işlem bekleyen kayıt sayıları tek performans özetinde birleştirildi.
+- İlan kartlarına kalite puanı, ilk geliştirme önerisi, yayın süresi, bekleyen teklif ve okunmamış mesaj bilgisi eklendi.
+- En fazla 50 sahip olunan ilan için toplu duraklatma, yayınlama, 60 gün yenileme, sonuçlandırma ve taslağa alma akışı eklendi.
+- Toplu işlemlerde başka kullanıcı ilanları sorgu seviyesinde dışlanır; inceleme veya ret durumundaki ilanların doğrudan yayınlanması korunur.
+- Tekil ilan durum işlemleri güvenli `next` dönüşünü destekler; Satıcı Merkezi'ndeki filtre konumu kaybolmaz.
+- Hesap paneli son altı ilana indirildi ve ayrıntılı yönetim bağlantıları Satıcı Merkezi'ne taşındı.
+- Randevu alanı hesap ana akışında geri plana alındı; yalnız yaklaşan kayıt bulunduğunda gösterilir.
+- Mobil Görsel Denetim satıcı ilan merkezi ve işlem bekleyen filtresiyle 156 ekran kombinasyonuna genişletildi.
+- Yeni tablo veya model alanı eklenmedi; veritabanı migration işlemi gerekmez.
 
 ## v1.23.0 — İlan detay ve mobil alıcı deneyimi
-- Fotoğraf galerisine ileri/geri gezinme, aktif sayaç, klavye ve dokunmatik kaydırma eklendi.
-- Büyütülmüş galeri erişilebilir diyalog yapısına ve fotoğraf sayacına geçirildi.
-- Satıcı güven özeti; üyelik süresi, işlem, aktif ilan, doğrulama ve yanıt bilgileriyle güçlendirildi.
-- Mobil sabit işlem çubuğuna fiyat özeti, mesaj ve teklif eylemleri eklendi.
-- Benzer ilanlar kategori ve konum önceliğiyle sıralanıyor.
-- Açıklama, yaklaşık konum ve güvenli işlem uyarıları daha okunur hale getirildi.
+
+- İlan galerisine ileri/geri düğmeleri, sayaç, dokunmatik kaydırma, klavye kontrolü ve erişilebilir büyütülmüş galeri eklendi.
+- Satıcı güven özeti, mobil fiyat/mesaj/teklif çubuğu ve kategori/konum öncelikli benzer ilan sıralaması eklendi.
+- Mobil Görsel Denetim ilan detayını ziyaretçi, alıcı ve satıcı rolleriyle 150 ekran kombinasyonunda doğrular.
+- Yeni tablo veya model alanı eklenmedi.
 
 ## v1.22.0 — Mobil görsel düzen ve ilan kalitesi
 

@@ -1,0 +1,61 @@
+{
+  "version": "v1.24.0",
+  "base_version": "v1.23.0",
+  "title": "Satıcı Merkezi ve ilan yönetimi",
+  "created_at_utc": "2026-08-06T14:59:40+00:00",
+  "schema_change": false,
+  "migration_required": false,
+  "expected_mobile_audit_pages": 156,
+  "source_test_method_count": 145,
+  "added_files": [
+    "V1.24.0-DENETIM-RAPORU.md",
+    "V1.24.0-MANIFEST.json",
+    "V1.24.0-YUKLEME.txt",
+    "docs/SELLER_CENTER_V124.md",
+    "static/css/v124-seller-center.css",
+    "static/js/v124-seller-center.js",
+    "templates/listings/my_listings.html"
+  ],
+  "modified_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/accounts/views.py",
+    "apps/core/tests.py",
+    "apps/core/views.py",
+    "apps/listings/tests.py",
+    "apps/listings/urls.py",
+    "apps/listings/views.py",
+    "docs/ROADMAP.md",
+    "scripts/check_mobile_contract.py",
+    "scripts/mobile_audit.py",
+    "static/js/v132-mobile-system.js",
+    "templates/accounts/dashboard.html",
+    "templates/base.html"
+  ],
+  "deleted_files": [],
+  "checks": {
+    "python_ast": "passed",
+    "python_compileall": "passed",
+    "javascript_node_check": "passed",
+    "bash_syntax": "passed",
+    "yaml_json_parse": "passed",
+    "css_balance": "passed",
+    "template_balance": "passed",
+    "template_url_and_static_scan": "passed",
+    "mobile_contract": "passed",
+    "django_tests": "pending_github_actions",
+    "playwright_mobile_audit": "pending_github_actions",
+    "update_apply_compare": "passed",
+    "full_package_compare": "passed",
+    "zip_integrity": "passed"
+  },
+  "notes": [
+    "Yeni tablo veya model alanı eklenmedi; mevcut veriler korunur.",
+    "Satıcı Merkezi yalnız oturum açan ilan sahibinin kayıtlarını ve istatistiklerini gösterir.",
+    "Toplu işlemler en fazla 50 seçili kayıtla ve sahiplik filtresiyle çalışır.",
+    "İncelemede veya reddedilmiş ilanlar normal kullanıcı tarafından doğrudan yayınlanamaz.",
+    "Randevu alanı ana hesap akışında yalnız yaklaşan kayıt varsa görünür.",
+    "Tam Django ve gerçek Chromium testleri GitHub Actions üzerinde doğrulanmalıdır."
+  ]
+}

@@ -83,7 +83,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         my_listings = list(
             user.listings.select_related("category", "owner")
             .prefetch_related("images", "price_history")
-            .order_by("-updated_at")[:20]
+            .order_by("-updated_at")[:6]
         )
         for listing in my_listings:
             listing.quality_profile = assess_listing_quality(listing)

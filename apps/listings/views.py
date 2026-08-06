@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction as db_transaction
-from django.db.models import Count, F, OuterRef, Q, Subquery
+from django.db.models import Count, F, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -906,6 +906,241 @@ def delete_listing_draft(request, pk):
     return redirect("listings:drafts")
 
 
+class MyListingListView(LoginRequiredMixin, ListView):
+    template_name = "listings/my_listings.html"
+    context_object_name = "listings"
+    paginate_by = 12
+
+    STATUS_FILTERS = (
+        ("published", "Yayında"),
+        ("review", "İncelemede"),
+        ("paused", "Duraklatıldı"),
+        ("draft", "Taslak"),
+        ("expired", "Süresi doldu"),
+        ("completed", "Sonuçlandı"),
+        ("rejected", "Reddedildi"),
+    )
+    SORT_OPTIONS = {
+        "updated": "-updated_at",
+        "views": "-view_count",
+        "favorites": "-favorite_count",
+        "offers": "-offer_total",
+        "messages": "-conversation_count",
+        "expiring": "expires_at",
+        "oldest": "created_at",
+    }
+
+    def get_queryset(self):
+        queryset = (
+            Listing.objects.filter(owner=self.request.user)
+            .select_related("category", "owner")
+            .prefetch_related("images", "price_history")
+            .annotate(
+                offer_total=Count("offers", distinct=True),
+                pending_offer_count=Count(
+                    "offers",
+                    filter=Q(offers__status=Offer.Status.PENDING),
+                    distinct=True,
+                ),
+                conversation_count=Count("conversations", distinct=True),
+                unread_message_count=Count(
+                    "conversations__messages",
+                    filter=Q(conversations__messages__is_read=False)
+                    & ~Q(conversations__messages__sender=self.request.user),
+                    distinct=True,
+                ),
+            )
+        )
+        self.query = self.request.GET.get("q", "").strip()[:120]
+        self.status_filter = self.request.GET.get("status", "").strip()
+        self.sort_filter = self.request.GET.get("sort", "updated").strip()
+
+        valid_statuses = {value for value, _label in self.STATUS_FILTERS}
+        if self.status_filter in valid_statuses:
+            queryset = queryset.filter(status=self.status_filter)
+        elif self.status_filter == "attention":
+            warning_date = timezone.now() + timedelta(days=7)
+            queryset = queryset.filter(
+                Q(status__in=[Listing.Status.REVIEW, Listing.Status.REJECTED, Listing.Status.EXPIRED])
+                | Q(status=Listing.Status.PUBLISHED, expires_at__lte=warning_date)
+            )
+        elif self.status_filter:
+            self.status_filter = ""
+
+        if self.sort_filter not in self.SORT_OPTIONS:
+            self.sort_filter = "updated"
+
+        if self.query:
+            queryset = queryset.filter(
+                Q(title__icontains=self.query)
+                | Q(category__name__icontains=self.query)
+                | Q(city__icontains=self.query)
+                | Q(district__icontains=self.query)
+                | Q(brand__icontains=self.query)
+                | Q(model_name__icontains=self.query)
+            )
+
+        ordering = self.SORT_OPTIONS.get(self.sort_filter, self.SORT_OPTIONS["updated"])
+        if ordering == "expires_at":
+            queryset = queryset.order_by(F("expires_at").asc(nulls_last=True), "-updated_at")
+        else:
+            queryset = queryset.order_by(ordering, "-updated_at")
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        now = timezone.now()
+        warning_date = now + timedelta(days=7)
+        all_listings = Listing.objects.filter(owner=user)
+        status_counts = {row["status"]: row["total"] for row in all_listings.values("status").annotate(total=Count("id"))}
+        totals = all_listings.aggregate(
+            total_views=Coalesce(Sum("view_count"), 0),
+            total_favorites=Coalesce(Sum("favorite_count"), 0),
+        )
+        attention_count = all_listings.filter(
+            Q(status__in=[Listing.Status.REVIEW, Listing.Status.REJECTED, Listing.Status.EXPIRED])
+            | Q(status=Listing.Status.PUBLISHED, expires_at__lte=warning_date)
+        ).count()
+
+        for listing in context["listings"]:
+            listing.quality_profile = assess_listing_quality(listing)
+            listing.quality_suggestion = next(iter(listing.quality_profile["suggestions"]), "")
+            listing.expiry_days = None
+            if listing.expires_at:
+                seconds = (listing.expires_at - now).total_seconds()
+                listing.expiry_days = max(0, int((seconds + 86399) // 86400))
+            listing.show_renew_action = (
+                listing.status == Listing.Status.PUBLISHED
+                and listing.expiry_days is not None
+                and listing.expiry_days <= 14
+            )
+            if listing.status == Listing.Status.REJECTED:
+                listing.attention_note = listing.review_note or "İlan reddedildi; bilgileri düzenleyip yeniden incelemeye gönder."
+            elif listing.status == Listing.Status.REVIEW:
+                listing.attention_note = "İlan yayın öncesi inceleme sırasında."
+            elif listing.status == Listing.Status.EXPIRED:
+                listing.attention_note = "İlanın süresi doldu; bilgileri kontrol edip yeniden yayınla."
+            elif listing.status == Listing.Status.PUBLISHED and listing.expiry_days is not None and listing.expiry_days <= 7:
+                listing.attention_note = f"İlanın süresi {listing.expiry_days} gün içinde doluyor."
+            else:
+                listing.attention_note = ""
+
+        context.update(
+            {
+                "status_filters": [
+                    {"value": value, "label": label, "count": status_counts.get(value, 0)}
+                    for value, label in self.STATUS_FILTERS
+                ],
+                "status_counts": status_counts,
+                "status_filter": self.status_filter,
+                "query": self.query,
+                "sort_filter": self.sort_filter,
+                "total_listing_count": all_listings.count(),
+                "published_count": status_counts.get(Listing.Status.PUBLISHED, 0),
+                "attention_count": attention_count,
+                "total_views": totals["total_views"],
+                "total_favorites": totals["total_favorites"],
+                "total_offers": Offer.objects.filter(listing__owner=user).count(),
+                "total_conversations": Conversation.objects.filter(listing__owner=user).count(),
+                "bulk_max_count": 50,
+            }
+        )
+        return context
+
+
+def _apply_listing_status_action(listing, action, *, actor):
+    previous_status = listing.status
+    if action in {"publish", "renew"}:
+        if previous_status in {Listing.Status.REVIEW, Listing.Status.REJECTED} and not actor.is_staff:
+            return False, "İncelemede veya reddedilmiş ilan doğrudan yayınlanamaz."
+        publishable = {
+            Listing.Status.DRAFT,
+            Listing.Status.PAUSED,
+            Listing.Status.COMPLETED,
+            Listing.Status.EXPIRED,
+        }
+        renewable = {Listing.Status.PUBLISHED, Listing.Status.PAUSED, Listing.Status.EXPIRED}
+        if action == "publish" and previous_status not in publishable:
+            return False, "Bu ilan mevcut durumunda yeniden yayınlanamaz."
+        if action == "renew" and previous_status not in renewable:
+            return False, "Bu ilan şu anda yenilenemez."
+        listing.status = Listing.Status.PUBLISHED
+        listing.published_at = timezone.now()
+        listing.expires_at = timezone.now() + timedelta(days=60)
+        listing.renewal_count += 1
+        listing.save(update_fields=["status", "published_at", "expires_at", "renewal_count", "updated_at"])
+        if action == "publish" and previous_status != Listing.Status.PUBLISHED:
+            notify_listing_publication(listing)
+        sync_listing_matches(listing, notify=False)
+        return True, "İlan yeniden yayınlandı." if action == "publish" else "İlan 60 gün süreyle yenilendi."
+
+    allowed = {
+        "pause": ({Listing.Status.PUBLISHED}, Listing.Status.PAUSED, "İlan duraklatıldı."),
+        "complete": (
+            {Listing.Status.PUBLISHED, Listing.Status.PAUSED},
+            Listing.Status.COMPLETED,
+            "İlan sonuçlandı olarak işaretlendi.",
+        ),
+        "draft": (
+            {
+                Listing.Status.REVIEW,
+                Listing.Status.PUBLISHED,
+                Listing.Status.PAUSED,
+                Listing.Status.COMPLETED,
+                Listing.Status.REJECTED,
+                Listing.Status.EXPIRED,
+            },
+            Listing.Status.DRAFT,
+            "İlan taslağa alındı.",
+        ),
+    }
+    if action not in allowed:
+        return False, "Geçersiz işlem."
+    valid_sources, target_status, message = allowed[action]
+    if previous_status == target_status:
+        return False, "İlan zaten bu durumda."
+    if previous_status not in valid_sources:
+        return False, "Bu işlem ilanın mevcut durumunda kullanılamaz."
+    listing.status = target_status
+    listing.save(update_fields=["status", "updated_at"])
+    sync_listing_matches(listing, notify=False)
+    return True, message
+
+
+@login_required
+@require_POST
+def bulk_manage_listings(request):
+    raw_ids = request.POST.getlist("listing_ids")[:50]
+    try:
+        listing_ids = {int(value) for value in raw_ids if value}
+    except (TypeError, ValueError):
+        listing_ids = set()
+    action = request.POST.get("bulk_action", "").strip()
+    fallback = reverse("listings:my_listings")
+    redirect_to = _safe_next_url(request, fallback)
+    if not listing_ids:
+        messages.warning(request, "İşlem yapılacak en az bir ilan seçmelisin.")
+        return redirect(redirect_to)
+    if action not in {"pause", "publish", "renew", "complete", "draft"}:
+        messages.error(request, "Toplu işlem seçimi geçersiz.")
+        return redirect(redirect_to)
+
+    listings = list(Listing.objects.filter(owner=request.user, pk__in=listing_ids).order_by("pk"))
+    changed = 0
+    skipped = 0
+    with db_transaction.atomic():
+        for listing in listings:
+            applied, _message = _apply_listing_status_action(listing, action, actor=request.user)
+            changed += int(applied)
+            skipped += int(not applied)
+    if changed:
+        messages.success(request, f"{changed} ilan için toplu işlem tamamlandı.")
+    if skipped:
+        messages.warning(request, f"{skipped} ilan mevcut durumu nedeniyle değiştirilmedi.")
+    return redirect(redirect_to)
+
+
 class ListingCreateView(LoginRequiredMixin, CreateView):
     model = Listing
     form_class = ListingForm
@@ -1063,31 +1298,12 @@ class ListingDeleteView(OwnerListingMixin, DeleteView):
 @require_POST
 def change_listing_status(request, slug, action):
     listing = get_object_or_404(Listing, slug=slug, owner=request.user)
-    allowed = {
-        "pause": (Listing.Status.PAUSED, "İlan duraklatıldı."),
-        "complete": (Listing.Status.COMPLETED, "İlan sonuçlandı olarak işaretlendi."),
-        "draft": (Listing.Status.DRAFT, "İlan taslağa alındı."),
-    }
-    if action == "publish":
-        if listing.status in {Listing.Status.REVIEW, Listing.Status.REJECTED} and not request.user.is_staff:
-            messages.warning(request, "Bu ilan önce moderasyon incelemesinden geçmelidir.")
-            return redirect("accounts:dashboard")
-        listing.status = Listing.Status.PUBLISHED
-        listing.published_at = timezone.now()
-        listing.expires_at = timezone.now() + timedelta(days=60)
-        listing.renewal_count += 1
-        listing.save(update_fields=["status", "published_at", "expires_at", "renewal_count", "updated_at"])
-        notify_listing_publication(listing)
-        messages.success(request, "İlan yeniden yayınlandı.")
-        return redirect("accounts:dashboard")
-    if action not in allowed:
-        messages.error(request, "Geçersiz işlem.")
-        return redirect("accounts:dashboard")
-    listing.status, message = allowed[action]
-    listing.save(update_fields=["status", "updated_at"])
-    sync_listing_matches(listing, notify=False)
-    messages.success(request, message)
-    return redirect("accounts:dashboard")
+    applied, message = _apply_listing_status_action(listing, action, actor=request.user)
+    if applied:
+        messages.success(request, message)
+    else:
+        messages.warning(request, message)
+    return redirect(_safe_next_url(request, reverse("accounts:dashboard")))
 
 
 @login_required

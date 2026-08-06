@@ -50,6 +50,7 @@ class PublicDiscoveryTests(TestCase):
         robots = self.client.get(reverse("core:robots"))
         self.assertEqual(robots.status_code, 200)
         self.assertContains(robots, "Sitemap:")
+        self.assertContains(robots, "Disallow: /ilanlar/ilanlarim/")
         sitemap = self.client.get("/sitemap.xml")
         self.assertEqual(sitemap.status_code, 200)
         self.assertContains(sitemap, self.listing.get_absolute_url())
@@ -143,6 +144,9 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "/static/js/v122-market-polish.js")
         self.assertContains(response, "/static/css/v123-detail-experience.css")
         self.assertContains(response, "/static/js/v123-detail-experience.js")
+        self.assertContains(response, "/static/css/v124-seller-center.css")
+        self.assertContains(response, "/static/js/v124-seller-center.js")
+        self.assertContains(response, '"/ilanlar/ilanlarim/"')
 
 
 class MobileSystemContractTests(TestCase):

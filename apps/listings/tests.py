@@ -1474,6 +1474,119 @@ class DiscoveryV121Tests(TestCase):
         self.assertContains(response, 'data-v122-check="photo"')
 
 
+class SellerCenterV124Tests(TestCase):
+    def setUp(self):
+        self.seller = User.objects.create_user(
+            username="seller-center", password="StrongPass_2026", city="Şanlıurfa", district="Karaköprü"
+        )
+        self.other = User.objects.create_user(username="other-seller", password="StrongPass_2026")
+        self.buyer = User.objects.create_user(username="seller-center-buyer", password="StrongPass_2026")
+        self.category = Category.objects.create(name="Satıcı merkezi", slug="satici-merkezi")
+        self.published = Listing.objects.create(
+            owner=self.seller, category=self.category, kind=Listing.Kind.PRODUCT, action=Listing.Action.SELL,
+            title="Yayındaki satıcı merkezi telefonu", description="Satıcı merkezi görünüm ve toplu işlem test ilanı.",
+            price=Decimal("18000"), city="Şanlıurfa", district="Karaköprü", status=Listing.Status.PUBLISHED,
+            view_count=17, favorite_count=3, expires_at=timezone.now() + timedelta(days=5),
+        )
+        self.paused = Listing.objects.create(
+            owner=self.seller, category=self.category, kind=Listing.Kind.PRODUCT, action=Listing.Action.SELL,
+            title="Duraklatılmış satıcı merkezi ilanı", description="Toplu yayınlama akışını sınayan ilan.",
+            price=Decimal("9000"), city="Şanlıurfa", district="Haliliye", status=Listing.Status.PAUSED,
+        )
+        self.review = Listing.objects.create(
+            owner=self.seller, category=self.category, kind=Listing.Kind.PRODUCT, action=Listing.Action.SELL,
+            title="İncelemedeki satıcı merkezi ilanı", description="Moderasyon korumasını sınayan ilan.",
+            price=Decimal("7000"), city="Şanlıurfa", district="Haliliye", status=Listing.Status.REVIEW,
+        )
+        self.foreign = Listing.objects.create(
+            owner=self.other, category=self.category, kind=Listing.Kind.PRODUCT, action=Listing.Action.SELL,
+            title="Başka satıcının ilanı", description="Sahiplik koruması için başka kullanıcı ilanı.",
+            price=Decimal("5000"), city="Gaziantep", district="Şahinbey", status=Listing.Status.PUBLISHED,
+        )
+        self.offer = Offer.objects.create(
+            listing=self.published, sender=self.buyer, amount=Decimal("17000"), message="Teklif testi", last_actor=self.buyer
+        )
+        self.conversation = Conversation.objects.create(
+            listing=self.published, buyer=self.buyer, seller=self.seller
+        )
+        Message.objects.create(conversation=self.conversation, sender=self.buyer, body="İlan hâlâ satılık mı?")
+
+    def test_seller_center_requires_login(self):
+        response = self.client.get(reverse("listings:my_listings"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response.url)
+
+    def test_seller_center_renders_owner_metrics_and_mobile_contract(self):
+        self.client.force_login(self.seller)
+        response = self.client.get(reverse("listings:my_listings"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "SATICI MERKEZİ")
+        self.assertContains(response, 'data-v124-seller-center')
+        self.assertContains(response, 'data-v124-bulk-form')
+        self.assertContains(response, self.published.title)
+        self.assertContains(response, self.paused.title)
+        self.assertContains(response, "1 yeni")
+        self.assertNotContains(response, self.foreign.title)
+        self.assertEqual(response.context["total_views"], 17)
+        self.assertEqual(response.context["total_favorites"], 3)
+        self.assertEqual(response.context["total_offers"], 1)
+        self.assertEqual(response.context["total_conversations"], 1)
+
+    def test_status_and_search_filters_only_return_matching_owner_listings(self):
+        self.client.force_login(self.seller)
+        response = self.client.get(reverse("listings:my_listings"), {"status": "paused", "q": "Duraklatılmış"})
+        self.assertEqual(list(response.context["listings"]), [self.paused])
+        self.assertContains(response, self.paused.title)
+        self.assertNotContains(response, self.published.title)
+
+    def test_bulk_pause_changes_only_owned_selected_listings(self):
+        self.client.force_login(self.seller)
+        response = self.client.post(
+            reverse("listings:bulk_manage_listings"),
+            {
+                "listing_ids": [str(self.published.pk), str(self.foreign.pk)],
+                "bulk_action": "pause",
+                "next": reverse("listings:my_listings"),
+            },
+        )
+        self.assertRedirects(response, reverse("listings:my_listings"))
+        self.published.refresh_from_db()
+        self.foreign.refresh_from_db()
+        self.assertEqual(self.published.status, Listing.Status.PAUSED)
+        self.assertEqual(self.foreign.status, Listing.Status.PUBLISHED)
+
+    def test_bulk_publish_respects_moderation_status(self):
+        self.client.force_login(self.seller)
+        response = self.client.post(
+            reverse("listings:bulk_manage_listings"),
+            {
+                "listing_ids": [str(self.paused.pk), str(self.review.pk)],
+                "bulk_action": "publish",
+                "next": reverse("listings:my_listings") + "?status=attention",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.paused.refresh_from_db()
+        self.review.refresh_from_db()
+        self.assertEqual(self.paused.status, Listing.Status.PUBLISHED)
+        self.assertEqual(self.review.status, Listing.Status.REVIEW)
+        self.assertIsNotNone(self.paused.expires_at)
+
+    def test_individual_renew_keeps_safe_next_and_extends_expiry(self):
+        old_expiry = self.published.expires_at
+        self.client.force_login(self.seller)
+        next_url = reverse("listings:my_listings") + "?status=published"
+        response = self.client.post(
+            reverse("listings:change_status", kwargs={"slug": self.published.slug, "action": "renew"}),
+            {"next": next_url},
+        )
+        self.assertRedirects(response, next_url)
+        self.published.refresh_from_db()
+        self.assertGreater(self.published.expires_at, old_expiry)
+        self.assertEqual(self.published.status, Listing.Status.PUBLISHED)
+
+
+
 class AppointmentFlowTests(TestCase):
     def setUp(self):
         self.seller = User.objects.create_user(

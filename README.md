@@ -1,15 +1,16 @@
 # İlan Şehri
 
-## v1.23 İlan detay ve mobil alıcı deneyimi
+## v1.24 Satıcı Merkezi ve ilan yönetimi
 
-- İlan fotoğrafları ileri/geri düğmeleri, sayaç, klavye ve parmakla kaydırma desteğiyle gezilebilir.
-- Büyütülmüş galeri erişilebilir, kapatılabilir ve fotoğraflar arasında geçiş yapılabilir hale getirildi.
-- Satıcı kartında üyelik süresi, tamamlanan işlem, aktif ilan, doğrulama ve yanıt bilgileri birlikte gösteriliyor.
-- Mobil sabit işlem çubuğunda fiyat, mesaj ve teklif eylemleri tek elde erişilebilir hale getirildi.
-- Benzer ilanlar aynı kategori ve konuma öncelik verecek şekilde sıralanıyor.
-- İlan açıklaması, yaklaşık konum ve güvenli alışveriş uyarıları daha okunur hale getirildi.
+- Bütün ilanlar durum, arama ve performans filtreleriyle ayrı Satıcı Merkezi'nde yönetilir.
+- Görüntülenme, favori, görüşme, teklif, yayın süresi ve ilan kalitesi aynı kartta gösterilir.
+- Yayında, incelemede, duraklatılmış, taslak, süresi dolmuş, sonuçlanmış ve reddedilmiş ilanlar ayrı sekmelere ayrılır.
+- İlanlar seçilerek duraklatma, yayınlama, yenileme, sonuçlandırma ve taslağa alma işlemleri toplu uygulanabilir.
+- Moderasyon incelemesindeki veya reddedilmiş ilanların doğrudan yayınlanması engellenir.
+- Hesap paneli sadeleştirildi; son altı ilan gösterilir ve ayrıntılı yönetim Satıcı Merkezi'ne taşındı.
+- Mobil satıcı ekranı 360–430 px genişlikler için seçim ve işlem çubuğuyla düzenlendi.
 
-> Güncel sürüm: **v1.23.0** — ilan detay sayfası ve mobil alıcı deneyimi güçlendirildi.
+> Güncel sürüm: **v1.24.0** — satıcı performansı ve ilan yaşam döngüsü tek merkezde yönetilir.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -184,7 +185,3 @@ python scripts/mobile_audit.py --base-url http://127.0.0.1:8000 --output mobile-
 ```
 
 Ayrıntılar: `docs/MOBILE_AUDIT.md`
-
-
-## v1.23.0
-İlan detay galerisi, satıcı güven özeti, mobil alıcı işlem çubuğu ve kategori/konum odaklı benzer ilan akışı eklendi.

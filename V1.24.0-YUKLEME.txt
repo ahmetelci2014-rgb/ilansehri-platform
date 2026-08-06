@@ -1,0 +1,26 @@
+İLAN ŞEHRİ v1.24.0 — SATICI MERKEZİ VE İLAN YÖNETİMİ
+================================================================
+
+TABAN SÜRÜM
+- v1.23.0
+
+YÜKLEME
+1. Güncelleme ZIP dosyasını çıkarın.
+2. İçindeki klasör ve dosyaları mevcut İlan Şehri proje ana klasörüne kopyalayın.
+3. Var olan dosyaların değiştirilmesini onaylayın.
+4. GitHub Desktop özetine şunu yazın:
+   İlan Şehri v1.24.0 satıcı merkezi ve ilan yönetimi
+5. Commit to main ve Push origin yapın.
+6. Django Kontrol ile Mobil Görsel Denetim sonuçlarının ikisinin de yeşil olmasını bekleyin.
+7. İki denetim de yeşil olduktan sonra Codespaces terminalinde:
+
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+ÖNEMLİ
+- Yeni tablo veya model alanı yoktur; migration gerekmez.
+- Kullanıcı verileri ve mevcut ilanlar silinmez.
+- Satıcı Merkezi yolu: /ilanlar/ilanlarim/
+- Toplu işlemler yalnız oturum sahibinin seçili ilanlarında uygulanır.
+- Tam Django ve Playwright kontrolleri GitHub Actions üzerinde tamamlanır.

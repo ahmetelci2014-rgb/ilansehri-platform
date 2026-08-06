@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}İlanlarım — İlan Şehri{% endblock %}
+{% block robots_meta %}noindex,nofollow{% endblock %}
+{% block content %}
+<section class="v124-seller-hero" data-v124-seller-center>
+  <div class="shell">
+    <div class="v124-seller-head">
+      <div><span class="section-label">SATICI MERKEZİ</span><h1>İlanlarını tek ekrandan yönet</h1><p>Yayın durumunu, ilgiyi, teklifleri ve geliştirilmesi gereken noktaları takip et.</p></div>
+      <a class="button" href="{% url 'listings:create' %}">＋ Yeni ilan ver</a>
+    </div>
+    <div class="v124-seller-stats" aria-label="İlan performans özeti">
+      <article><span>Toplam ilan</span><strong>{{ total_listing_count }}</strong><small>{{ published_count }} ilan yayında</small></article>
+      <article><span>Görüntülenme</span><strong>{{ total_views }}</strong><small>Tüm ilanların toplamı</small></article>
+      <article><span>Favori</span><strong>{{ total_favorites }}</strong><small>Alıcıların kaydettiği ilanlar</small></article>
+      <article><span>Görüşme</span><strong>{{ total_conversations }}</strong><small>İlanlardan başlayan mesajlar</small></article>
+      <article><span>Teklif</span><strong>{{ total_offers }}</strong><small>Gönderilen tüm teklifler</small></article>
+      <a class="{% if attention_count %}has-attention{% endif %}" href="?status=attention"><span>İşlem bekleyen</span><strong>{{ attention_count }}</strong><small>Süre veya yayın durumu uyarısı</small></a>
+    </div>
+  </div>
+</section>
+
+<section class="v124-seller-page shell">
+  <nav class="v124-status-tabs" aria-label="İlan durumu filtreleri" data-v124-status-tabs>
+    <a href="{% url 'listings:my_listings' %}" class="{% if not status_filter %}active{% endif %}"><span>Tümü</span><b>{{ total_listing_count }}</b></a>
+    {% for item in status_filters %}
+      <a href="?status={{ item.value }}" class="{% if status_filter == item.value %}active{% endif %}"><span>{{ item.label }}</span><b>{{ item.count }}</b></a>
+    {% endfor %}
+    <a href="?status=attention" class="attention-tab {% if status_filter == 'attention' %}active{% endif %}"><span>İşlem bekleyen</span><b>{{ attention_count }}</b></a>
+  </nav>
+
+  <div class="v124-seller-toolbar">
+    <form class="v124-seller-search" method="get">
+      {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+      <label><span>⌕</span><input name="q" value="{{ query }}" placeholder="İlan adı, kategori, marka veya konum ara"></label>
+      <label class="v124-sort"><span>Sırala</span><select name="sort" onchange="this.form.submit()">
+        <option value="updated" {% if sort_filter == 'updated' %}selected{% endif %}>Son güncellenen</option>
+        <option value="views" {% if sort_filter == 'views' %}selected{% endif %}>En çok görüntülenen</option>
+        <option value="favorites" {% if sort_filter == 'favorites' %}selected{% endif %}>En çok favorilenen</option>
+        <option value="offers" {% if sort_filter == 'offers' %}selected{% endif %}>En çok teklif alan</option>
+        <option value="messages" {% if sort_filter == 'messages' %}selected{% endif %}>En çok görüşülen</option>
+        <option value="expiring" {% if sort_filter == 'expiring' %}selected{% endif %}>Süresi yaklaşan</option>
+        <option value="oldest" {% if sort_filter == 'oldest' %}selected{% endif %}>En eski</option>
+      </select></label>
+      <button type="submit">Ara</button>
+      {% if query %}<a href="{% url 'listings:my_listings' %}{% if status_filter %}?status={{ status_filter }}{% endif %}">Temizle</a>{% endif %}
+    </form>
+
+    <form id="v124-bulk-form" class="v124-bulk-form" method="post" action="{% url 'listings:bulk_manage_listings' %}" data-v124-bulk-form>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <label class="v124-select-all"><input type="checkbox" data-v124-select-all> Tümünü seç</label>
+      <span data-v124-selected-count>0 ilan seçildi</span>
+      <select name="bulk_action" required aria-label="Toplu işlem">
+        <option value="">Toplu işlem seç</option>
+        <option value="pause">Duraklat</option>
+        <option value="publish">Yayınla</option>
+        <option value="renew">60 gün yenile</option>
+        <option value="complete">Sonuçlandı</option>
+        <option value="draft">Taslağa al</option>
+      </select>
+      <button type="submit" disabled data-v124-bulk-submit>Uygula</button>
+    </form>
+  </div>
+
+  {% if status_filter == 'attention' and attention_count %}
+    <div class="v124-attention-banner"><span>!</span><div><b>{{ attention_count }} ilan kontrol bekliyor</b><p>Süresi yaklaşan, incelemede olan, reddedilen veya süresi dolan ilanlar aşağıda.</p></div></div>
+  {% endif %}
+
+  <div class="v124-listing-grid">
+    {% for listing in listings %}
+      <article class="v124-listing-card status-{{ listing.status }}{% if listing.attention_note %} needs-attention{% endif %}" data-v124-listing-card>
+        <label class="v124-card-check" title="Toplu işlem için seç"><input type="checkbox" name="listing_ids" value="{{ listing.pk }}" form="v124-bulk-form" data-v124-listing-select><span></span></label>
+        <a class="v124-card-media" href="{{ listing.get_absolute_url }}">
+          {% with cover=listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="market-card-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}
+          <em class="v124-status status-{{ listing.status }}">{{ listing.get_status_display }}</em>
+          {% if listing.images.count %}<small>{{ listing.images.count }} fotoğraf</small>{% endif %}
+        </a>
+        <div class="v124-card-main">
+          <div class="v124-card-title"><div><small>{{ listing.category.name }} · {{ listing.location_text }}</small><h2><a href="{{ listing.get_absolute_url }}">{{ listing.title }}</a></h2></div><strong>{% if listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Teklif alıyor{% endif %}</strong></div>
+          <div class="v124-metrics">
+            <span><b>{{ listing.view_count }}</b> görüntüleme</span>
+            <span><b>{{ listing.favorite_count }}</b> favori</span>
+            <a href="{% url 'listings:conversation_list' %}?q={{ listing.title|urlencode }}"><b>{{ listing.conversation_count }}</b> görüşme{% if listing.unread_message_count %}<i>{{ listing.unread_message_count }} yeni</i>{% endif %}</a>
+            <a href="{% url 'listings:offer_center' %}"><b>{{ listing.offer_total }}</b> teklif{% if listing.pending_offer_count %}<i>{{ listing.pending_offer_count }} bekliyor</i>{% endif %}</a>
+          </div>
+          <div class="v124-quality tone-{{ listing.quality_profile.tone }}">
+            <div><span>İlan kalitesi</span><strong>{{ listing.quality_profile.score }}/100</strong></div><i><b style="width:{{ listing.quality_profile.score }}%"></b></i>
+            {% if listing.quality_suggestion %}<small>{{ listing.quality_suggestion }}</small>{% else %}<small>İlan bilgileri güçlü görünüyor.</small>{% endif %}
+          </div>
+          {% if listing.attention_note %}<div class="v124-card-warning"><span>!</span><p>{{ listing.attention_note }}</p></div>{% endif %}
+          <div class="v124-card-meta">
+            <span>Güncellendi: {{ listing.updated_at|timesince }} önce</span>
+            {% if listing.status == 'published' and listing.expires_at %}<span>{% if listing.expiry_days == 0 %}Bugün süresi doluyor{% else %}{{ listing.expiry_days }} gün yayında kalacak{% endif %}</span>{% elif listing.status == 'expired' %}<span>Süresi doldu</span>{% endif %}
+          </div>
+          <div class="v124-card-actions">
+            <a href="{{ listing.get_absolute_url }}">Görüntüle</a>
+            <a class="primary" href="{% url 'listings:update' listing.slug %}">Düzenle</a>
+            {% if listing.status == 'published' %}
+              <form method="post" action="{% url 'listings:change_status' listing.slug 'pause' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button>Duraklat</button></form>
+              {% if listing.show_renew_action %}<form method="post" action="{% url 'listings:change_status' listing.slug 'renew' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="renew">60 gün yenile</button></form>{% endif %}
+            {% elif listing.status == 'paused' or listing.status == 'expired' or listing.status == 'draft' or listing.status == 'completed' %}
+              <form method="post" action="{% url 'listings:change_status' listing.slug 'publish' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="publish">Yayınla</button></form>
+            {% endif %}
+            <details><summary>Diğer</summary><div>{% if listing.status != 'completed' %}<form method="post" action="{% url 'listings:change_status' listing.slug 'complete' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button>Sonuçlandı</button></form>{% endif %}{% if listing.status != 'draft' %}<form method="post" action="{% url 'listings:change_status' listing.slug 'draft' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button>Taslağa al</button></form>{% endif %}<a class="danger" href="{% url 'listings:delete' listing.slug %}">İlanı sil</a></div></details>
+          </div>
+        </div>
+      </article>
+    {% empty %}
+      <div class="market-empty v124-empty"><span>📦</span><h3>Bu filtrede ilan bulunamadı</h3><p>Arama veya durum filtresini temizleyebilir ya da yeni bir ilan oluşturabilirsin.</p><div><a class="market-secondary-button" href="{% url 'listings:my_listings' %}">Filtreleri temizle</a><a class="button" href="{% url 'listings:create' %}">Yeni ilan ver</a></div></div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}<nav class="market-pagination" aria-label="İlanlarım sayfaları">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if query %}&q={{ query|urlencode }}{% endif %}&sort={{ sort_filter }}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if query %}&q={{ query|urlencode }}{% endif %}&sort={{ sort_filter }}">Sonraki →</a>{% endif %}</nav>{% endif %}
+</section>
+{% endblock %}

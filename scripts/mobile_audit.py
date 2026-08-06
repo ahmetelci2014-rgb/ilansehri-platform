@@ -66,6 +66,8 @@ ROLE_ROUTES = {
     "seller": (
         ("listing-detail", "/ilanlar/demo-telefon/"),
         ("account", "/hesap/hesabim/"),
+        ("my-listings", "/ilanlar/ilanlarim/"),
+        ("my-listings-attention", "/ilanlar/ilanlarim/?status=attention"),
         ("new-listing", "/ilanlar/yeni/"),
         ("drafts", "/ilanlar/taslaklarim/"),
         ("messages", "/ilanlar/mesajlar/"),
