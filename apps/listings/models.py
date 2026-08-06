@@ -130,6 +130,9 @@ class Listing(models.Model):
         default="",
     )
     condition = models.CharField(max_length=50, blank=True)
+    color = models.CharField(max_length=60, blank=True, default="")
+    search_tags = models.JSONField(default=list, blank=True)
+    technical_features = models.JSONField(default=list, blank=True)
 
     brand = models.CharField(max_length=100, blank=True, default="")
     model_name = models.CharField(max_length=100, blank=True, default="")
@@ -218,6 +221,8 @@ class Listing(models.Model):
                 items.append(("Model", self.model_name))
             if self.condition:
                 items.append(("Durum", self.condition))
+            if self.color:
+                items.append(("Renk", self.color))
         if self.kind == self.Kind.VEHICLE:
             if self.model_year:
                 items.append(("Model yılı", self.model_year))

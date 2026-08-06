@@ -1,0 +1,31 @@
+İLAN ŞEHRİ v1.12.2.3 — KÜMÜLATİF AI KURULUM ONARIMI
+
+Bu paket v1.12.2 ana paketi atlandığı için eksik kalan bütün dosyaları içerir.
+Yalnız exceptions.py dosyasını değiştirmek yeterli değildir; paketin tamamını kopyalayın.
+
+1. ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosya ve klasörleri GitHub Desktop'taki
+   ilansehri-platform klasörüne kopyalayın.
+3. Mevcut dosyaları değiştirmeyi kabul edin.
+4. GitHub Desktop Summary:
+   İlan Şehri v1.12.2.3 kümülatif AI onarımı
+5. Commit to main ve Push origin.
+6. GitHub Actions'ın sonucunu bekleyin.
+7. Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+8. Port 8000'i açıp Ctrl + Shift + R yapın.
+9. Eski arayüz kalırsa:
+   F12 > Application > Service Workers > Unregister
+
+DÜZELTİLEN ANA HATALAR
+- SafetyBlockedError import hatası
+- Atlanan fotoğrafla başlayan AI ilan akışı dosyaları
+- Eksik ilan modeli alanları: color, search_tags, technical_features
+- Eksik AI analiz ve görsel hazırlama servisleri
+- Eksik fotoğraf yükleme JavaScript ve mobil arayüzü
+- GitHub Actions AI import ön kontrolü
+
+Bu paket model alanları içerdiği için migration gerekir.
+scripts/start_codespace.sh migrationları otomatik üretip uygular.

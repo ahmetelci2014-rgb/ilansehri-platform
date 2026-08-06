@@ -36,7 +36,7 @@ def _flatten_alpha(image: Image.Image) -> Image.Image:
     return image.convert("RGB")
 
 
-def prepare_images(files, *, max_images: int, max_image_size_mb: int, max_dimension: int = 1600) -> list[PreparedImage]:
+def prepare_images(files, *, max_images: int, max_image_size_mb: int, max_dimension: int = 1280) -> list[PreparedImage]:
     files = list(files)
     if not files:
         raise ImageValidationError("Analiz için en az bir fotoğraf seçmelisin.")
@@ -65,7 +65,7 @@ def prepare_images(files, *, max_images: int, max_image_size_mb: int, max_dimens
         image = _flatten_alpha(image)
         image.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
         output = BytesIO()
-        image.save(output, format="JPEG", quality=82, optimize=True, progressive=True)
+        image.save(output, format="JPEG", quality=80, optimize=True, progressive=True)
         data = output.getvalue()
         prepared.append(
             PreparedImage(

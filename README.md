@@ -1,6 +1,6 @@
 # İlan Şehri
 
-> Güncel sürüm: **v1.12.2.2** — GitHub Actions statik dosya test düzeltmesi. v1.12.2 — Fotoğrafla Başlayan Yapay Zekâ İlan Akışı
+> Güncel sürüm: **v1.12.2.3** — Kümülatif AI kurulum onarımı. Fotoğrafla başlayan Gemini ilan akışı ve test düzeltmeleri tek pakette birleştirildi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 

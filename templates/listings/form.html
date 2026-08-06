@@ -4,7 +4,12 @@
 {% block title %}{% if object %}İlanı Düzenle{% else %}Ücretsiz İlan Ver{% endif %} — İlan Şehri{% endblock %}
 {% block content %}
 <section class="v16-wizard-page">
-  <header class="v16-wizard-intro"><span class="section-label">{% if object %}İLAN YÖNETİMİ{% else %}ÜCRETSİZ İLAN VER{% endif %}</span><h1>{% if object %}İlanını profesyonelce güncelle{% else %}İlanını adım adım hazırla{% endif %}</h1><p>Her adımı tamamla, ilan kartını canlı önizle ve güvenlik incelemesine gönder.</p></header>
+  <header class="v16-wizard-intro">
+    <span class="section-label">{% if object %}İLAN YÖNETİMİ{% else %}ÜCRETSİZ İLAN VER{% endif %}</span>
+    <h1>{% if object %}İlanını profesyonelce güncelle{% else %}Fotoğraflardan ilanını hızlıca hazırla{% endif %}</h1>
+    <p>{% if object %}Bilgileri ve fotoğrafları güncelle, sonra yeniden incelemeye gönder.{% else %}Önce fotoğrafları ekle; yapay zekâ ilan taslağını hazırlasın veya mevcut formu kendin doldur.{% endif %}</p>
+  </header>
+
   {% if not object and not server_draft %}<div class="v18-draft-note" data-v18-draft-box>
     <span>☁</span><div><b>İlan bilgilerin tarayıcıda korunur</b><small data-v18-draft-status>Yazdıkların otomatik kaydedilir; sayfayı yanlışlıkla kapatsan da geri getirebilirsin.</small></div>
     <button type="button" data-v18-restore-draft hidden>Taslağı geri getir</button><button type="button" data-v18-clear-draft>Taslağı sil</button>
@@ -18,47 +23,93 @@
       {% csrf_token %}{{ form.non_field_errors }}
       <input type="hidden" name="ai_analysis_id" value="{{ request.POST.ai_analysis_id|default:'' }}" data-ai-analysis-id>
       {% if server_draft %}<input type="hidden" name="draft_id" value="{{ server_draft.pk }}">{% endif %}
-      <nav class="v16-stepper" aria-label="İlan oluşturma adımları">
-        <button type="button" data-v16-step="1"><span>1</span>Tür</button><button type="button" data-v16-step="2"><span>2</span>Temel bilgiler</button><button type="button" data-v16-step="3"><span>3</span>Ayrıntılar</button><button type="button" data-v16-step="4"><span>4</span>Konum</button><button type="button" data-v16-step="5"><span>5</span>Fotoğraflar</button>
+
+      {% if not object %}
+      <section class="ai-quick-start{% if not ai_config.can_analyze %} is-locked{% endif %}"
+               data-ai-listing-assistant
+               data-ai-quick-start
+               data-analyze-url="{% url 'ai_listing:analyze' %}"
+               data-max-images="{{ ai_config.max_images }}"
+               data-max-image-size="{{ ai_config.max_image_size_mb }}"
+               data-ai-can-analyze="{{ ai_config.can_analyze|yesno:'1,0' }}"
+               data-ai-status-message="{{ ai_config.status_message|escape }}">
+        <div class="ai-quick-heading">
+          <span class="ai-quick-icon">✦</span>
+          <div><small>AI İLE HIZLI BAŞLANGIÇ</small><h2>Fotoğrafı yükle, ilan taslağın hazırlansın</h2><p>Başlık, açıklama, kategori, durum, marka, model, renk ve görülebilen özellikler öneri olarak forma yerleştirilir.</p></div>
+          <span class="ai-provider-chip">{{ ai_config.provider_label|default:'Yapay zekâ' }}{% if ai_config.model_name %} · {{ ai_config.model_name }}{% endif %}</span>
+        </div>
+
+        <div class="ai-upload-panel" data-ai-drop-zone>
+          {{ form.images }}
+          <label class="ai-upload-target" for="{{ form.images.id_for_label }}">
+            <span class="ai-upload-camera">📷</span>
+            <strong>Ürün fotoğraflarını seç veya buraya sürükle</strong>
+            <small>JPG, JPEG, PNG ve WEBP · en fazla {{ ai_config.max_images }} fotoğraf · fotoğraf başına en fazla {{ ai_config.max_image_size_mb }} MB</small>
+            <em>Fotoğraf seç</em>
+          </label>
+          {% for error in form.images.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          <div class="ai-upload-toolbar">
+            <span data-ai-file-summary>Henüz fotoğraf seçilmedi.</span>
+            <button type="button" data-ai-clear-images hidden>Tümünü temizle</button>
+          </div>
+          <div class="image-preview-grid ai-image-preview-grid" data-image-preview aria-live="polite"></div>
+        </div>
+
+        <div class="ai-listing-status{% if not ai_config.can_analyze %} warning{% endif %}" data-ai-status>{{ ai_config.status_message }}</div>
+        <button type="button" class="ai-listing-button" data-ai-analyze disabled><span>✦</span> Yapay Zekâ ile İlan Hazırla</button>
+        <div class="ai-listing-progress" data-ai-progress hidden><i class="ai-listing-spinner"></i><span>Fotoğraflar inceleniyor, ilanınız hazırlanıyor…</span></div>
+        <div class="ai-listing-result" data-ai-result aria-live="polite"></div>
+        <div class="ai-quick-footer">
+          <small>Yapay zekâ sonucu doğrudan yayınlanmaz. Emin olunmayan bilgiler sorulur; bütün alanları son kez sen kontrol edersin.</small>
+          <button type="button" class="ai-manual-start" data-ai-manual-start>Formu kendim dolduracağım →</button>
+        </div>
+      </section>
+      {% endif %}
+
+      <nav class="v16-stepper" aria-label="İlan oluşturma adımları" data-ai-wizard-start>
+        <button type="button" data-v16-step="1"><span>1</span>Tür</button><button type="button" data-v16-step="2"><span>2</span>Temel bilgiler</button><button type="button" data-v16-step="3"><span>3</span>Ayrıntılar</button><button type="button" data-v16-step="4"><span>4</span>Konum</button><button type="button" data-v16-step="5"><span>5</span>Kontrol</button>
       </nav>
 
       <section class="v16-wizard-section" data-v16-section="1">
-        <div class="v16-step-head"><span>01</span><div><h2>Ne ilanı veriyorsun?</h2><p>Doğru tür ve kategori, ilanın doğru kişilere ulaşmasını sağlar.</p></div></div>
+        <div class="v16-step-head"><span>01</span><div><h2>Ne ilanı veriyorsun?</h2><p>AI önerisini kontrol et veya doğru tür ve kategoriyi kendin seç.</p></div></div>
         <div class="v16-field-grid"><div class="field">{{ form.kind.label_tag }}{{ form.kind }}{{ form.kind.errors }}</div><div class="field">{{ form.action.label_tag }}{{ form.action }}{{ form.action.errors }}</div><div class="field">{{ form.category.label_tag }}{{ form.category }}{{ form.category.errors }}</div><div class="field">{{ form.management_mode.label_tag }}{{ form.management_mode }}{{ form.management_mode.errors }}</div></div>
-        <div class="v16-choice-help"><b>İpucu:</b> Ürün satıyorsan “Ürün / Eşya”, araç satıyorsan “Araç”, ev veya işyeri için “Emlak” türünü seç. Tam Yönetim seçeneğinde ilan hazırlama ve görüşme sürecini ekibimiz takip eder.</div>
+        <div class="v16-choice-help"><b>İpucu:</b> Yapay zekâ yalnız fotoğrafta anlayabildiği kategori bilgisini önerir. Satış, kiralama, takas veya arama kararını sen seçersin.</div>
       </section>
 
       <section class="v16-wizard-section" data-v16-section="2">
-        <div class="v16-step-head"><span>02</span><div><h2>İlanın temel bilgileri</h2><p>Başlığın açık, açıklaman dürüst ve fiyatın anlaşılır olsun.</p></div></div>
-        <div class="v16-field-grid">{% for field in form %}{% if field.name in 'title description price price_on_request is_negotiable delivery_type condition' %}<div class="field {% if field.name == 'description' %}field-wide{% endif %}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div>
-        <div class="v16-choice-help">Başlıkta marka, model ve temel özelliği belirt. Açıklamada ürünün durumunu, varsa kusurlarını, teslim şeklini ve pazarlık durumunu açıkça yaz.</div>
+        <div class="v16-step-head"><span>02</span><div><h2>İlanın temel bilgileri</h2><p>AI tarafından oluşturulan metni ve ürün durumunu mutlaka kontrol et.</p></div></div>
+        <div class="v16-field-grid">{% for field in form %}{% if field.name in 'title description price price_on_request is_negotiable delivery_type condition' %}<div class="field {% if field.name == 'description' %}field-wide{% endif %}" data-field-name="{{ field.name }}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div>
+        <div class="v16-choice-help">Fiyatı yapay zekâ doldurmaz. Başlık ve açıklamanın doğru, dürüst ve ürünle uyumlu olduğundan emin ol.</div>
       </section>
 
       <section class="v16-wizard-section category-fields" data-v16-section="3" data-category-details>
-        <div class="v16-step-head"><span>03</span><div><h2>Kategoriye özel ayrıntılar</h2><p>Seçtiğin ilan türüne göre alıcıların görmek istediği bilgiler gösterilir.</p></div></div>
-        <div class="v16-field-grid">{% for field in form %}{% if field.name in 'brand model_name model_year mileage fuel_type transmission room_count area_m2 building_age floor_location heating_type service_area fee_type job_type experience_level' %}<div class="field" data-kind-field="{{ field.name }}">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div>
-        <div class="v16-choice-help">Ayrıntı alanlarını mümkün olduğunca doldur. Dolu ilanlar filtrelerde daha kolay bulunur ve daha güvenilir görünür.</div>
+        <div class="v16-step-head"><span>03</span><div><h2>Kategoriye özel ayrıntılar</h2><p>Fotoğrafta güvenle görülebilen bilgiler doldurulur; emin olunmayanlar sana bırakılır.</p></div></div>
+        <div class="v16-field-grid">{% for field in form %}{% if field.name in 'brand model_name color model_year mileage fuel_type transmission room_count area_m2 building_age floor_location heating_type service_area fee_type job_type experience_level search_tags_text technical_features_text' %}<div class="field{% if field.name == 'technical_features_text' %} field-wide{% endif %}" data-kind-field="{{ field.name }}" data-field-name="{{ field.name }}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div>
+        <div class="v16-choice-help">Marka, model ve teknik bilgiler yalnız fotoğrafta açıkça görülüyorsa önerilir. Emin olmadığın AI önerisini sil veya düzelt.</div>
       </section>
 
       <section class="v16-wizard-section" data-v16-section="4">
-        <div class="v16-step-head"><span>04</span><div><h2>İlanın konumu</h2><p>Yakınındaki alıcılara ulaşmak için şehir ve ilçe bilgisini ekle.</p></div></div>
+        <div class="v16-step-head"><span>04</span><div><h2>Fiyat ve konumu sen tamamla</h2><p>Yapay zekâ fiyat veya açık adres tahmini yapmaz.</p></div></div>
         <div class="v16-field-grid">{% for field in form %}{% if field.name in 'city district neighborhood' %}<div class="field">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div><datalist id="district-options"></datalist><datalist id="neighborhood-options"></datalist>
-        <div class="v16-choice-help"><b>Güvenlik:</b> Ev numarası veya tam açık adres yazma. Mahalle bilgisi ilan için yeterlidir; buluşma noktasını mesajlaşma sırasında belirleyebilirsin.</div>
+        <div class="v16-choice-help"><b>Güvenlik:</b> Ev numarası veya tam açık adres yazma. Mahalle bilgisi ilan için yeterlidir.</div>
       </section>
 
       <section class="v16-wizard-section" data-v16-section="5">
-        <div class="v16-step-head"><span>05</span><div><h2>Fotoğrafları ekle ve yayınla</h2><p>Aydınlık, net ve farklı açılardan çekilmiş fotoğraflar daha fazla mesaj getirir.</p></div></div>
-        <div class="v16-field-grid"><div class="field field-wide">{{ form.images.label_tag }}{{ form.images }}{% if form.images.help_text %}<small>{{ form.images.help_text }}</small>{% endif %}{% for error in form.images.errors %}<div class="field-error">{{ error }}</div>{% endfor %}<div class="image-preview-grid" data-image-preview></div></div></div>
-        {% if not object and ai_config.available %}<div class="ai-listing-assistant{% if not ai_config.can_analyze %} is-locked{% endif %}" data-ai-listing-assistant data-analyze-url="{% url 'ai_listing:analyze' %}" data-max-images="{{ ai_config.max_images }}" data-ai-can-analyze="{{ ai_config.can_analyze|yesno:'1,0' }}" data-ai-status-message="{{ ai_config.status_message|escape }}">
-          <div class="ai-listing-head"><span>✦</span><div><h3>Yapay Zekâ ile İlan Hazırla</h3><p>Fotoğraflar güvenli biçimde küçültülür; başlık, açıklama ve ürün bilgileri öneri olarak hazırlanır.</p></div></div>
-          <div class="ai-listing-status{% if not ai_config.can_analyze %} warning{% endif %}" data-ai-status>{{ ai_config.status_message }}</div>
-          <button type="button" class="ai-listing-button" data-ai-analyze disabled>✦ Yapay Zekâ ile İlan Hazırla</button>
-          <div class="ai-listing-progress" data-ai-progress hidden><i class="ai-listing-spinner"></i><span>Fotoğraflar inceleniyor, ilanınız hazırlanıyor…</span></div>
-          <div class="ai-listing-result" data-ai-result aria-live="polite"></div>
-          <small class="ai-listing-disclaimer">Yapay zekâ sonucu doğrudan yayınlanmaz. Emin olunmayan bilgiler forma yazılmaz ve son karar her zaman kullanıcıya aittir.</small>
-        </div>{% endif %}
+        <div class="v16-step-head"><span>05</span><div><h2>Fotoğrafları ve ilanı son kez kontrol et</h2><p>İlan yayınlanmadan önce bütün AI önerileri senin onayından geçer.</p></div></div>
+        {% if object %}
+          <div class="listing-photo-uploader">
+            {{ form.images }}
+            <label for="{{ form.images.id_for_label }}"><span>📷</span><strong>Yeni fotoğraf ekle</strong><small>En fazla 10 fotoğraf; ilk yeni fotoğraf kapak adayı olur.</small></label>
+            {% for error in form.images.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            <div class="image-preview-grid" data-image-preview></div>
+          </div>
+        {% else %}
+          <div class="ai-photo-review">
+            <span>📷</span><div><b data-ai-review-photo-count>Fotoğraflar yukarıdaki hızlı başlangıç alanından eklenir.</b><small>Fotoğrafları değiştirdiğinde yapay zekâ analizini yeniden çalıştırman gerekir.</small></div><button type="button" data-ai-scroll-upload>Fotoğrafları değiştir</button>
+          </div>
+        {% endif %}
         {% if object and object.images.exists %}<div class="v16-existing-images" data-sortable-images>{% for image in object.images.all %}<article data-image-id="{{ image.pk }}"><img src="{{ image.image.url }}" alt="{{ image.alt_text }}"><span>{% if image.is_cover %}Kapak fotoğrafı{% else %}{{ forloop.counter }}. fotoğraf{% endif %}</span><div><button type="submit" formaction="{% url 'listings:set_cover_image' object.slug image.pk %}" formmethod="post" formnovalidate>Kapak yap</button><button type="submit" formaction="{% url 'listings:delete_image' object.slug image.pk %}" formmethod="post" formnovalidate class="danger-link">Sil</button></div></article>{% endfor %}</div><input type="hidden" name="image_order" data-image-order><button type="submit" class="button secondary image-order-save" formaction="{% url 'listings:reorder_images' object.slug %}" formmethod="post" formnovalidate data-image-order-submit>Fotoğraf sırasını kaydet</button>{% endif %}
-        <div class="v16-choice-help"><b>Yayın öncesi kontrol:</b> İlan bilgilerin güvenlik ekibi tarafından incelenir. Yanıltıcı, yasaklı veya başka kişilere ait içerikler yayınlanmaz.</div>
+        <div class="v16-choice-help"><b>Yayın öncesi kontrol:</b> Yanıltıcı, yasaklı veya başka kişilere ait içerikler yayınlanmaz. Yapay zekâ önerileri ilan sahibinin sorumluluğunu ortadan kaldırmaz.</div>
       </section>
 
       <footer class="v16-wizard-footer"><button type="button" class="v16-wizard-back" data-v16-back>← Geri</button><button type="submit" class="v19-save-draft" name="submit_action" value="save_draft" formnovalidate>☁ Hesabıma taslak kaydet</button><small data-v16-step-text>1. adım / 5</small><button type="button" class="v16-wizard-next" data-v16-next>Devam et →</button><button type="submit" class="v16-wizard-submit" data-v16-submit>{% if object %}Değişiklikleri kaydet{% else %}İlanı incelemeye gönder{% endif %}</button></footer>

@@ -1,3 +1,14 @@
+# v1.12.2.3 — Kümülatif AI Kurulum Onarımı
+
+- v1.12.2 ana paketi atlanarak Gemini fark paketinin yüklenmesi nedeniyle eksik kalan AI ve ilan dosyaları tek güncellemede birleştirildi.
+- Eksik `SafetyBlockedError` sınıfı geri eklendi; Django başlangıcındaki ImportError giderildi.
+- Fotoğrafla başlayan AI hızlı başlangıç şablonu, görsel yükleme JavaScript'i ve mobil CSS eksiksiz dahil edildi.
+- İlan modelinin `color`, `search_tags` ve `technical_features` alanları yeniden dahil edildi.
+- AI analiz, görsel hazırlama, form eşleme ve kullanıcı değişiklik kaydı dosyaları senkronlandı.
+- Gemini sağlayıcısı, JSON şeması, güvenlik engeli ve yönetim ayarları tek sürüm altında birleştirildi.
+- GitHub Actions'a AI servis import kontrolü eklendi; benzer eksiklikler migration aşamasından önce yakalanır.
+- PWA ve statik dosya sürümü `v11223` olarak yenilendi.
+
 # v1.12.2.2 — GitHub Actions statik dosya testi düzeltmesi
 
 - Otomatik testler için ayrı `config.settings_test` ayarı eklendi.

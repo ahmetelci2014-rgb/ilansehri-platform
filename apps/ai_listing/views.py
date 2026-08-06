@@ -10,6 +10,7 @@ from django.utils import timezone
 from .models import AIAnalysis, AISettings
 from .services.analysis import analyze_listing_images
 from .services.exceptions import AIListingError
+from .services.providers import provider_is_configured
 
 
 def _analysis_payload(analysis: AIAnalysis):
@@ -35,12 +36,17 @@ def _analysis_payload(analysis: AIAnalysis):
 def availability(request):
     config = AISettings.load()
     today_count = AIAnalysis.objects.filter(user=request.user, created_at__date=timezone.localdate()).count()
+    provider_ready = provider_is_configured(config.provider)
+    mock_allowed = config.provider != AISettings.Provider.MOCK or request.user.is_staff
     return JsonResponse(
         {
             "enabled": config.is_enabled,
+            "configured": provider_ready,
+            "can_analyze": bool(config.is_enabled and provider_ready and mock_allowed),
             "max_images": config.max_images,
             "max_image_size_mb": config.max_image_size_mb,
             "provider": config.provider,
+            "model_name": config.model_name,
             "user_daily_limit": config.user_daily_limit,
             "used_today": today_count,
         }

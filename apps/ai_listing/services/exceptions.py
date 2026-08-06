@@ -24,3 +24,7 @@ class ProviderError(AIListingError):
 
 class SchemaValidationError(AIListingError):
     code = "invalid_provider_output"
+
+
+class SafetyBlockedError(AIListingError):
+    code = "safety_blocked"

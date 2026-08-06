@@ -25,7 +25,7 @@ class MultipleFileField(forms.FileField):
             "widget",
             MultipleFileInput(
                 attrs={
-                    "accept": "image/*",
+                    "accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp",
                     "data-image-input": "true",
                     "class": "file-input",
                 }
@@ -41,6 +41,18 @@ class MultipleFileField(forms.FileField):
 
 
 class ListingForm(forms.ModelForm):
+    search_tags_text = forms.CharField(
+        required=False,
+        label="Arama etiketleri",
+        help_text="Virgülle ayır. En fazla 20 kısa etiket.",
+        widget=forms.TextInput(attrs={"placeholder": "Örn. bluetooth, kablosuz, siyah"}),
+    )
+    technical_features_text = forms.CharField(
+        required=False,
+        label="Ek teknik özellikler",
+        help_text="Her satıra bir özellik yaz. Yapay zekâ önerilerini kontrol ederek düzenleyebilirsin.",
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "Örn. 128 GB depolama\nKablosuz bağlantı\nKutusu mevcut"}),
+    )
     images = MultipleFileField(
         required=False,
         label="İlan fotoğrafları",
@@ -89,6 +101,7 @@ class ListingForm(forms.ModelForm):
             "is_negotiable",
             "delivery_type",
             "condition",
+            "color",
             "brand",
             "model_name",
             "model_year",
@@ -113,6 +126,7 @@ class ListingForm(forms.ModelForm):
             "action": "Ne yapmak istiyorsun?",
             "management_mode": "İlanı kim yönetecek?",
             "condition": "Ürün / araç durumu",
+            "color": "Renk",
             "price_on_request": "Fiyat yerine teklif almak istiyorum",
             "is_negotiable": "Pazarlık payı var",
             "delivery_type": "Teslim / hizmet şekli",
@@ -144,6 +158,7 @@ class ListingForm(forms.ModelForm):
             "title": forms.TextInput(attrs={"placeholder": "Kısa, anlaşılır ve açıklayıcı başlık"}),
             "price": forms.NumberInput(attrs={"min": "0", "step": "0.01", "placeholder": "0,00"}),
             "condition": forms.TextInput(attrs={"placeholder": "Örn. Sıfır, az kullanılmış, hasarsız"}),
+            "color": forms.TextInput(attrs={"placeholder": "Örn. Siyah, lacivert, ahşap"}),
             "brand": forms.TextInput(attrs={"placeholder": "Örn. Toyota, Apple"}),
             "model_name": forms.TextInput(attrs={"placeholder": "Örn. Corolla, iPhone 15"}),
             "model_year": forms.NumberInput(attrs={"min": "1900", "max": "2100"}),
@@ -163,6 +178,40 @@ class ListingForm(forms.ModelForm):
         if current_city and current_city not in dict(self.fields["city"].choices):
             self.fields["city"].choices = (*self.fields["city"].choices, (current_city, current_city))
         self.fields["category"].queryset = self.fields["category"].queryset.filter(is_active=True)
+        if not self.is_bound and getattr(self.instance, "pk", None):
+            self.fields["search_tags_text"].initial = ", ".join(self.instance.search_tags or [])
+            self.fields["technical_features_text"].initial = "\n".join(self.instance.technical_features or [])
+
+    @staticmethod
+    def _clean_text_list(value, *, max_items: int, max_length: int):
+        if not value:
+            return []
+        normalized = str(value).replace(";", ",").replace("\r", "\n")
+        raw_items = []
+        for line in normalized.split("\n"):
+            raw_items.extend(line.split(","))
+        result = []
+        for item in raw_items:
+            cleaned = " ".join(item.strip().split())[:max_length]
+            if cleaned and cleaned.casefold() not in {existing.casefold() for existing in result}:
+                result.append(cleaned)
+            if len(result) >= max_items:
+                break
+        return result
+
+    def clean_search_tags_text(self):
+        return self._clean_text_list(
+            self.cleaned_data.get("search_tags_text", ""),
+            max_items=20,
+            max_length=40,
+        )
+
+    def clean_technical_features_text(self):
+        return self._clean_text_list(
+            self.cleaned_data.get("technical_features_text", ""),
+            max_items=30,
+            max_length=160,
+        )
 
     def clean_images(self):
         images = self.cleaned_data.get("images", [])
@@ -226,6 +275,15 @@ class ListingForm(forms.ModelForm):
         elif kind == Listing.Kind.JOB and not cleaned.get("job_type"):
             self.add_error("job_type", "Çalışma şeklini seç.")
         return cleaned
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.search_tags = self.cleaned_data.get("search_tags_text", [])
+        instance.technical_features = self.cleaned_data.get("technical_features_text", [])
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class OfferForm(forms.ModelForm):

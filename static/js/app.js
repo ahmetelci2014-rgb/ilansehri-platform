@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const imageInput = document.querySelector("[data-image-input]");
   const preview = document.querySelector("[data-image-preview]");
-  if (imageInput && preview) {
+  if (imageInput && preview && !imageInput.closest("[data-ai-quick-start]")) {
     imageInput.addEventListener("change", () => {
       preview.innerHTML = "";
       Array.from(imageInput.files || []).slice(0, 10).forEach((file, index) => {
@@ -59,6 +59,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const actionSelect = listingForm?.querySelector("#id_action");
   const fieldKinds = {
     condition: ["product", "vehicle"], brand: ["product", "vehicle"], model_name: ["product", "vehicle"],
+    color: ["product", "vehicle", "real_estate"],
+    search_tags_text: ["product", "vehicle", "real_estate", "service", "need", "job"],
+    technical_features_text: ["product", "vehicle", "real_estate", "service", "need", "job"],
     model_year: ["vehicle"], mileage: ["vehicle"], fuel_type: ["vehicle"], transmission: ["vehicle"],
     room_count: ["real_estate"], area_m2: ["real_estate"], building_age: ["real_estate"], floor_location: ["real_estate"], heating_type: ["real_estate"],
     service_area: ["service"], fee_type: ["service"], job_type: ["job"], experience_level: ["job"],

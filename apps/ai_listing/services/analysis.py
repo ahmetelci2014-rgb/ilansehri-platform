@@ -11,18 +11,20 @@ from django.utils import timezone
 from apps.listings.models import Category
 
 from ..models import AIAnalysis, AISettings
-from .exceptions import AIListingError, FeatureDisabledError, UsageLimitError
+from .exceptions import AIListingError, FeatureDisabledError, SafetyBlockedError, UsageLimitError
 from .image_processor import prepare_images
 from .providers import get_provider
 from .schemas import validate_analysis_payload
 
 
 ANALYSIS_INSTRUCTIONS = """
-Fotoğraflardaki ürünü yalnız görünür kanıtlara dayanarak analiz et. Görülmeyen marka, model,
-teknik özellik veya ürün durumunu kesinmiş gibi yazma. Görülebilen çizik, kırık ve deformasyonları
-gizleme. Telefon numarası, kimlik, plaka veya adres ihtimali varsa pii_warnings alanına ekle.
-Yasaklı, tehlikeli, sahte veya mevzuata aykırı içerikte safety_status değerini blocked yap.
-Fiyat üretme. Sonucu yalnız sözleşmedeki JSON alanlarıyla döndür.
+Sen İlan Şehri'nin güvenli görsel ilan asistanısın. Fotoğraflardaki ürünü yalnız görünür kanıtlara
+dayanarak analiz et. Görülmeyen marka, model, teknik özellik veya ürün durumunu kesinmiş gibi yazma.
+Emin olmadığın alanı boş bırak, güven puanını düşür ve missing_questions içinde kısa bir soru sor.
+Görülebilen çizik, kırık, leke, deformasyon ve eksik parçaları açıklamada ve possible_defects alanında
+gizlemeden belirt. Telefon numarası, kimlik, plaka, adres veya başka kişisel bilgi ihtimali varsa
+pii_warnings alanına ekle. Yasaklı, tehlikeli, sahte veya mevzuata aykırı ürün ihtimalinde
+safety_status değerini blocked yap. Fiyat üretme. Sonucu yalnız tanımlı JSON sözleşmesiyle döndür.
 """.strip()
 
 
@@ -102,7 +104,7 @@ def analyze_listing_images(*, user, files, idempotency_key: str, form_snapshot=N
 
     started = monotonic()
     try:
-        provider = get_provider(config.provider)
+        provider = get_provider(config.provider, model_name=config.model_name)
         categories = list(Category.objects.filter(is_active=True).values("id", "slug", "name", "parent_id"))
         response = provider.analyze(
             images=prepared,
@@ -133,6 +135,25 @@ def analyze_listing_images(*, user, files, idempotency_key: str, form_snapshot=N
             "ihtiyaclar": "need",
         }
         validated["kind"] = kind_by_parent_slug.get((parent or {}).get("slug", ""), "")
+        if not validated.get("kind"):
+            validated["missing_questions"].append(
+                {
+                    "field": "kind",
+                    "question": "Bu ilan hangi türde?",
+                    "type": "choice",
+                    "options": ["Ürün / Eşya", "Araç", "Emlak", "Hizmet", "İş", "İhtiyaç / Arıyorum"],
+                    "required": True,
+                }
+            )
+        validated["missing_questions"].append(
+            {
+                "field": "action",
+                "question": "Bu ürünü satmak, kiralamak, takas etmek veya aramak mı istiyorsun?",
+                "type": "choice",
+                "options": ["Satmak", "Kiralamak", "Takas etmek", "Arıyorum"],
+                "required": True,
+            }
+        )
         duration_ms = round((monotonic() - started) * 1000)
         safety_status = validated["safety_status"]
         status = AIAnalysis.Status.BLOCKED if safety_status == "blocked" else AIAnalysis.Status.SUCCEEDED
@@ -148,6 +169,19 @@ def analyze_listing_images(*, user, files, idempotency_key: str, form_snapshot=N
             analysis.completed_at = timezone.now()
             analysis.save()
             _increment_stats(config, status=status, duration_ms=duration_ms)
+        return analysis
+    except SafetyBlockedError as exc:
+        duration_ms = round((monotonic() - started) * 1000)
+        analysis.status = AIAnalysis.Status.BLOCKED
+        analysis.safety_status = AIAnalysis.SafetyStatus.BLOCKED
+        analysis.validated_output = {}
+        analysis.error_code = exc.code
+        analysis.error_message = str(exc)[:1000]
+        analysis.safety_warnings = [str(exc)[:500]]
+        analysis.duration_ms = duration_ms
+        analysis.completed_at = timezone.now()
+        analysis.save()
+        _increment_stats(config, status=AIAnalysis.Status.BLOCKED, duration_ms=duration_ms)
         return analysis
     except Exception as exc:
         duration_ms = round((monotonic() - started) * 1000)
@@ -168,10 +202,13 @@ _DIRECT_FIELD_MAP = {
     "title": "title",
     "description": "description",
     "condition": "condition",
+    "color": "color",
     "brand": "brand",
     "model": "model_name",
     "kind": "kind",
     "category_id": "category_id",
+    "tags": "search_tags",
+    "detected_features": "technical_features",
 }
 
 
@@ -190,9 +227,14 @@ def record_analysis_application(*, analysis_id: str, user, listing):
         return None
     if analysis is None:
         return None
-    output = analysis.validated_output or {}
+    output = dict(analysis.validated_output or {})
+    technical = output.get("technical_attributes") or {}
+    for key, value in technical.items():
+        if value not in (None, "", []):
+            output[key] = value
+    field_map = {**_DIRECT_FIELD_MAP, **{key: key for key in technical}}
     changes = []
-    for output_name, listing_name in _DIRECT_FIELD_MAP.items():
+    for output_name, listing_name in field_map.items():
         suggested = output.get(output_name)
         if suggested in (None, "", []):
             continue

@@ -117,6 +117,9 @@ _DRAFT_FIELD_LIMITS = {
     "brand": 100,
     "model_name": 100,
     "condition": 50,
+    "color": 60,
+    "search_tags_text": 900,
+    "technical_features_text": 5000,
     "service_area": 160,
     "experience_level": 80,
 }
@@ -124,7 +127,7 @@ _DRAFT_FIELD_LIMITS = {
 
 def _listing_draft_payload(post_data):
     payload = {}
-    for field_name in ListingForm.Meta.fields:
+    for field_name in [*ListingForm.Meta.fields, "search_tags_text", "technical_features_text"]:
         if field_name in _DRAFT_BOOLEAN_FIELDS:
             payload[field_name] = field_name in post_data
             continue
@@ -395,6 +398,7 @@ class ListingListView(ListView):
                 | Q(category__name__icontains=q)
                 | Q(brand__icontains=q)
                 | Q(model_name__icontains=q)
+                | Q(color__icontains=q)
             )
         if city:
             qs = qs.filter(city__iexact=city)

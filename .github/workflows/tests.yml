@@ -20,6 +20,10 @@ jobs:
         run: cp .env.example .env
       - name: Python sözdizimini kontrol et
         run: python -m compileall -q .
+      - name: AI servis importlarını doğrula
+        run: |
+          python -c "from apps.ai_listing.services.exceptions import SafetyBlockedError"
+          python -c "from apps.ai_listing.services.providers import GeminiVisionProvider, get_provider"
       - name: Migration üret ve uygula
         run: |
           python manage.py makemigrations accounts listings managed_services partners support_center ai_listing --noinput

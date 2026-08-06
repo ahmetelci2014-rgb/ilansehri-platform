@@ -62,7 +62,7 @@ class AISettingsAdmin(admin.ModelAdmin):
     def connection_test(self, request):
         config = AISettings.load()
         try:
-            ok, message = get_provider(config.provider).test_connection(timeout_seconds=config.timeout_seconds)
+            ok, message = get_provider(config.provider, model_name=config.model_name).test_connection(timeout_seconds=config.timeout_seconds)
         except Exception as exc:
             ok, message = False, str(exc)
         config.last_connection_checked_at = timezone.now()
