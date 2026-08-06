@@ -1,0 +1,63 @@
+{
+  "version": "v1.25.0",
+  "base_version": "v1.24.0",
+  "title": "Mesajlaşma, teklif ve iletişim merkezi",
+  "created_at_utc": "2026-08-06T15:46:38+00:00",
+  "schema_change": false,
+  "migration_required": false,
+  "expected_mobile_audit_pages": 168,
+  "source_test_method_count": 151,
+  "added_files": [
+    "V1.25.0-DENETIM-RAPORU.md",
+    "V1.25.0-MANIFEST.json",
+    "V1.25.0-YUKLEME.txt",
+    "docs/COMMUNICATION_CENTER_V125.md",
+    "static/css/v125-communication-center.css",
+    "static/js/v125-communication-center.js"
+  ],
+  "modified_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/management/commands/seed_demo.py",
+    "apps/core/views.py",
+    "apps/listings/context_processors.py",
+    "apps/listings/services.py",
+    "apps/listings/tests.py",
+    "apps/listings/urls.py",
+    "apps/listings/views.py",
+    "docs/ROADMAP.md",
+    "scripts/check_mobile_contract.py",
+    "scripts/mobile_audit.py",
+    "static/js/v132-mobile-system.js",
+    "templates/base.html",
+    "templates/listings/conversation_detail.html",
+    "templates/listings/conversation_list.html",
+    "templates/listings/offer_center.html"
+  ],
+  "deleted_files": [],
+  "checks": {
+    "python_ast": "passed",
+    "python_compileall": "passed",
+    "javascript_node_check": "passed",
+    "bash_syntax": "passed",
+    "yaml_json_parse": "passed",
+    "css_balance": "passed",
+    "template_balance": "passed",
+    "template_url_and_static_scan": "passed",
+    "mobile_contract": "passed",
+    "django_tests": "pending_github_actions",
+    "playwright_mobile_audit": "pending_github_actions",
+    "update_apply_compare": "passed",
+    "full_package_compare": "passed",
+    "zip_integrity": "passed"
+  },
+  "notes": [
+    "Yeni tablo veya model alanı eklenmedi; mevcut veriler korunur.",
+    "Mesaj kutusunda işlem bekleyen görünümü okunmamış mesajlarla yanıt sırası kullanıcıda olan teklifleri birleştirir.",
+    "Konuşma arşivi alıcı ve satıcı için bağımsız çalışır.",
+    "Görüşme içinden teklif oluşturma yalnız alıcı, yayındaki ilan ve engellenmemiş taraflar için açıktır.",
+    "Randevu aracı ana iletişim akışında zorunlu değildir ve ikincil araç olarak korunur.",
+    "Tam Django ve gerçek Chromium testleri GitHub Actions üzerinde doğrulanmalıdır."
+  ]
+}

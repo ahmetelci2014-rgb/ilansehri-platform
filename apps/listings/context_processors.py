@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from .matching import blocked_owner_ids
@@ -42,9 +42,10 @@ def notification_counts(request):
         "unread_message_count": unread_messages,
         "header_favorite_count": Favorite.objects.filter(user=request.user).count(),
         "header_match_count": header_match_count,
-        "header_offer_count": Offer.objects.filter(
-            Q(sender=request.user) | Q(listing__owner=request.user),
-            status=Offer.Status.PENDING,
+        "header_offer_count": Offer.objects.filter(status=Offer.Status.PENDING).filter(
+            Q(listing__owner=request.user, last_actor=F("sender"))
+            | Q(listing__owner=request.user, last_actor__isnull=True)
+            | Q(sender=request.user, last_actor=F("listing__owner"))
         ).count(),
         "header_pending_appointment_count": Appointment.objects.filter(
             invitee=request.user,

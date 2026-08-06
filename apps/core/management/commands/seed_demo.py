@@ -13,6 +13,7 @@ from apps.listings.models import (
     Conversation,
     Listing,
     ListingPriceHistory,
+    Message,
     Notification,
     Offer,
     OfferEvent,
@@ -342,6 +343,21 @@ class Command(BaseCommand):
             listing=phone_listing,
             buyer=buyer,
             defaults={"seller": seller},
+        )
+        Message.objects.get_or_create(
+            conversation=appointment_conversation,
+            sender=buyer,
+            body="Merhaba, ilan hâlâ güncel mi? Kutusu ve faturası duruyor mu?",
+        )
+        Message.objects.get_or_create(
+            conversation=appointment_conversation,
+            sender=seller,
+            body="Merhaba, ilan güncel. Kutu ve fatura mevcut; cihazı ortak alanda kontrol edebilirsiniz.",
+        )
+        Message.objects.get_or_create(
+            conversation=appointment_conversation,
+            sender=buyer,
+            body="Teşekkür ederim. Teklifimi de görüşmeye ekledim.",
         )
         appointment_time = (timezone.now() + timedelta(days=2)).replace(
             hour=14, minute=30, second=0, microsecond=0

@@ -1,20 +1,68 @@
 {% extends 'base.html' %}
-{% block title %}Mesajlarım — İlan Şehri{% endblock %}
+{% block title %}Mesaj ve Görüşme Merkezi — İlan Şehri{% endblock %}
 {% block content %}
-<section class="inbox-page shell">
-  <div class="market-page-title"><div><span class="section-label">MESAJ KUTUSU</span><h1>Görüşmelerim</h1><p>Alım ve satış görüşmelerini düzenli biçimde takip et.</p></div><div class="v120-title-actions"><a class="market-secondary-button" href="{% url 'listings:appointment_list' %}">📅 Randevularım</a><a class="button" href="{% url 'listings:offer_center' %}">🤝 Teklif Merkezi</a></div></div>
-  <div class="inbox-toolbar">
-    <nav><a href="{% url 'listings:conversation_list' %}" class="{% if mode == 'all' %}active{% endif %}">Tümü</a><a href="?mode=unread" class="{% if mode == 'unread' %}active{% endif %}">Okunmamış</a><a href="?mode=buying" class="{% if mode == 'buying' %}active{% endif %}">Alış görüşmeleri</a><a href="?mode=selling" class="{% if mode == 'selling' %}active{% endif %}">Satış görüşmeleri</a></nav>
-    <form method="get"><input type="hidden" name="mode" value="{{ mode }}"><span>⌕</span><input name="q" value="{{ query }}" placeholder="İlan veya kullanıcı ara"><button>Ara</button></form>
+<section class="v125-inbox shell" data-v125-inbox>
+  <header class="v125-page-head">
+    <div><span class="section-label">İLETİŞİM MERKEZİ</span><h1>Mesajlar ve görüşmeler</h1><p>Alıcı–satıcı konuşmalarını, cevap bekleyen teklifleri ve okunmamış mesajları tek yerden takip et.</p></div>
+    <div class="v125-head-actions"><a class="market-secondary-button" href="{% url 'listings:offer_center' %}?direction=action">Yanıt bekleyen teklifler</a><a class="button" href="{% url 'listings:list' %}">İlan keşfet</a></div>
+  </header>
+
+  <div class="v125-inbox-summary" aria-label="Mesaj kutusu özeti">
+    <a href="?mode=action" class="{% if mode == 'action' %}active{% endif %}"><span>⚡</span><div><b>{{ conversation_summary.action }}</b><small>İşlem bekleyen</small></div></a>
+    <a href="?mode=unread" class="{% if mode == 'unread' %}active{% endif %}"><span>●</span><div><b>{{ conversation_summary.unread }}</b><small>Okunmamış</small></div></a>
+    <a href="?mode=buying" class="{% if mode == 'buying' %}active{% endif %}"><span>↓</span><div><b>{{ conversation_summary.buying }}</b><small>Alış görüşmesi</small></div></a>
+    <a href="?mode=selling" class="{% if mode == 'selling' %}active{% endif %}"><span>↑</span><div><b>{{ conversation_summary.selling }}</b><small>Satış görüşmesi</small></div></a>
   </div>
-  <div class="conversation-list v13-conversation-list">
+
+  <div class="v125-inbox-toolbar">
+    <nav aria-label="Görüşme filtreleri">
+      <a href="{% url 'listings:conversation_list' %}" class="{% if mode == 'all' %}active{% endif %}">Tümü <b>{{ conversation_summary.all }}</b></a>
+      <a href="?mode=action" class="{% if mode == 'action' %}active{% endif %}">İşlem bekleyen <b>{{ conversation_summary.action }}</b></a>
+      <a href="?mode=unread" class="{% if mode == 'unread' %}active{% endif %}">Okunmamış <b>{{ conversation_summary.unread }}</b></a>
+      <a href="?mode=buying" class="{% if mode == 'buying' %}active{% endif %}">Alış</a>
+      <a href="?mode=selling" class="{% if mode == 'selling' %}active{% endif %}">Satış</a>
+      <a href="?mode=archived" class="{% if mode == 'archived' %}active{% endif %}">Arşiv <b>{{ conversation_summary.archived }}</b></a>
+    </nav>
+    <form method="get" class="v125-inbox-search">
+      <input type="hidden" name="mode" value="{{ mode }}">
+      <span aria-hidden="true">⌕</span><input name="q" value="{{ query }}" placeholder="İlan veya kullanıcı ara" aria-label="Görüşmelerde ara"><button>Ara</button>
+    </form>
+  </div>
+
+  {% if query %}<div class="v125-search-note"><span>“{{ query }}” için sonuçlar</span><a href="?mode={{ mode }}">Aramayı temizle</a></div>{% endif %}
+
+  <div class="v125-conversation-list">
     {% for conversation in conversations %}
-      <a href="{% url 'listings:conversation_detail' conversation.pk %}" class="{% if conversation.unread_count %}unread{% endif %}">
-        <div class="conversation-cover">{% with cover=conversation.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ conversation.listing.title }}">{% else %}<span>▣</span>{% endif %}{% endwith %}</div>
-        <div class="conversation-copy"><div><b>{{ conversation.listing.title }}</b><em>{% if conversation.buyer == user %}Satıcı: {{ conversation.seller.display_name }}{% else %}Alıcı: {{ conversation.buyer.display_name }}{% endif %}</em></div>{% with last=conversation.messages.last %}<p>{% if last.sender == user %}<span>Sen:</span> {% endif %}{{ last.body|default:"Görüşme başladı"|truncatechars:110 }}</p>{% endwith %}<small>{% if conversation.listing.price %}{{ conversation.listing.price|floatformat:"0g" }} TL{% else %}Teklif alıyor{% endif %}</small></div>
-        <div class="conversation-state"><time>{{ conversation.updated_at|timesince }} önce</time>{% if conversation.unread_count %}<strong>{{ conversation.unread_count }}</strong>{% endif %}<i>›</i></div>
-      </a>
-    {% empty %}<div class="market-empty"><span>💬</span><h3>Görüşme bulunamadı</h3><p>İlan detayından satıcıya mesaj göndererek başlayabilirsin.</p><a class="button" href="{% url 'listings:list' %}">İlanları keşfet</a></div>{% endfor %}
+      <article class="v125-conversation-row{% if conversation.unread_count %} unread{% endif %}{% if conversation.offer_needs_my_action %} needs-action{% endif %}" data-v125-conversation-row>
+        <a class="v125-conversation-main" href="{% url 'listings:conversation_detail' conversation.pk %}">
+          <div class="v125-conversation-cover">
+            {% with cover=conversation.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ conversation.listing.title }}">{% else %}<span>▣</span>{% endif %}{% endwith %}
+            {% if conversation.unread_count %}<i>{{ conversation.unread_count }}</i>{% endif %}
+          </div>
+          <div class="v125-conversation-copy">
+            <div class="v125-conversation-title"><div><small>{% if conversation.buyer == user %}Satıcı{% else %}Alıcı{% endif %}: {% if conversation.buyer == user %}{{ conversation.seller.display_name }}{% else %}{{ conversation.buyer.display_name }}{% endif %}</small><h2>{{ conversation.listing.title }}</h2></div><time>{{ conversation.updated_at|timesince }} önce</time></div>
+            {% with last=conversation.messages.last %}<p>{% if last %}{% if last.sender == user %}<b>Sen:</b> {% endif %}{{ last.body|truncatechars:120 }}{% else %}Görüşme açıldı; henüz mesaj gönderilmedi.{% endif %}</p>{% endwith %}
+            <div class="v125-conversation-meta">
+              <span>{% if conversation.listing.price %}{{ conversation.listing.price|floatformat:"0g" }} TL{% else %}Teklif alıyor{% endif %}</span>
+              <span>{{ conversation.listing.get_status_display }}</span>
+              {% if conversation.pending_offer %}<strong class="{% if conversation.offer_needs_my_action %}action{% endif %}">{% if conversation.offer_needs_my_action %}Teklif yanıtını bekliyor{% else %}Teklif karşı tarafta{% endif %}{% if conversation.pending_offer.amount %} · {{ conversation.pending_offer.amount|floatformat:"0g" }} TL{% endif %}</strong>{% endif %}
+            </div>
+          </div>
+          <span class="v125-row-arrow">›</span>
+        </a>
+        <div class="v125-row-tools">
+          {% if mode == 'archived' %}
+            <form method="post" action="{% url 'listings:restore_conversation' conversation.pk %}">{% csrf_token %}<button type="submit">Mesaj kutusuna taşı</button></form>
+          {% else %}
+            <form method="post" action="{% url 'listings:archive_conversation' conversation.pk %}">{% csrf_token %}<button type="submit" aria-label="Konuşmayı arşivle">Arşivle</button></form>
+          {% endif %}
+        </div>
+      </article>
+    {% empty %}
+      <div class="market-empty v125-empty"><span>{% if mode == 'archived' %}□{% elif mode == 'action' %}✓{% else %}💬{% endif %}</span><h3>{% if mode == 'archived' %}Arşivlenmiş görüşme yok{% elif mode == 'action' %}Cevap bekleyen görüşme yok{% else %}Görüşme bulunamadı{% endif %}</h3><p>{% if mode == 'action' %}Yeni mesaj veya yanıtlaman gereken teklif olduğunda burada görünecek.{% else %}Bir ilanı açıp satıcıya mesaj göndererek görüşme başlatabilirsin.{% endif %}</p><a class="button" href="{% url 'listings:list' %}">İlanları keşfet</a></div>
+    {% endfor %}
   </div>
+
+  {% if is_paginated %}<nav class="pagination" aria-label="Mesaj sayfaları">{% if page_obj.has_previous %}<a href="?mode={{ mode }}&q={{ query|urlencode }}&page={{ page_obj.previous_page_number }}">← Önceki</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?mode={{ mode }}&q={{ query|urlencode }}&page={{ page_obj.next_page_number }}">Sonraki →</a>{% endif %}</nav>{% endif %}
 </section>
 {% endblock %}

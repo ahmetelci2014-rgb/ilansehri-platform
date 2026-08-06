@@ -1,0 +1,26 @@
+İLAN ŞEHRİ v1.25.0 — MESAJLAŞMA, TEKLİF VE İLETİŞİM MERKEZİ
+================================================================
+
+TABAN SÜRÜM
+- v1.24.0
+
+YÜKLEME
+1. Güncelleme ZIP dosyasını çıkarın.
+2. İçindeki klasör ve dosyaları mevcut İlan Şehri proje ana klasörüne kopyalayın.
+3. Var olan dosyaların değiştirilmesini onaylayın.
+4. GitHub Desktop özetine şunu yazın:
+   İlan Şehri v1.25.0 mesajlaşma teklif ve iletişim merkezi
+5. Commit to main ve Push origin yapın.
+6. Django Kontrol ile Mobil Görsel Denetim sonuçlarının ikisinin de yeşil olmasını bekleyin.
+7. İki denetim de yeşil olduktan sonra Codespaces terminalinde:
+
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+ÖNEMLİ
+- Bu sürüm yeni tablo veya model alanı eklemez; migration gerekmez.
+- Mesaj kutusu yolu: /ilanlar/mesajlar/
+- Teklif Merkezi yolu: /ilanlar/tekliflerim/
+- İşlem bekleyen görüşmeler: /ilanlar/mesajlar/?mode=action
+- GitHub Actions yeşil olmadan sürüm stabil kabul edilmemelidir.

@@ -1,5 +1,21 @@
 # Değişiklik Günlüğü
 
+## v1.25.0 — Mesajlaşma, teklif ve iletişim merkezi
+
+- Mesaj kutusuna işlem bekleyen, okunmamış, alış, satış ve arşiv görünümleri eklendi.
+- Okunmamış mesajlarla kullanıcının yanıtını bekleyen teklifler tek “İşlem bekleyen” sayacında birleştirildi.
+- Görüşmeler ilan başlığı, kullanıcı adı ve ad-soyad bilgisiyle aranabilir hale getirildi.
+- Konuşmalar alıcı ve satıcı için bağımsız arşivlenebilir ve yeniden mesaj kutusuna taşınabilir hale getirildi.
+- Görüşme ekranına tarih ayraçları, hızlı yanıtlar, sabit mobil yazma alanı ve son 120 mesajı hızlı açan geçmiş yönetimi eklendi.
+- Alıcının görüşme içinden teklif oluşturması; mevcut teklifin durumu ve yanıt sırasının aynı ekranda izlenmesi sağlandı.
+- Teklif Merkezi gelen, gönderilen ve yanıt bekleyen yön filtreleri, durum sekmeleri, arama ve odaklanan teklif kartıyla yenilendi.
+- Teklif kartları ilgili konuşmayla bağlandı; karşı teklif ve ret bildirimleri doğru teklif kartına yönlendirilir.
+- Üst menü teklif rozeti bütün bekleyen teklifler yerine yalnız kullanıcının işlem yapması gereken teklifleri sayar.
+- Randevu formu ana görüşme akışından çıkarılıp ikincil görüşme ve güvenlik araçları altına taşındı.
+- Mesaj gönderme ve görüşme içi teklif oluşturma akışlarına hız sınırlaması ve mevcut engelleme kontrolleri bağlandı.
+- Demo görüşmesine örnek mesaj geçmişi eklendi; Mobil Görsel Denetim alıcı ve satıcı iletişim ekranlarıyla 168 ekran kombinasyonuna genişletildi.
+- Yeni tablo veya model alanı eklenmedi; veritabanı migration işlemi gerekmez.
+
 ## v1.24.0 — Satıcı Merkezi ve ilan yönetimi
 
 - Kullanıcıya ait bütün ilanları ayrı bir Satıcı Merkezi'nde listeleyen `/ilanlar/ilanlarim/` ekranı eklendi.

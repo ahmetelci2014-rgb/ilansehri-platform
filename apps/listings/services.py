@@ -607,7 +607,7 @@ def counter_offer(*, offer: Offer, actor, amount, message: str) -> Offer:
         notification_type=Notification.Type.OFFER,
         title="Yeni karşı teklif geldi",
         body=f"{actor.display_name} {amount:,.0f} TL karşı teklif gönderdi.".replace(",", "."),
-        link=reverse("listings:offer_center"),
+        link=f"{reverse('listings:offer_center')}?focus={locked_offer.pk}",
     )
     return locked_offer
 
@@ -903,7 +903,7 @@ def reject_offer(*, offer: Offer, actor) -> None:
         notification_type=Notification.Type.OFFER,
         title="Teklif sonuçlandı",
         body="Karşı taraf teklifi kabul etmedi.",
-        link=reverse("listings:offer_center"),
+        link=f"{reverse('listings:offer_center')}?focus={offer.pk}",
     )
 
 

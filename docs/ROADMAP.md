@@ -18,6 +18,7 @@
 - Güvenilir satıcı profili, yerel fotoğraf tekrar kontrolü ve personel risk inceleme merkezi
 - İlan görüşmesine bağlı güvenli randevu, teslim planlama, çakışma koruması ve hatırlatma
 - Satıcı Merkezi, ilan performansı, yaşam döngüsü filtreleri ve güvenli toplu ilan yönetimi
+- Mesaj, teklif, arşiv ve işlem bekleyen görevleri birleştiren alıcı–satıcı iletişim merkezi
 
 ## Canlı lansman öncesi dış bağımlılıklar
 

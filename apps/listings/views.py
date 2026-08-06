@@ -871,7 +871,7 @@ class ListingDetailView(FormMixin, DetailView):
                 notification_type=Notification.Type.OFFER,
                 title="İlanına yeni teklif geldi",
                 body=f"{request.user.display_name} bir teklif gönderdi.",
-                link=reverse("listings:offer_center"),
+                link=f"{reverse('listings:offer_center')}?focus={offer.pk}",
             )
             messages.success(request, "Teklifin ilan sahibine gönderildi.")
             return redirect(self.object.get_absolute_url())
@@ -1451,19 +1451,76 @@ class OfferCenterView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+        all_offers = Offer.objects.filter(Q(sender=user) | Q(listing__owner=user))
         base = (
-            Offer.objects.filter(Q(sender=user) | Q(listing__owner=user))
-            .select_related("listing", "listing__owner", "sender", "last_actor")
+            all_offers.select_related("listing", "listing__owner", "sender", "last_actor")
             .prefetch_related("events__actor", "listing__images")
             .order_by("-updated_at")
         )
         status_filter = self.request.GET.get("status", "").strip()
         if status_filter in {value for value, _ in Offer.Status.choices}:
             base = base.filter(status=status_filter)
-        context["offers"] = base[:60]
+        else:
+            status_filter = ""
+
+        direction = self.request.GET.get("direction", "all").strip()
+        if direction == "incoming":
+            base = base.filter(listing__owner=user)
+        elif direction == "outgoing":
+            base = base.filter(sender=user)
+        elif direction == "action":
+            base = base.filter(status=Offer.Status.PENDING).filter(
+                Q(listing__owner=user, last_actor=F("sender"))
+                | Q(listing__owner=user, last_actor__isnull=True)
+                | Q(sender=user, last_actor=F("listing__owner"))
+            )
+        else:
+            direction = "all"
+
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            base = base.filter(
+                Q(listing__title__icontains=query)
+                | Q(sender__username__icontains=query)
+                | Q(sender__first_name__icontains=query)
+                | Q(sender__last_name__icontains=query)
+                | Q(listing__owner__username__icontains=query)
+                | Q(listing__owner__first_name__icontains=query)
+                | Q(listing__owner__last_name__icontains=query)
+            )
+
+        offer_rows = list(base[:60])
+        if offer_rows:
+            listing_ids = {offer.listing_id for offer in offer_rows}
+            buyer_ids = {offer.sender_id for offer in offer_rows}
+            conversation_map = {
+                (conversation.listing_id, conversation.buyer_id): conversation.pk
+                for conversation in Conversation.objects.filter(
+                    listing_id__in=listing_ids,
+                    buyer_id__in=buyer_ids,
+                ).only("pk", "listing_id", "buyer_id")
+            }
+            for offer in offer_rows:
+                offer.conversation_pk = conversation_map.get((offer.listing_id, offer.sender_id))
+
+        action_filter = Q(status=Offer.Status.PENDING) & (
+            Q(listing__owner=user, last_actor=F("sender"))
+            | Q(listing__owner=user, last_actor__isnull=True)
+            | Q(sender=user, last_actor=F("listing__owner"))
+        )
+        context["offers"] = offer_rows
         context["status_filter"] = status_filter
+        context["direction"] = direction
+        context["query"] = query
+        context["focus_offer_id"] = _safe_int(self.request.GET.get("focus"))
         context["counter_form"] = CounterOfferForm()
-        context["pending_count"] = base.filter(status=Offer.Status.PENDING).count()
+        context["offer_summary"] = {
+            "all": all_offers.count(),
+            "incoming": all_offers.filter(listing__owner=user).count(),
+            "outgoing": all_offers.filter(sender=user).count(),
+            "action": all_offers.filter(action_filter).count(),
+            "pending": all_offers.filter(status=Offer.Status.PENDING).count(),
+        }
         transaction_qs = (
             Transaction.objects.filter(Q(buyer=user) | Q(seller=user))
             .select_related("listing", "buyer", "seller")
@@ -1485,9 +1542,10 @@ def counter_offer_action(request, pk):
         pk=pk,
     )
     form = CounterOfferForm(request.POST)
+    fallback = f"{reverse('listings:offer_center')}?focus={offer.pk}"
     if not form.is_valid():
         messages.error(request, "Karşı teklif bilgilerini kontrol et.")
-        return redirect("listings:offer_center")
+        return redirect(_safe_next_url(request, fallback))
     try:
         counter_offer(
             offer=offer,
@@ -1500,13 +1558,14 @@ def counter_offer_action(request, pk):
         raise Http404
     except ValueError as exc:
         messages.error(request, str(exc))
-    return redirect("listings:offer_center")
+    return redirect(_safe_next_url(request, fallback))
 
 
 @login_required
 @require_POST
 def offer_action(request, pk, action):
     offer = get_object_or_404(Offer.objects.select_related("listing", "sender", "listing__owner", "last_actor"), pk=pk)
+    fallback = f"{reverse('listings:offer_center')}?focus={offer.pk}"
     try:
         if action == "accept":
             transaction = accept_offer(offer=offer, actor=request.user)
@@ -1535,7 +1594,7 @@ def offer_action(request, pk, action):
         raise Http404
     except ValueError as exc:
         messages.error(request, str(exc))
-    return redirect("listings:offer_center")
+    return redirect(_safe_next_url(request, fallback))
 
 
 class TransactionDetailView(LoginRequiredMixin, DetailView):
@@ -1928,6 +1987,15 @@ def appointment_action(request, public_id, action):
     return redirect(_safe_next_url(request, appointment.get_absolute_url()))
 
 
+def _conversation_action_offer_ids(user):
+    queryset = Offer.objects.filter(status=Offer.Status.PENDING).filter(
+        Q(listing__owner=user, last_actor=F("sender"))
+        | Q(listing__owner=user, last_actor__isnull=True)
+        | Q(sender=user, last_actor=F("listing__owner"))
+    )
+    return list(queryset.values_list("listing_id", "sender_id"))
+
+
 class ConversationListView(LoginRequiredMixin, ListView):
     template_name = "listings/conversation_list.html"
     context_object_name = "conversations"
@@ -1935,8 +2003,20 @@ class ConversationListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
+        mode = self.request.GET.get("mode", "all").strip()
+        allowed_modes = {"all", "action", "unread", "buying", "selling", "archived"}
+        if mode not in allowed_modes:
+            mode = "all"
+        self.mode = mode
+
+        participant_q = Q(buyer=user) | Q(seller=user)
+        if mode == "archived":
+            visibility_q = Q(buyer=user, buyer_archived=True) | Q(seller=user, seller_archived=True)
+        else:
+            visibility_q = Q(buyer=user, buyer_archived=False) | Q(seller=user, seller_archived=False)
+
         queryset = (
-            Conversation.objects.filter(Q(buyer=user, buyer_archived=False) | Q(seller=user, seller_archived=False))
+            Conversation.objects.filter(participant_q, visibility_q)
             .select_related("listing", "buyer", "seller")
             .prefetch_related("messages", "listing__images")
             .annotate(
@@ -1947,26 +2027,76 @@ class ConversationListView(LoginRequiredMixin, ListView):
             )
             .order_by("-updated_at")
         )
-        mode = self.request.GET.get("mode", "all")
         if mode == "buying":
             queryset = queryset.filter(buyer=user)
         elif mode == "selling":
             queryset = queryset.filter(seller=user)
         elif mode == "unread":
             queryset = queryset.filter(unread_count__gt=0)
+        elif mode == "action":
+            action_pairs = _conversation_action_offer_ids(user)
+            action_q = Q(unread_count__gt=0)
+            for listing_id, buyer_id in action_pairs:
+                action_q |= Q(listing_id=listing_id, buyer_id=buyer_id)
+            queryset = queryset.filter(action_q)
+
         query = self.request.GET.get("q", "").strip()
+        self.query = query
         if query:
             queryset = queryset.filter(
                 Q(listing__title__icontains=query)
                 | Q(buyer__username__icontains=query)
+                | Q(buyer__first_name__icontains=query)
+                | Q(buyer__last_name__icontains=query)
                 | Q(seller__username__icontains=query)
+                | Q(seller__first_name__icontains=query)
+                | Q(seller__last_name__icontains=query)
             )
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["mode"] = self.request.GET.get("mode", "all")
-        context["query"] = self.request.GET.get("q", "").strip()
+        user = self.request.user
+        active = Conversation.objects.filter(
+            Q(buyer=user, buyer_archived=False) | Q(seller=user, seller_archived=False)
+        )
+        action_pairs = _conversation_action_offer_ids(user)
+        action_conversation_ids = set()
+        if action_pairs:
+            pair_q = Q(pk__in=[])
+            for listing_id, buyer_id in action_pairs:
+                pair_q |= Q(listing_id=listing_id, buyer_id=buyer_id)
+            action_conversation_ids = set(active.filter(pair_q).values_list("pk", flat=True))
+        unread_ids = set(
+            active.filter(messages__is_read=False)
+            .exclude(messages__sender=user)
+            .values_list("pk", flat=True)
+        )
+        context["mode"] = getattr(self, "mode", "all")
+        context["query"] = getattr(self, "query", "")
+        context["conversation_summary"] = {
+            "all": active.count(),
+            "action": len(action_conversation_ids | unread_ids),
+            "unread": len(unread_ids),
+            "buying": active.filter(buyer=user).count(),
+            "selling": active.filter(seller=user).count(),
+            "archived": Conversation.objects.filter(
+                Q(buyer=user, buyer_archived=True) | Q(seller=user, seller_archived=True)
+            ).count(),
+        }
+        page_rows = list(context.get("conversations") or [])
+        if page_rows:
+            pair_map = {(row.listing_id, row.buyer_id): row for row in page_rows}
+            pending_offers = Offer.objects.filter(
+                status=Offer.Status.PENDING,
+                listing_id__in={row.listing_id for row in page_rows},
+                sender_id__in={row.buyer_id for row in page_rows},
+            ).select_related("last_actor", "listing__owner", "sender")
+            for offer in pending_offers:
+                row = pair_map.get((offer.listing_id, offer.sender_id))
+                if row is not None:
+                    row.pending_offer = offer
+                    row.offer_needs_my_action = offer.can_respond(user)
         return context
 
 
@@ -1979,17 +2109,55 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
     def get_queryset(self):
         user = self.request.user
         return Conversation.objects.filter(Q(buyer=user) | Q(seller=user)).select_related(
-            "listing", "buyer", "seller"
-        ).prefetch_related("messages__sender")
+            "listing", "buyer", "seller", "listing__owner", "listing__category"
+        )
 
     def get_success_url(self):
         return reverse("listings:conversation_detail", kwargs={"pk": self.object.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["other_user"] = self.object.other_participant(self.request.user)
-        context["blocked_between"] = _blocked_between(self.request.user, context["other_user"])
-        context["other_user_trust_profile"] = build_trust_profile(context["other_user"])
+        user = self.request.user
+        other_user = self.object.other_participant(user)
+        blocked_between = _blocked_between(user, other_user)
+        context["other_user"] = other_user
+        context["blocked_between"] = blocked_between
+        context["other_user_trust_profile"] = build_trust_profile(other_user)
+
+        show_full_history = self.request.GET.get("history") == "all"
+        message_limit = 500 if show_full_history else 120
+        recent_messages = list(
+            self.object.messages.select_related("sender").order_by("-created_at")[:message_limit]
+        )
+        recent_messages.reverse()
+        context["thread_messages"] = recent_messages
+        context["message_total_count"] = self.object.messages.count()
+        context["show_full_history"] = show_full_history
+        context["history_truncated"] = context["message_total_count"] > len(recent_messages)
+
+        active_offer = (
+            Offer.objects.filter(listing=self.object.listing, sender=self.object.buyer)
+            .select_related("last_actor", "listing__owner", "sender")
+            .prefetch_related("events__actor")
+            .order_by("-updated_at")
+            .first()
+        )
+        context["active_offer"] = active_offer
+        context["offer_form"] = OfferForm()
+        context["can_make_offer"] = bool(
+            user.pk == self.object.buyer_id
+            and self.object.listing.status == Listing.Status.PUBLISHED
+            and not blocked_between
+            and not (active_offer and active_offer.status == Offer.Status.PENDING)
+        )
+        context["offer_needs_my_action"] = bool(
+            active_offer and active_offer.status == Offer.Status.PENDING and active_offer.can_respond(user)
+        )
+        context["conversation_role_label"] = "Alıcı" if user.pk == self.object.buyer_id else "Satıcı"
+        context["is_archived_for_user"] = (
+            self.object.buyer_archived if user.pk == self.object.buyer_id else self.object.seller_archived
+        )
+
         initial = {
             "appointment_type": Appointment.Type.IN_PERSON,
             "duration_minutes": 30,
@@ -1999,7 +2167,10 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
         context["appointment_form"] = AppointmentForm(initial=initial)
         context["conversation_appointments"] = self.object.appointments.select_related(
             "proposer", "invitee"
-        ).order_by("-created_at")[:6]
+        ).filter(
+            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+            starts_at__gte=timezone.now(),
+        ).order_by("starts_at")[:3]
         return context
 
     def get(self, request, *args, **kwargs):
@@ -2012,6 +2183,9 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
         other_user = self.object.other_participant(request.user)
         if _blocked_between(request.user, other_user):
             messages.error(request, "Engellenen kullanıcıyla mesaj gönderilemez.")
+            return redirect(self.get_success_url())
+        if not consume_rate_limit(request, "message", limit=20, period=600):
+            messages.error(request, "Kısa sürede çok fazla mesaj gönderdin. Birkaç dakika sonra tekrar dene.")
             return redirect(self.get_success_url())
         form = self.get_form()
         if form.is_valid():
@@ -2033,8 +2207,65 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
                 body=safe_notification_preview(request.user.display_name, message.body),
                 link=self.get_success_url(),
             )
-            return redirect(self.get_success_url())
+            return redirect(self.get_success_url() + "#message-composer")
         return self.form_invalid(form)
+
+
+@login_required
+@require_POST
+def create_conversation_offer(request, pk):
+    conversation = get_object_or_404(
+        Conversation.objects.select_related("listing", "buyer", "seller", "listing__owner"),
+        Q(buyer=request.user) | Q(seller=request.user),
+        pk=pk,
+    )
+    if request.user.pk != conversation.buyer_id:
+        raise Http404
+    listing = conversation.listing
+    if listing.status != Listing.Status.PUBLISHED:
+        messages.warning(request, "Yalnız yayındaki ilanlara teklif verilebilir.")
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+    if _blocked_between(request.user, conversation.seller):
+        messages.error(request, "Bu kullanıcıyla teklif işlemi yapılamıyor.")
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+    if not consume_rate_limit(request, "offer", limit=8, period=600):
+        messages.error(request, "Kısa sürede çok fazla teklif işlemi yaptın. Birkaç dakika sonra tekrar dene.")
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+    if Offer.objects.filter(listing=listing, sender=request.user, status=Offer.Status.PENDING).exists():
+        messages.info(request, "Bu ilan için bekleyen teklifin zaten var.")
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+    form = OfferForm(request.POST)
+    if not form.is_valid():
+        first_error = next(
+            (str(error) for errors in form.errors.values() for error in errors),
+            "Teklif bilgilerini kontrol et.",
+        )
+        messages.error(request, first_error)
+        return redirect("listings:conversation_detail", pk=conversation.pk)
+
+    offer = form.save(commit=False)
+    offer.listing = listing
+    offer.sender = request.user
+    offer.last_actor = request.user
+    offer.save()
+    create_offer_event(
+        offer=offer,
+        actor=request.user,
+        event_type=OfferEvent.Type.SUBMITTED,
+        amount=offer.amount,
+        message=offer.message,
+    )
+    create_notification(
+        user=conversation.seller,
+        actor=request.user,
+        listing=listing,
+        notification_type=Notification.Type.OFFER,
+        title="Görüşmene yeni teklif geldi",
+        body=f"{request.user.display_name} bir teklif gönderdi.",
+        link=f"{reverse('listings:conversation_detail', kwargs={'pk': conversation.pk})}#offer-panel",
+    )
+    messages.success(request, "Teklifin görüşmeye eklendi.")
+    return redirect(f"{reverse('listings:conversation_detail', kwargs={'pk': conversation.pk})}#offer-panel")
 
 
 @login_required
@@ -2043,11 +2274,25 @@ def archive_conversation(request, pk):
     conversation = get_object_or_404(Conversation, Q(buyer=request.user) | Q(seller=request.user), pk=pk)
     if request.user.pk == conversation.buyer_id:
         conversation.buyer_archived = True
-        conversation.save(update_fields=["buyer_archived"])
+        conversation.save(update_fields=["buyer_archived", "updated_at"])
     else:
         conversation.seller_archived = True
-        conversation.save(update_fields=["seller_archived"])
+        conversation.save(update_fields=["seller_archived", "updated_at"])
     messages.success(request, "Konuşma arşivlendi.")
+    return redirect("listings:conversation_list")
+
+
+@login_required
+@require_POST
+def restore_conversation(request, pk):
+    conversation = get_object_or_404(Conversation, Q(buyer=request.user) | Q(seller=request.user), pk=pk)
+    if request.user.pk == conversation.buyer_id:
+        conversation.buyer_archived = False
+        conversation.save(update_fields=["buyer_archived", "updated_at"])
+    else:
+        conversation.seller_archived = False
+        conversation.save(update_fields=["seller_archived", "updated_at"])
+    messages.success(request, "Konuşma yeniden mesaj kutusuna taşındı.")
     return redirect("listings:conversation_list")
 
 

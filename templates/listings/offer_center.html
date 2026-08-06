@@ -1,46 +1,81 @@
 {% extends 'base.html' %}
-{% block title %}Teklif Merkezi — İlan Şehri{% endblock %}
+{% block title %}Teklif ve Pazarlık Merkezi — İlan Şehri{% endblock %}
 {% block content %}
-<section class="offer-center-page shell">
-  <div class="market-page-title"><div><span class="section-label">PAZARLIK MERKEZİ</span><h1>Tekliflerim</h1><p>Gönderdiğin ve aldığın teklifleri tek ekrandan yönet.</p></div><a class="button" href="{% url 'listings:list' %}">İlan keşfet</a></div>
-  <nav class="offer-tabs"><a href="{% url 'listings:offer_center' %}" class="{% if not status_filter %}active{% endif %}">Tümü</a><a href="?status=pending" class="{% if status_filter == 'pending' %}active{% endif %}">Bekleyenler</a><a href="?status=accepted" class="{% if status_filter == 'accepted' %}active{% endif %}">Kabul edilen</a><a href="?status=rejected" class="{% if status_filter == 'rejected' %}active{% endif %}">Kapananlar</a></nav>
+<section class="v125-offer-center shell" data-v125-offer-center>
+  <header class="v125-page-head">
+    <div><span class="section-label">PAZARLIK MERKEZİ</span><h1>Teklifler ve anlaşmalar</h1><p>Gönderdiğin, aldığın ve yanıtını bekleyen teklifleri görüşmelerle bağlantılı olarak yönet.</p></div>
+    <div class="v125-head-actions"><a class="market-secondary-button" href="{% url 'listings:conversation_list' %}?mode=action">İşlem bekleyen mesajlar</a><a class="button" href="{% url 'listings:list' %}">İlan keşfet</a></div>
+  </header>
+
+  <div class="v125-offer-summary" aria-label="Teklif özeti">
+    <a href="{% url 'listings:offer_center' %}" class="{% if direction == 'all' %}active{% endif %}"><span>🤝</span><div><b>{{ offer_summary.all }}</b><small>Tüm teklifler</small></div></a>
+    <a href="?direction=action" class="{% if direction == 'action' %}active{% endif %}"><span>⚡</span><div><b>{{ offer_summary.action }}</b><small>Yanıtın bekleniyor</small></div></a>
+    <a href="?direction=incoming" class="{% if direction == 'incoming' %}active{% endif %}"><span>↓</span><div><b>{{ offer_summary.incoming }}</b><small>Gelen teklifler</small></div></a>
+    <a href="?direction=outgoing" class="{% if direction == 'outgoing' %}active{% endif %}"><span>↑</span><div><b>{{ offer_summary.outgoing }}</b><small>Gönderilen teklifler</small></div></a>
+  </div>
+
   {% if transactions %}
-  <section class="v119-transaction-strip">
-    <div class="market-section-head"><div><h2>Güvenli işlemlerim</h2><p>{{ active_transaction_count }} aktif işlem; teslim ve değerlendirme adımlarını buradan sürdür.</p></div></div>
-    <div class="v119-transaction-grid">
-      {% for transaction in transactions %}
-        <a href="{{ transaction.get_absolute_url }}" class="v119-transaction-mini status-{{ transaction.status }}">
-          <span>{{ transaction.get_status_display }}</span><b>{{ transaction.listing.title }}</b>
-          <small>{% if user == transaction.buyer %}Satıcı: {{ transaction.seller.display_name }}{% else %}Alıcı: {{ transaction.buyer.display_name }}{% endif %} · {{ transaction.updated_at|date:"d.m H:i" }}</small>
-          <em>{% if transaction.amount %}{{ transaction.amount|floatformat:"0g" }} TL{% else %}Tutar belirtilmedi{% endif %}</em>
-        </a>
-      {% endfor %}
+  <section class="v125-transaction-strip">
+    <header><div><span>GÜVENLİ İŞLEMLER</span><h2>Anlaşmaya dönüşen işlemler</h2><p>{{ active_transaction_count }} aktif işlem; teslim ve değerlendirme adımlarını buradan sürdür.</p></div></header>
+    <div class="v125-transaction-grid">
+      {% for transaction in transactions %}<a href="{{ transaction.get_absolute_url }}" class="status-{{ transaction.status }}"><span>{{ transaction.get_status_display }}</span><b>{{ transaction.listing.title }}</b><small>{% if user == transaction.buyer %}Satıcı: {{ transaction.seller.display_name }}{% else %}Alıcı: {{ transaction.buyer.display_name }}{% endif %}</small><strong>{% if transaction.amount %}{{ transaction.amount|floatformat:"0g" }} TL{% else %}Tutar belirtilmedi{% endif %}</strong></a>{% endfor %}
     </div>
   </section>
   {% endif %}
-  <div class="offer-center-list">
+
+  <div class="v125-offer-toolbar">
+    <nav aria-label="Teklif yönü">
+      <a href="?direction=all{% if status_filter %}&status={{ status_filter }}{% endif %}" class="{% if direction == 'all' %}active{% endif %}">Tümü</a>
+      <a href="?direction=action{% if status_filter %}&status={{ status_filter }}{% endif %}" class="{% if direction == 'action' %}active{% endif %}">Yanıt bekleyen <b>{{ offer_summary.action }}</b></a>
+      <a href="?direction=incoming{% if status_filter %}&status={{ status_filter }}{% endif %}" class="{% if direction == 'incoming' %}active{% endif %}">Gelen</a>
+      <a href="?direction=outgoing{% if status_filter %}&status={{ status_filter }}{% endif %}" class="{% if direction == 'outgoing' %}active{% endif %}">Gönderilen</a>
+    </nav>
+    <form method="get"><input type="hidden" name="direction" value="{{ direction }}">{% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}<span>⌕</span><input name="q" value="{{ query }}" placeholder="İlan veya kullanıcı ara"><button>Ara</button></form>
+  </div>
+
+  <nav class="v125-status-tabs" aria-label="Teklif durumu">
+    <a href="?direction={{ direction }}{% if query %}&q={{ query|urlencode }}{% endif %}" class="{% if not status_filter %}active{% endif %}">Tüm durumlar</a>
+    <a href="?direction={{ direction }}&status=pending{% if query %}&q={{ query|urlencode }}{% endif %}" class="{% if status_filter == 'pending' %}active{% endif %}">Bekleyen</a>
+    <a href="?direction={{ direction }}&status=accepted{% if query %}&q={{ query|urlencode }}{% endif %}" class="{% if status_filter == 'accepted' %}active{% endif %}">Kabul edilen</a>
+    <a href="?direction={{ direction }}&status=rejected{% if query %}&q={{ query|urlencode }}{% endif %}" class="{% if status_filter == 'rejected' %}active{% endif %}">Reddedilen</a>
+    <a href="?direction={{ direction }}&status=withdrawn{% if query %}&q={{ query|urlencode }}{% endif %}" class="{% if status_filter == 'withdrawn' %}active{% endif %}">Geri çekilen</a>
+  </nav>
+
+  {% if query %}<div class="v125-search-note"><span>“{{ query }}” için teklifler</span><a href="?direction={{ direction }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Aramayı temizle</a></div>{% endif %}
+
+  <div class="v125-offer-list">
     {% for offer in offers %}
-      <article class="offer-center-card{% if offer.status == 'pending' and offer.current_recipient_id == user.pk %} needs-action{% endif %}">
-        <div class="offer-listing-photo">{% with cover=offer.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ offer.listing.title }}">{% else %}<span>▣</span>{% endif %}{% endwith %}</div>
-        <div class="offer-center-main">
-          <div class="offer-card-head"><div><small>{% if user == offer.sender %}Satıcı: {{ offer.listing.owner.display_name }}{% else %}Alıcı: {{ offer.sender.display_name }}{% endif %}</small><h2><a href="{{ offer.listing.get_absolute_url }}">{{ offer.listing.title }}</a></h2></div><span class="offer-status status-{{ offer.status }}">{{ offer.get_status_display }}</span></div>
-          <div class="offer-current-price"><strong>{% if offer.amount %}{{ offer.amount|floatformat:"0g" }} TL{% else %}Tutar belirtilmedi{% endif %}</strong>{% if offer.counter_count %}<span>{{ offer.counter_count }} karşı teklif</span>{% endif %}</div>
-          <div class="offer-timeline">
-            {% for event in offer.events.all %}<div><span class="timeline-dot"></span><div><b>{{ event.actor.display_name|default:'Sistem' }}</b><em>{{ event.get_event_type_display }} · {{ event.created_at|date:'d.m H:i' }}</em>{% if event.amount %}<strong>{{ event.amount|floatformat:"0g" }} TL</strong>{% endif %}{% if event.message %}<p>{{ event.message }}</p>{% endif %}</div></div>{% empty %}<p>Teklif geçmişi bulunmuyor.</p>{% endfor %}
+      <article id="offer-{{ offer.pk }}" class="v125-offer-card status-{{ offer.status }}{% if offer.status == 'pending' and offer.current_recipient_id == user.pk %} needs-action{% endif %}{% if focus_offer_id == offer.pk %} focused{% endif %}" data-v125-offer-card>
+        <div class="v125-offer-photo">{% with cover=offer.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ offer.listing.title }}">{% else %}<span>▣</span>{% endif %}{% endwith %}</div>
+        <div class="v125-offer-main">
+          <header class="v125-offer-card-head">
+            <div><small>{% if user == offer.sender %}Gönderdiğin teklif · Satıcı: {{ offer.listing.owner.display_name }}{% else %}Gelen teklif · Alıcı: {{ offer.sender.display_name }}{% endif %}</small><h2><a href="{{ offer.listing.get_absolute_url }}">{{ offer.listing.title }}</a></h2></div>
+            <span class="v125-offer-status">{{ offer.get_status_display }}</span>
+          </header>
+
+          <div class="v125-offer-price-line"><strong>{% if offer.amount %}{{ offer.amount|floatformat:"0g" }} TL{% else %}Tutar belirtilmedi{% endif %}</strong><span>{% if offer.counter_count %}{{ offer.counter_count }} karşı teklif{% else %}İlk teklif{% endif %}</span>{% if offer.status == 'pending' %}<em>{% if offer.current_recipient_id == user.pk %}Yanıt sırası sende{% else %}Karşı tarafın yanıtı bekleniyor{% endif %}</em>{% endif %}</div>
+
+          <div class="v125-offer-links">
+            {% if offer.conversation_pk %}<a href="{% url 'listings:conversation_detail' offer.conversation_pk %}#offer-panel">💬 İlgili görüşmeyi aç</a>{% endif %}
+            <a href="{{ offer.listing.get_absolute_url }}">▣ İlanı görüntüle</a>
+            <time>Son hareket: {{ offer.updated_at|date:'d.m.Y H:i' }}</time>
           </div>
+
+          <details class="v125-offer-history" {% if focus_offer_id == offer.pk %}open{% endif %}><summary>Teklif geçmişi <b>{{ offer.events.count }}</b></summary><div class="v125-offer-timeline">{% for event in offer.events.all %}<article><span></span><div><header><b>{{ event.actor.display_name|default:'Sistem' }}</b><time>{{ event.created_at|date:'d.m H:i' }}</time></header><small>{{ event.get_event_type_display }}</small>{% if event.amount %}<strong>{{ event.amount|floatformat:"0g" }} TL</strong>{% endif %}{% if event.message %}<p>{{ event.message|linebreaksbr }}</p>{% endif %}</div></article>{% empty %}<p>Teklif geçmişi bulunmuyor.</p>{% endfor %}</div></details>
+
           {% if offer.status == 'pending' %}
-            <div class="offer-response-row">
+            <div class="v125-offer-actions">
               {% if offer.current_recipient_id == user.pk %}
-                <form method="post" action="{% url 'listings:offer_action' offer.pk 'accept' %}">{% csrf_token %}<button class="button">Kabul et</button></form>
-                <details class="counter-offer-box"><summary>Karşı teklif ver</summary><form method="post" action="{% url 'listings:counter_offer' offer.pk %}">{% csrf_token %}<label>Yeni tutar<input type="number" name="amount" min="0.01" step="0.01" value="{{ offer.amount }}" required></label><label>Not<textarea name="message" rows="3" required>Yeni teklifim ve teslim koşullarım:</textarea></label><button class="button full">Karşı teklifi gönder</button></form></details>
-                <form method="post" action="{% url 'listings:offer_action' offer.pk 'reject' %}">{% csrf_token %}<button class="market-secondary-button">Reddet</button></form>
-              {% else %}<div class="offer-waiting">Karşı tarafın yanıtı bekleniyor.</div>{% endif %}
-              {% if user == offer.sender %}<form method="post" action="{% url 'listings:offer_action' offer.pk 'withdraw' %}">{% csrf_token %}<button class="text-danger-button">Teklifi geri çek</button></form>{% endif %}
+                <form method="post" action="{% url 'listings:offer_action' offer.pk 'accept' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}#offer-{{ offer.pk }}"><button class="button" type="submit">Kabul et</button></form>
+                <details class="v125-counter-box"><summary>Karşı teklif ver</summary><form method="post" action="{% url 'listings:counter_offer' offer.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}#offer-{{ offer.pk }}"><label>Yeni tutar<input type="number" name="amount" min="0.01" step="0.01" value="{{ offer.amount }}" required></label><label>Koşullar<textarea name="message" rows="3" maxlength="1200" required>Yeni teklifim ve teslim koşullarım:</textarea></label><button class="button full" type="submit">Karşı teklifi gönder</button></form></details>
+                <form method="post" action="{% url 'listings:offer_action' offer.pk 'reject' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}#offer-{{ offer.pk }}"><button class="market-secondary-button" type="submit">Reddet</button></form>
+              {% else %}<div class="v125-offer-waiting">Karşı tarafın yanıtı bekleniyor.</div>{% endif %}
+              {% if user == offer.sender %}<form method="post" action="{% url 'listings:offer_action' offer.pk 'withdraw' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}#offer-{{ offer.pk }}"><button class="text-danger-button" type="submit">Teklifi geri çek</button></form>{% endif %}
             </div>
           {% elif offer.status == 'accepted' and offer.transaction %}<a class="button" href="{{ offer.transaction.get_absolute_url }}">Güvenli işlemi aç</a>{% endif %}
         </div>
       </article>
-    {% empty %}<div class="market-empty"><span>🤝</span><h3>Henüz teklif yok</h3><p>İlanları keşfedip pazarlığa başlayabilirsin.</p></div>{% endfor %}
+    {% empty %}<div class="market-empty v125-empty"><span>🤝</span><h3>Bu filtrede teklif yok</h3><p>Yeni teklif geldiğinde veya bir ilana teklif gönderdiğinde burada görünecek.</p><a class="button" href="{% url 'listings:list' %}">İlanları keşfet</a></div>{% endfor %}
   </div>
 </section>
 {% endblock %}

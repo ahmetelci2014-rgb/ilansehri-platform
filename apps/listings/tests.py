@@ -463,7 +463,11 @@ class ListingFlowTests(TestCase):
             reverse("listings:counter_offer", kwargs={"pk": offer.pk}),
             {"amount": "24000", "message": "Bu tutarla bugün teslim edebilirim."},
         )
-        self.assertRedirects(response, reverse("listings:offer_center"))
+        self.assertRedirects(
+            response,
+            f"{reverse('listings:offer_center')}?focus={offer.pk}",
+            fetch_redirect_response=False,
+        )
         offer.refresh_from_db()
         self.assertEqual(offer.amount, Decimal("24000"))
         self.assertEqual(offer.last_actor, self.owner)
@@ -1233,7 +1237,7 @@ class MessageSafetyTests(TestCase):
         self.assertEqual(conversation.messages.count(), 1)
 
         sent = self.client.post(url, {"body": risky_body, "safety_confirmed": "on"})
-        self.assertRedirects(sent, url)
+        self.assertRedirects(sent, url + "#message-composer", fetch_redirect_response=False)
         self.assertEqual(conversation.messages.count(), 2)
         detail = self.client.get(url)
         self.assertContains(detail, "Kritik güvenlik uyarısı")
@@ -1585,6 +1589,145 @@ class SellerCenterV124Tests(TestCase):
         self.assertGreater(self.published.expires_at, old_expiry)
         self.assertEqual(self.published.status, Listing.Status.PUBLISHED)
 
+
+
+class CommunicationCenterV125Tests(TestCase):
+    def setUp(self):
+        self.seller = User.objects.create_user(
+            username="v125-seller", password="StrongPass_2026", first_name="Mehmet", last_name="Demir"
+        )
+        self.buyer = User.objects.create_user(
+            username="v125-buyer", password="StrongPass_2026", first_name="Ayşe", last_name="Kaya"
+        )
+        self.stranger = User.objects.create_user(username="v125-stranger", password="StrongPass_2026")
+        self.category = Category.objects.create(name="İletişim merkezi", slug="iletisim-merkezi")
+        self.listing = Listing.objects.create(
+            owner=self.seller,
+            category=self.category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="İletişim merkezi test telefonu",
+            description="Mesaj ve teklif merkezini doğrulamak için yayınlanan test ilanı.",
+            price=Decimal("25000"),
+            city="Şanlıurfa",
+            district="Karaköprü",
+            status=Listing.Status.PUBLISHED,
+        )
+        self.conversation = Conversation.objects.create(
+            listing=self.listing, buyer=self.buyer, seller=self.seller
+        )
+        self.message = Message.objects.create(
+            conversation=self.conversation, sender=self.seller, body="İlan güncel, ayrıntıları konuşabiliriz."
+        )
+
+    def test_inbox_action_mode_renders_unread_conversation_and_v125_contract(self):
+        self.client.force_login(self.buyer)
+        response = self.client.get(reverse("listings:conversation_list"), {"mode": "action"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-v125-inbox')
+        self.assertContains(response, self.listing.title)
+        self.assertContains(response, "İşlem bekleyen")
+        self.assertEqual(response.context["conversation_summary"]["unread"], 1)
+        self.assertEqual(response.context["conversation_summary"]["action"], 1)
+
+    def test_conversation_can_be_archived_listed_and_restored_per_user(self):
+        self.client.force_login(self.buyer)
+        archive = self.client.post(
+            reverse("listings:archive_conversation", kwargs={"pk": self.conversation.pk})
+        )
+        self.assertRedirects(archive, reverse("listings:conversation_list"))
+        self.conversation.refresh_from_db()
+        self.assertTrue(self.conversation.buyer_archived)
+        self.assertFalse(self.conversation.seller_archived)
+
+        archived = self.client.get(reverse("listings:conversation_list"), {"mode": "archived"})
+        self.assertContains(archived, self.listing.title)
+        self.assertContains(archived, "Mesaj kutusuna taşı")
+
+        restored = self.client.post(
+            reverse("listings:restore_conversation", kwargs={"pk": self.conversation.pk})
+        )
+        self.assertEqual(restored.status_code, 302)
+        self.conversation.refresh_from_db()
+        self.assertFalse(self.conversation.buyer_archived)
+
+    def test_conversation_detail_renders_quick_replies_offer_panel_and_history(self):
+        self.client.force_login(self.buyer)
+        response = self.client.get(
+            reverse("listings:conversation_detail", kwargs={"pk": self.conversation.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-v125-conversation')
+        self.assertContains(response, 'data-v125-quick-reply')
+        self.assertContains(response, 'data-v125-offer-panel')
+        self.assertContains(response, "Teklif bilgilerini gir")
+        self.message.refresh_from_db()
+        self.assertTrue(self.message.is_read)
+
+    def test_buyer_can_create_offer_inside_conversation(self):
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse("listings:conversation_offer", kwargs={"pk": self.conversation.pk}),
+            {"amount": "23500", "message": "Bugün güvenli elden teslim alabilirim."},
+        )
+        offer = Offer.objects.get(listing=self.listing, sender=self.buyer)
+        self.assertEqual(offer.amount, Decimal("23500"))
+        self.assertEqual(offer.last_actor, self.buyer)
+        self.assertTrue(
+            OfferEvent.objects.filter(offer=offer, event_type=OfferEvent.Type.SUBMITTED).exists()
+        )
+        self.assertTrue(Notification.objects.filter(user=self.seller, notification_type=Notification.Type.OFFER).exists())
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("#offer-panel", response.url)
+
+    def test_seller_and_stranger_cannot_create_offer_from_conversation(self):
+        self.client.force_login(self.seller)
+        seller_response = self.client.post(
+            reverse("listings:conversation_offer", kwargs={"pk": self.conversation.pk}),
+            {"amount": "23000", "message": "Geçersiz satıcı teklifi"},
+        )
+        self.assertEqual(seller_response.status_code, 404)
+
+        self.client.force_login(self.stranger)
+        stranger_response = self.client.post(
+            reverse("listings:conversation_offer", kwargs={"pk": self.conversation.pk}),
+            {"amount": "23000", "message": "Geçersiz yabancı teklifi"},
+        )
+        self.assertEqual(stranger_response.status_code, 404)
+        self.assertFalse(Offer.objects.exists())
+
+    def test_offer_center_action_direction_and_conversation_link(self):
+        offer = Offer.objects.create(
+            listing=self.listing,
+            sender=self.buyer,
+            amount=Decimal("24000"),
+            message="Teklif merkezindeki test teklifi",
+            last_actor=self.buyer,
+        )
+        OfferEvent.objects.create(
+            offer=offer,
+            actor=self.buyer,
+            event_type=OfferEvent.Type.SUBMITTED,
+            amount=offer.amount,
+            message=offer.message,
+        )
+        self.client.force_login(self.seller)
+        response = self.client.get(reverse("listings:offer_center"), {"direction": "action", "focus": offer.pk})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-v125-offer-center')
+        self.assertContains(response, 'data-v125-offer-card')
+        self.assertContains(response, "Yanıt sırası sende")
+        self.assertContains(
+            response,
+            reverse("listings:conversation_detail", kwargs={"pk": self.conversation.pk}),
+        )
+        self.assertEqual(response.context["offer_summary"]["action"], 1)
+
+        self.client.force_login(self.buyer)
+        buyer_action = self.client.get(reverse("listings:offer_center"), {"direction": "action"})
+        self.assertNotContains(buyer_action, self.listing.title)
+        outgoing = self.client.get(reverse("listings:offer_center"), {"direction": "outgoing"})
+        self.assertContains(outgoing, self.listing.title)
 
 
 class AppointmentFlowTests(TestCase):

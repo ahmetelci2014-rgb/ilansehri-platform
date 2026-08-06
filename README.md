@@ -1,16 +1,17 @@
 # İlan Şehri
 
-## v1.24 Satıcı Merkezi ve ilan yönetimi
+## v1.25 Mesajlaşma, teklif ve iletişim merkezi
 
-- Bütün ilanlar durum, arama ve performans filtreleriyle ayrı Satıcı Merkezi'nde yönetilir.
-- Görüntülenme, favori, görüşme, teklif, yayın süresi ve ilan kalitesi aynı kartta gösterilir.
-- Yayında, incelemede, duraklatılmış, taslak, süresi dolmuş, sonuçlanmış ve reddedilmiş ilanlar ayrı sekmelere ayrılır.
-- İlanlar seçilerek duraklatma, yayınlama, yenileme, sonuçlandırma ve taslağa alma işlemleri toplu uygulanabilir.
-- Moderasyon incelemesindeki veya reddedilmiş ilanların doğrudan yayınlanması engellenir.
-- Hesap paneli sadeleştirildi; son altı ilan gösterilir ve ayrıntılı yönetim Satıcı Merkezi'ne taşındı.
-- Mobil satıcı ekranı 360–430 px genişlikler için seçim ve işlem çubuğuyla düzenlendi.
+- Mesaj kutusu işlem bekleyen, okunmamış, alış, satış ve arşiv görünümünde yönetilir.
+- Görüşmeler ilan veya kullanıcı adıyla aranabilir; okunmamış mesaj ve yanıt bekleyen teklif aynı görev akışında birleşir.
+- Konuşmalar kullanıcıya özel arşivlenip yeniden mesaj kutusuna alınabilir.
+- Görüşme ekranına tarih ayraçları, hazır yanıtlar, sabit mobil mesaj alanı ve 120 mesajlık hızlı geçmiş eklendi.
+- Alıcı, görüşmeden ayrılmadan kayıtlı teklif oluşturabilir; mevcut teklif ve yanıt sırası konuşma içinde görünür.
+- Teklif Merkezi gelen, gönderilen ve kullanıcının yanıtını bekleyen teklifleri ayrı görünümlerde sunar.
+- Teklif kartları ilgili konuşmaya bağlanır; bildirimler ve işlem dönüşleri odaklanan teklif kartını açar.
+- Randevu araçları ana iletişim akışından çıkarılıp ikincil güvenlik araçlarının altına taşındı.
 
-> Güncel sürüm: **v1.24.0** — satıcı performansı ve ilan yaşam döngüsü tek merkezde yönetilir.
+> Güncel sürüm: **v1.25.0** — mesaj, teklif ve güvenli işlem devamlılığı tek iletişim merkezinde yönetilir.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
