@@ -15,7 +15,7 @@
 - Site geneli mobil tasarım sözleşmesi ve Playwright ekran görüntüsü denetimi
 - Arıyorum–Satıyorum açıklanabilir akıllı eşleştirme ve iki taraflı eşleşme merkezi
 - Ürün, araç ve emlak için açıklanabilir Akıllı Fiyat Rehberi
-- İzinli yaklaşık konum, 5–200 km mesafe keşfi ve şehir/ilçe yedeği
+- Güvenilir satıcı profili, yerel fotoğraf tekrar kontrolü ve personel risk inceleme merkezi
 
 ## Canlı lansman öncesi dış bağımlılıklar
 
@@ -29,7 +29,7 @@
 ## Lansman sonrası büyüme
 
 - Lisanslı ödeme/emanet entegrasyonu
-- Harita görünümü, yüksek ölçekli coğrafi indeks ve PostGIS
+- Harita, gerçek mesafe ve PostGIS
 - Redis/Celery ile gerçek zamanlı görevler
 - WebSocket mesajlaşma
 - Yapay zekâlı fotoğraf/sesli ilan asistanı

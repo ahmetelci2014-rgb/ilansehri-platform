@@ -62,7 +62,7 @@
 
       <a class="v131-mobile-seller-strip" href="{% url 'accounts:public_profile' listing.owner.username %}" aria-label="Satıcı profilini aç">
         <span class="v131-mobile-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span>
-        <div><b>{{ listing.owner.display_name }}</b><small>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %} · ★ {{ listing.owner.average_rating }} · Güven {{ listing.owner.trust_score }}/100</small></div>
+        <div><b>{{ listing.owner.display_name }}</b><small>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %} · ★ {{ listing.owner.average_rating }} · Güven {{ seller_trust_profile.score }}/100</small></div>
         <i>›</i>
       </a>
 
@@ -81,7 +81,7 @@
 
       {% include 'listings/_price_guide.html' with guide=price_guide variant='aside' %}
 
-      <a class="v16-seller-card" href="{% url 'accounts:public_profile' listing.owner.username %}"><span class="v16-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span><div><b>{{ listing.owner.display_name }}</b><small>★ {{ listing.owner.average_rating }} · {{ listing.owner.rating_count }} değerlendirme</small><em>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %} · Güven {{ listing.owner.trust_score }}/100</em></div><i>›</i></a>
+      <a class="v16-seller-card v118-seller-card" href="{% url 'accounts:public_profile' listing.owner.username %}"><span class="v16-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span><div><b>{{ listing.owner.display_name }}</b><small>★ {{ listing.owner.average_rating }} · {{ listing.owner.rating_count }} değerlendirme</small><em>{{ seller_trust_profile.tier }} · {{ seller_trust_profile.score }}/100</em><span>{{ seller_trust_profile.response_label }}</span></div><i>›</i></a>
 
       {% if user.is_authenticated and user != listing.owner %}<form class="detail-follow-form" method="post" action="{% url 'accounts:toggle_follow' listing.owner.pk %}">{% csrf_token %}<button class="market-secondary-button full{% if is_following %} active{% endif %}">{% if is_following %}✓ Satıcı takip ediliyor{% else %}＋ Satıcıyı takip et{% endif %}</button></form>{% endif %}
 
@@ -96,7 +96,7 @@
         {% else %}<a class="button full" href="{% url 'login' %}?next={{ request.path }}">Mesaj ve teklif için giriş yap</a>{% endif %}
       </div>
 
-      <div class="v16-safety"><b>🛡 Güvenli alışveriş hatırlatması</b><p>Ürünü görmeden ödeme yapma. Şifreni, SMS kodunu veya kart bilgilerini paylaşma.</p></div>
+      <div class="v16-safety v118-listing-safety tone-{{ listing_safety_profile.tone }}"><b>🛡 {% if user == listing.owner or user.is_staff %}{{ listing_safety_profile.label }}{% else %}Güvenli alışveriş koruması{% endif %}</b><p>{{ listing_safety_profile.public_advice }}</p>{% if user == listing.owner or user.is_staff %}{% if listing_safety_profile.flags %}<details><summary>İnceleme işaretlerini gör</summary><ul>{% for flag in listing_safety_profile.flags %}<li>{{ flag }}</li>{% endfor %}</ul></details>{% endif %}{% endif %}</div>
       {% if user.is_authenticated and user != listing.owner %}<details class="detail-report"><summary>İlanı şikâyet et</summary><form method="post" action="{% url 'listings:report' listing.slug %}">{% csrf_token %}{{ report_form.as_p }}<button class="market-secondary-button full">Şikâyeti gönder</button></form></details>{% endif %}
     </aside>
   </section>

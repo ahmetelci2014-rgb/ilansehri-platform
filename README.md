@@ -1,14 +1,15 @@
 
 # İlan Şehri
 
-## v1.17 Akıllı arama takibi
+## v1.18 Güvenilir satıcı ve dolandırıcılık koruması
 
-- Kullanıcı filtrelerini kaydeder; uygun yeni ilanlar için anlık veya günlük özet bildirimi alır.
-- Aynı ilan için tekrar uyarı gönderilmez ve her aramanın bildirim sıklığı ayrı yönetilir.
-- Yakındaki ilanlar yaklaşık konumla filtrelenir; izin reddinde şehir–ilçe yedeği kullanılır.
-- Mesaj güvenliği, akıllı eşleştirme, fiyat rehberi ve mevcut mobil yapı korunur.
+- Satıcı profilleri; doğrulama, hesap yaşı, yanıt süresi, işlem geçmişi ve kullanıcı puanlarından açıklanabilir güven profili üretir.
+- Şüpheli ilan içeriği, yüksek riskli mesaj, olağan dışı fiyat ve başka hesaplarda kullanılan fotoğraflar personel inceleme kuyruğuna alınır.
+- Kullanıcı şikâyeti, ilan şikâyeti ve otomatik risk kayıtları tek moderasyon merkezinden yönetilir.
+- Sistem otomatik suçlama veya hesap kapatma yapmaz; risk sinyalleri yalnız yetkili ekibin incelemesine yardımcı olur.
+- Kayıtlı aramalar, yakınlık keşfi, güvenli mesajlaşma, akıllı eşleştirme ve fiyat rehberi korunur.
 
-> Güncel sürüm: **v1.17.0** — konum tabanlı yakınlık keşfi ile anlık/günlük kayıtlı arama bildirimleri eklendi; aynı ilan için tekrar uyarı engellendi.
+> Güncel sürüm: **v1.18.0** — güvenilir satıcı profili, açıklanabilir risk olayları, gelişmiş kullanıcı şikâyeti ve yerel fotoğraf tekrar kontrolü eklendi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 

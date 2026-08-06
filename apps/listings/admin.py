@@ -32,6 +32,7 @@ from .services import (
 class ListingImageInline(admin.TabularInline):
     model = ListingImage
     extra = 0
+    readonly_fields = ("fingerprint",)
 
 
 class OfferInline(admin.TabularInline):
@@ -135,7 +136,12 @@ class ListingMatchAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Category)
-admin.site.register(ListingImage)
+@admin.register(ListingImage)
+class ListingImageAdmin(admin.ModelAdmin):
+    list_display = ("listing", "is_cover", "duplicate_owner_count", "created_at")
+    search_fields = ("listing__title", "listing__owner__username", "fingerprint")
+    readonly_fields = ("fingerprint", "duplicate_owner_count", "created_at")
+
 admin.site.register(Offer)
 admin.site.register(Favorite)
 

@@ -1,7 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import AccountClosureRequest, NotificationPreference, User, UserBlock, UserFollow, VerificationCode
+from .models import (
+    AccountClosureRequest,
+    AccountRiskEvent,
+    NotificationPreference,
+    User,
+    UserBlock,
+    UserFollow,
+    UserReport,
+    VerificationCode,
+)
 
 
 @admin.register(User)
@@ -58,3 +67,19 @@ class NotificationPreferenceAdmin(admin.ModelAdmin):
     list_filter = ("digest_frequency", "email_messages", "email_offers", "email_system")
     search_fields = ("user__username", "user__email")
     readonly_fields = ("created_at", "updated_at", "last_digest_at")
+
+
+@admin.register(UserReport)
+class UserReportAdmin(admin.ModelAdmin):
+    list_display = ("reported_user", "reporter", "reason", "status", "created_at")
+    list_filter = ("reason", "status")
+    search_fields = ("reported_user__username", "reporter__username", "details")
+    readonly_fields = ("created_at", "reviewed_at")
+
+
+@admin.register(AccountRiskEvent)
+class AccountRiskEventAdmin(admin.ModelAdmin):
+    list_display = ("subject_user", "event_type", "severity", "status", "created_at")
+    list_filter = ("event_type", "severity", "status")
+    search_fields = ("subject_user__username", "summary", "fingerprint")
+    readonly_fields = ("fingerprint", "created_at", "updated_at", "reviewed_at")

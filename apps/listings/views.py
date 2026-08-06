@@ -23,7 +23,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 from django.views.generic.edit import FormMixin
 
-from apps.accounts.models import UserBlock, UserFollow
+from apps.accounts.models import AccountRiskEvent, User, UserBlock, UserFollow, UserReport
+from apps.accounts.trust import build_trust_profile
 from apps.managed_services.models import ManagedRequest
 from apps.support_center.models import StaffActionLog
 from apps.support_center.services import log_staff_action
@@ -76,6 +77,12 @@ from .services import (
 from .matching import blocked_owner_ids, refresh_user_matches, sync_listing_matches
 from .message_safety import safe_notification_preview
 from .pricing import build_price_guide
+from .safety import (
+    assess_listing_safety,
+    record_listing_report_risk,
+    record_listing_risks,
+    record_message_risk,
+)
 from .search_alerts import (
     apply_listing_filters,
     attach_nearby_distances,
@@ -624,6 +631,12 @@ class ListingDetailView(FormMixin, DetailView):
                 context["owner_match_tab"] = "offered"
         context["price_guide"] = build_price_guide(self.object, exclude_pk=self.object.pk)
         context["quality_profile"] = assess_listing_quality(self.object)
+        context["listing_safety_profile"] = assess_listing_safety(
+            self.object, price_guide=context["price_guide"]
+        )
+        context["seller_trust_profile"] = build_trust_profile(
+            self.object.owner, include_private=bool(user.is_authenticated and user.is_staff)
+        )
         context["canonical_url"] = self.request.build_absolute_uri(self.object.get_absolute_url())
         cover = self.object.cover_image
         context["share_image_url"] = self.request.build_absolute_uri(cover.image.url) if cover else ""
@@ -767,6 +780,15 @@ class ListingCreateView(LoginRequiredMixin, CreateView):
         )
         response = super().form_valid(form)
         _save_images(self.object, form.cleaned_data.get("images", []))
+        safety_profile = assess_listing_safety(
+            self.object, price_guide=build_price_guide(self.object, exclude_pk=self.object.pk)
+        )
+        if safety_profile["requires_review"] and self.object.status == Listing.Status.PUBLISHED and not self.request.user.is_staff:
+            self.object.status = Listing.Status.REVIEW
+            self.object.published_at = None
+            self.object.expires_at = None
+            self.object.save(update_fields=["status", "published_at", "expires_at", "updated_at"])
+        record_listing_risks(self.object, safety_profile=safety_profile)
         analysis_id = self.request.POST.get("ai_analysis_id", "").strip()
         if analysis_id:
             try:
@@ -845,6 +867,10 @@ class ListingUpdateView(OwnerListingMixin, UpdateView):
             actor=self.request.user,
         )
         _save_images(self.object, form.cleaned_data.get("images", []))
+        safety_profile = assess_listing_safety(
+            self.object, price_guide=build_price_guide(self.object, exclude_pk=self.object.pk)
+        )
+        record_listing_risks(self.object, safety_profile=safety_profile)
         if self.object.management_mode == Listing.ManagementMode.FULL:
             ManagedRequest.objects.get_or_create(listing=self.object, defaults={"customer": self.request.user})
         messages.success(self.request, "İlan değişiklikleri kaydedildi.")
@@ -1325,6 +1351,7 @@ def start_conversation(request, slug):
     message.conversation = conversation
     message.sender = request.user
     message.save()
+    record_message_risk(message)
     create_notification(
         user=listing.owner,
         actor=request.user,
@@ -1399,6 +1426,7 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["other_user"] = self.object.other_participant(self.request.user)
         context["blocked_between"] = _blocked_between(self.request.user, context["other_user"])
+        context["other_user_trust_profile"] = build_trust_profile(context["other_user"])
         return context
 
     def get(self, request, *args, **kwargs):
@@ -1422,6 +1450,7 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
             message.conversation = self.object
             message.sender = request.user
             message.save()
+            record_message_risk(message)
             create_notification(
                 user=other_user,
                 actor=request.user,
@@ -1728,6 +1757,7 @@ def report_listing(request, slug):
         report.listing = listing
         report.reporter = request.user
         report.save()
+        record_listing_report_risk(report)
         messages.success(request, "Şikâyetin inceleme ekibine gönderildi.")
     else:
         messages.error(request, "Şikâyet bilgilerini kontrol et.")
@@ -1771,6 +1801,9 @@ class ModerationDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
         pending_listings = list(base_qs[:200])
         for listing in pending_listings:
             listing.quality_profile = assess_listing_quality(listing)
+            listing.safety_profile = assess_listing_safety(
+                listing, price_guide=build_price_guide(listing, exclude_pk=listing.pk)
+            )
         if quality == "low":
             pending_listings = [item for item in pending_listings if item.quality_profile["score"] < 60]
         elif quality == "strong":
@@ -1787,12 +1820,25 @@ class ModerationDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateV
                 "city_choices": CITY_CHOICES,
             }
         )
-        context["open_reports"] = ListingReport.objects.filter(
+        context["open_reports"] = list(ListingReport.objects.filter(
             status__in=[ListingReport.Status.OPEN, ListingReport.Status.REVIEWING]
-        ).select_related("listing", "reporter")[:100]
-        context["disputes"] = Transaction.objects.filter(status=Transaction.Status.DISPUTED).select_related(
+        ).select_related("listing", "listing__owner", "reporter")[:100])
+        context["disputes"] = list(Transaction.objects.filter(status=Transaction.Status.DISPUTED).select_related(
             "listing", "buyer", "seller"
-        )[:100]
+        )[:100])
+        context["open_user_reports"] = list(UserReport.objects.filter(
+            status__in=[UserReport.Status.OPEN, UserReport.Status.REVIEWING]
+        ).select_related("reported_user", "reporter", "related_listing")[:100])
+        context["open_risk_events"] = list(AccountRiskEvent.objects.filter(
+            status__in=[AccountRiskEvent.Status.OPEN, AccountRiskEvent.Status.REVIEWING]
+        ).select_related("subject_user", "source_listing", "source_message")[:100])
+        risky_ids = {item.reported_user_id for item in context["open_user_reports"]}
+        risky_ids.update(item.subject_user_id for item in context["open_risk_events"])
+        risky_ids.update(item.listing.owner_id for item in context["open_reports"])
+        risky_accounts = list(User.objects.filter(pk__in=risky_ids).order_by("date_joined")[:30])
+        for account in risky_accounts:
+            account.risk_profile = build_trust_profile(account, include_private=True, include_response=False)
+        context["risky_accounts"] = risky_accounts
         return context
 
 
@@ -1913,7 +1959,85 @@ def moderate_report(request, pk, action):
     report.reviewed_by = request.user
     report.reviewed_at = timezone.now()
     report.save(update_fields=["status", "reviewed_by", "reviewed_at"])
+    related_status = {
+        "review": AccountRiskEvent.Status.REVIEWING,
+        "resolve": AccountRiskEvent.Status.RESOLVED,
+        "dismiss": AccountRiskEvent.Status.DISMISSED,
+    }[action]
+    AccountRiskEvent.objects.filter(
+        fingerprint=f"listing-report:{report.pk}",
+        status__in=[AccountRiskEvent.Status.OPEN, AccountRiskEvent.Status.REVIEWING],
+    ).update(
+        status=related_status,
+        reviewed_by=request.user,
+        reviewed_at=timezone.now(),
+        updated_at=timezone.now(),
+    )
+    log_staff_action(
+        actor=request.user,
+        action=StaffActionLog.Action.ACCOUNT_ACTION,
+        target=report.listing.owner,
+        summary=f"İlan şikâyeti güncellendi: {report.get_status_display()}",
+        metadata={"listing_report_id": report.pk, "listing_id": report.listing_id, "action": action},
+    )
     messages.success(request, "Şikâyet durumu güncellendi.")
+    return redirect("listings:moderation")
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff)
+@require_POST
+def moderate_user_report(request, pk, action):
+    report = get_object_or_404(UserReport, pk=pk)
+    statuses = {
+        "review": UserReport.Status.REVIEWING,
+        "resolve": UserReport.Status.RESOLVED,
+        "dismiss": UserReport.Status.DISMISSED,
+    }
+    if action not in statuses:
+        messages.error(request, "Geçersiz kullanıcı şikâyeti işlemi.")
+        return redirect("listings:moderation")
+    report.status = statuses[action]
+    report.reviewed_by = request.user
+    report.reviewed_at = timezone.now()
+    report.save(update_fields=["status", "reviewed_by", "reviewed_at"])
+    if action in {"resolve", "dismiss"}:
+        report.risk_events.filter(status__in=[AccountRiskEvent.Status.OPEN, AccountRiskEvent.Status.REVIEWING]).update(
+            status=(AccountRiskEvent.Status.RESOLVED if action == "resolve" else AccountRiskEvent.Status.DISMISSED),
+            reviewed_by=request.user,
+            reviewed_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
+    log_staff_action(
+        actor=request.user, action=StaffActionLog.Action.ACCOUNT_ACTION, target=report.reported_user,
+        summary=f"Kullanıcı şikâyeti güncellendi: {report.get_status_display()}",
+        metadata={"report_id": report.pk, "action": action},
+    )
+    messages.success(request, "Kullanıcı şikâyeti güncellendi.")
+    return redirect("listings:moderation")
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff)
+@require_POST
+def moderate_risk_event(request, pk, action):
+    event = get_object_or_404(AccountRiskEvent, pk=pk)
+    statuses = {
+        "review": AccountRiskEvent.Status.REVIEWING,
+        "resolve": AccountRiskEvent.Status.RESOLVED,
+        "dismiss": AccountRiskEvent.Status.DISMISSED,
+    }
+    if action not in statuses:
+        messages.error(request, "Geçersiz risk kaydı işlemi.")
+        return redirect("listings:moderation")
+    event.status = statuses[action]
+    event.reviewed_by = request.user
+    event.reviewed_at = timezone.now()
+    event.save(update_fields=["status", "reviewed_by", "reviewed_at", "updated_at"])
+    log_staff_action(
+        actor=request.user, action=StaffActionLog.Action.ACCOUNT_ACTION, target=event.subject_user,
+        summary=f"Risk kaydı güncellendi: {event.get_status_display()}",
+        metadata={"risk_event_id": event.pk, "action": action},
+    )
+    messages.success(request, "Risk kaydı güncellendi.")
     return redirect("listings:moderation")
 
 

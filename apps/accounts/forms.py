@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from apps.listings.locations import CITY_CHOICES
 
-from .models import NotificationPreference, User, VerificationCode
+from .models import NotificationPreference, User, UserReport, VerificationCode
 
 
 class SignUpForm(UserCreationForm):
@@ -188,3 +188,25 @@ class NotificationPreferenceForm(forms.ModelForm):
             "digest_frequency": forms.Select(attrs={"class": "v111-select"}),
         }
 
+
+
+class UserReportForm(forms.ModelForm):
+    class Meta:
+        model = UserReport
+        fields = ("reason", "details")
+        labels = {"reason": "Şikâyet nedeni", "details": "Açıklama"}
+        widgets = {
+            "details": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "İnceleme ekibinin bilmesi gereken somut ayrıntıları yaz...",
+                    "maxlength": "1600",
+                }
+            )
+        }
+
+    def clean_details(self):
+        details = (self.cleaned_data.get("details") or "").strip()
+        if self.cleaned_data.get("reason") == UserReport.Reason.OTHER and len(details) < 10:
+            raise forms.ValidationError("Diğer seçeneğinde en az 10 karakter açıklama yazmalısın.")
+        return details

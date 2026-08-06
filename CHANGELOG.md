@@ -1,5 +1,17 @@
 # Değişiklik Günlüğü
 
+## v1.18.0 — Güvenilir satıcı profili ve dolandırıcılık koruması
+
+- Satıcı profillerine açıklanabilir 0–100 güven puanı, doğrulama rozetleri, hesap yaşı, ortalama yanıt süresi ve işlem güvenilirliği eklendi.
+- Kullanıcı şikâyeti akışı; kendi hesabını şikâyet engeli, hız sınırı, açık kayıt tekrar engeli ve ilişkili ilan seçimiyle güçlendirildi.
+- Şüpheli ilan içeriği, olağan dışı düşük fiyat, riskli mesaj ve başka hesaplarda kullanılan fotoğraf için `AccountRiskEvent` inceleme kayıtları eklendi.
+- İlan görsellerine yerel SHA-256 parmak izi eklendi; görseller üçüncü taraf servise gönderilmeden hesaplar arası tekrar kullanımı kontrol edilir.
+- Personel moderasyon ekranına riskli hesaplar, otomatik risk olayları ve kullanıcı şikâyetleri eklendi.
+- Risk sinyalleri otomatik hesap kapatma veya ceza uygulamaz; bütün sonuçlar personel incelemesine bırakılır.
+- Kullanıcı veri ihracına gönderilmiş kullanıcı ve ilan şikâyetleri eklendi; alınan şikâyetlerin üçüncü taraf ayrıntıları gizli tutuldu.
+- Eski veritabanları için güvenlik tablolarını ve görsel parmak izi alanını tamamlayan geriye uyumlu şema komutu eklendi.
+- Codespaces, üretim başlangıcı ve GitHub Actions akışına şema doğrulama ve fotoğraf parmak izi tamamlama adımları eklendi.
+
 ## v1.17.0 — Kayıtlı aramalar ve akıllı ilan bildirimleri
 
 - Kayıtlı aramalara Anlık, Günlük özet ve Kapalı bildirim sıklığı eklendi.

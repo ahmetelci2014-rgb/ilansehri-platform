@@ -51,7 +51,15 @@ class User(AbstractUser):
         return self.get_full_name().strip() or self.username
 
     @property
+    def account_age_days(self) -> int:
+        if not self.date_joined:
+            return 0
+        return max(0, (timezone.now() - self.date_joined).days)
+
+    @property
     def trust_score(self) -> int:
+        # Hızlı ve sorgusuz temel puan. Ayrıntılı risk/işlem verileri
+        # accounts.trust.build_trust_profile içinde hesaplanır.
         score = 20
         if self.is_email_verified:
             score += 15
@@ -65,7 +73,21 @@ class User(AbstractUser):
         score += min(self.completed_transactions, 10)
         if self.rating_count and self.average_rating >= 4:
             score += 5
+        if self.account_age_days >= 365:
+            score += 5
+        elif self.account_age_days >= 90:
+            score += 3
         return min(score, 100)
+
+    @property
+    def trust_tier(self) -> str:
+        if self.trust_score >= 85:
+            return "Çok güçlü profil"
+        if self.trust_score >= 70:
+            return "Güçlü profil"
+        if self.trust_score >= 50:
+            return "Gelişen profil"
+        return "Yeni / temel profil"
 
     def __str__(self) -> str:
         return self.display_name
@@ -142,6 +164,125 @@ class UserBlock(models.Model):
 
     def __str__(self) -> str:
         return f"{self.blocker} → {self.blocked}"
+
+
+class UserReport(models.Model):
+    class Reason(models.TextChoices):
+        FRAUD = "fraud", "Dolandırıcılık şüphesi"
+        FAKE_IDENTITY = "fake_identity", "Sahte kimlik / yanıltıcı profil"
+        HARASSMENT = "harassment", "Taciz veya uygunsuz iletişim"
+        SPAM = "spam", "Spam / sürekli istenmeyen iletişim"
+        PROHIBITED = "prohibited", "Yasaklı ürün veya faaliyet"
+        OTHER = "other", "Diğer"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Açık"
+        REVIEWING = "reviewing", "İnceleniyor"
+        RESOLVED = "resolved", "Çözüldü"
+        DISMISSED = "dismissed", "İşlem gerektirmiyor"
+
+    reporter = models.ForeignKey(
+        User, related_name="submitted_user_reports", on_delete=models.CASCADE
+    )
+    reported_user = models.ForeignKey(
+        User, related_name="received_user_reports", on_delete=models.CASCADE
+    )
+    related_listing = models.ForeignKey(
+        "listings.Listing",
+        related_name="user_reports",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    reason = models.CharField(max_length=24, choices=Reason.choices)
+    details = models.TextField(max_length=1600, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.OPEN)
+    reviewed_by = models.ForeignKey(
+        User,
+        related_name="reviewed_user_reports",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["reported_user", "status", "-created_at"]),
+            models.Index(fields=["reporter", "-created_at"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=~models.Q(reporter=models.F("reported_user")),
+                name="prevent_self_user_report",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.reported_user} · {self.get_reason_display()}"
+
+
+class AccountRiskEvent(models.Model):
+    class EventType(models.TextChoices):
+        MESSAGE = "message", "Riskli mesaj"
+        LISTING_REPORT = "listing_report", "İlan şikâyeti"
+        USER_REPORT = "user_report", "Kullanıcı şikâyeti"
+        DUPLICATE_IMAGE = "duplicate_image", "Tekrarlanan fotoğraf"
+        LISTING_CONTENT = "listing_content", "Şüpheli ilan içeriği"
+        TRANSACTION = "transaction", "İşlem uyuşmazlığı"
+
+    class Severity(models.TextChoices):
+        LOW = "low", "Düşük"
+        MEDIUM = "medium", "Orta"
+        HIGH = "high", "Yüksek"
+        CRITICAL = "critical", "Kritik"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Açık"
+        REVIEWING = "reviewing", "İnceleniyor"
+        RESOLVED = "resolved", "Çözüldü"
+        DISMISSED = "dismissed", "İşlem gerektirmiyor"
+
+    subject_user = models.ForeignKey(
+        User, related_name="risk_events", on_delete=models.CASCADE
+    )
+    event_type = models.CharField(max_length=24, choices=EventType.choices)
+    severity = models.CharField(max_length=12, choices=Severity.choices)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.OPEN)
+    source_listing = models.ForeignKey(
+        "listings.Listing", related_name="account_risk_events",
+        on_delete=models.SET_NULL, null=True, blank=True
+    )
+    source_message = models.ForeignKey(
+        "listings.Message", related_name="account_risk_events",
+        on_delete=models.SET_NULL, null=True, blank=True
+    )
+    source_user_report = models.ForeignKey(
+        UserReport, related_name="risk_events",
+        on_delete=models.SET_NULL, null=True, blank=True
+    )
+    fingerprint = models.CharField(max_length=96, unique=True)
+    summary = models.CharField(max_length=240)
+    details = models.JSONField(default=dict, blank=True)
+    reviewed_by = models.ForeignKey(
+        User, related_name="reviewed_risk_events", on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["subject_user", "status", "-created_at"]),
+            models.Index(fields=["severity", "status", "-created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.subject_user} · {self.get_event_type_display()}"
 
 
 class UserFollow(models.Model):

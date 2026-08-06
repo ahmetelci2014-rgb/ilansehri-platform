@@ -5,6 +5,8 @@ set -euo pipefail
 # Canlı sürüm sabitlendikten sonra üretilen migrationların repoya alınması önerilir.
 python manage.py makemigrations accounts listings managed_services partners support_center ai_listing --noinput
 python manage.py migrate --noinput
+python manage.py ensure_v118_schema
+python manage.py backfill_image_fingerprints --limit 5000
 python manage.py seed_categories
 python manage.py marketplace_maintenance
 python manage.py rebuild_listing_matches --limit 2000

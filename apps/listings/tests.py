@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.accounts.models import NotificationPreference, User, UserBlock
+from apps.accounts.models import AccountRiskEvent, NotificationPreference, User, UserBlock
 from apps.support_center.models import StaffActionLog
 
 from .models import (
@@ -29,6 +29,7 @@ from .models import (
 from .matching import score_listing_pair, sync_listing_matches
 from .message_safety import analyze_message, safe_notification_preview
 from .pricing import build_price_guide
+from .safety import assess_listing_safety
 from .services import (
     assess_listing_quality,
     create_notification,
@@ -1127,3 +1128,79 @@ class MessageSafetyTests(TestCase):
         )
         self.assertIn("Güvenlik uyarısı", preview)
         self.assertNotIn("kart şifreni", preview)
+
+
+class TrustSafetyInfrastructureTests(TestCase):
+    def setUp(self):
+        self.first_owner = User.objects.create_user(username="photo-owner-a", password="StrongPass_2026")
+        self.second_owner = User.objects.create_user(username="photo-owner-b", password="StrongPass_2026")
+        self.category = Category.objects.create(name="Risk test", slug="risk-test")
+        self.first_listing = Listing.objects.create(
+            owner=self.first_owner,
+            category=self.category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="Birinci fotoğraf ilanı",
+            description="Aynı fotoğraf parmak izi kontrolü için yeterli açıklama.",
+            price=Decimal("1000"),
+            city="Şanlıurfa",
+            district="Haliliye",
+            status=Listing.Status.REVIEW,
+        )
+        self.second_listing = Listing.objects.create(
+            owner=self.second_owner,
+            category=self.category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="İkinci fotoğraf ilanı",
+            description="Aynı fotoğrafın farklı hesaplarda kullanımını test eder.",
+            price=Decimal("900"),
+            city="Şanlıurfa",
+            district="Haliliye",
+            status=Listing.Status.REVIEW,
+        )
+
+    def test_same_image_bytes_create_duplicate_signal(self):
+        first = ListingImage.objects.create(
+            listing=self.first_listing,
+            image=SimpleUploadedFile("first.gif", TINY_GIF, content_type="image/gif"),
+        )
+        second = ListingImage.objects.create(
+            listing=self.second_listing,
+            image=SimpleUploadedFile("second.gif", TINY_GIF, content_type="image/gif"),
+        )
+        self.assertTrue(first.fingerprint)
+        self.assertEqual(first.fingerprint, second.fingerprint)
+        self.assertEqual(second.duplicate_owner_count, 1)
+        profile = assess_listing_safety(self.second_listing)
+        self.assertGreaterEqual(profile["score"], 20)
+        self.assertIn("Fotoğraf başka hesaplarda da kullanılmış", profile["flags"])
+
+    def test_confirmed_high_risk_message_creates_staff_risk_event(self):
+        listing = Listing.objects.create(
+            owner=self.first_owner,
+            category=self.category,
+            kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL,
+            title="Mesaj risk ilanı",
+            description="Güvenli mesaj risk kaydı oluşturmak için yayınlanan test ilanı.",
+            price=Decimal("1000"),
+            city="Şanlıurfa",
+            district="Haliliye",
+            status=Listing.Status.PUBLISHED,
+        )
+        self.client.force_login(self.second_owner)
+        response = self.client.post(
+            reverse("listings:start_conversation", kwargs={"slug": listing.slug}),
+            {
+                "body": "AnyDesk kur ve SMS doğrulama kodunu hemen gönder.",
+                "safety_confirmed": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            AccountRiskEvent.objects.filter(
+                subject_user=self.second_owner,
+                event_type=AccountRiskEvent.EventType.MESSAGE,
+            ).exists()
+        )

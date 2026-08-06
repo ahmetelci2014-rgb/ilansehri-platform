@@ -1,7 +1,15 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import AccountClosureRequest, NotificationPreference, User, UserFollow, VerificationCode
+from .models import (
+    AccountClosureRequest,
+    AccountRiskEvent,
+    NotificationPreference,
+    User,
+    UserFollow,
+    UserReport,
+    VerificationCode,
+)
 
 
 class AccountFlowTests(TestCase):
@@ -179,3 +187,104 @@ class AccountFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Şifreni yeniden oluştur")
 
+
+
+class TrustAndUserReportTests(TestCase):
+    def setUp(self):
+        self.reporter = User.objects.create_user(
+            username="reporter-user", password="StrongPass_2026"
+        )
+        self.seller = User.objects.create_user(
+            username="trusted-seller",
+            password="StrongPass_2026",
+            email="seller@example.com",
+            is_email_verified=True,
+            phone="05551112233",
+            is_phone_verified=True,
+        )
+
+    def test_public_profile_shows_trust_profile(self):
+        response = self.client.get(
+            reverse("accounts:public_profile", kwargs={"username": self.seller.username})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "GÜVENİLİR SATICI PROFİLİ")
+        self.assertContains(response, "Telefon doğrulandı")
+
+    def test_user_can_submit_one_open_account_report(self):
+        self.client.force_login(self.reporter)
+        url = reverse("accounts:report_user", kwargs={"pk": self.seller.pk})
+        response = self.client.post(
+            url,
+            {"reason": UserReport.Reason.FRAUD, "details": "Mesajda kapora ve kimlik bilgisi istedi."},
+        )
+        self.assertRedirects(
+            response,
+            reverse("accounts:public_profile", kwargs={"username": self.seller.username}),
+        )
+        report = UserReport.objects.get(reporter=self.reporter, reported_user=self.seller)
+        self.assertEqual(report.status, UserReport.Status.OPEN)
+        self.assertTrue(
+            AccountRiskEvent.objects.filter(
+                subject_user=self.seller,
+                event_type=AccountRiskEvent.EventType.USER_REPORT,
+            ).exists()
+        )
+        self.client.post(url, {"reason": UserReport.Reason.SPAM, "details": "Tekrar."})
+        self.assertEqual(UserReport.objects.filter(reported_user=self.seller).count(), 1)
+
+    def test_report_can_reference_only_target_users_listing(self):
+        from apps.listings.models import Category, Listing
+
+        other = User.objects.create_user(username="other-seller", password="StrongPass_2026")
+        category = Category.objects.create(name="Şikâyet testi", slug="account-report-test")
+        target_listing = Listing.objects.create(
+            owner=self.seller, category=category, title="İlgili ilan",
+            description="Kullanıcı şikâyetiyle ilişkilendirilen ilan açıklaması.",
+            kind=Listing.Kind.PRODUCT, action=Listing.Action.SELL,
+            city="Şanlıurfa", district="Karaköprü", status=Listing.Status.PUBLISHED,
+        )
+        other_listing = Listing.objects.create(
+            owner=other, category=category, title="Başka satıcının ilanı",
+            description="Bu ilan hedef kullanıcıya ait değildir.",
+            kind=Listing.Kind.PRODUCT, action=Listing.Action.SELL,
+            city="Şanlıurfa", district="Karaköprü", status=Listing.Status.PUBLISHED,
+        )
+        self.client.force_login(self.reporter)
+        url = reverse("accounts:report_user", kwargs={"pk": self.seller.pk})
+        self.client.post(
+            url,
+            {
+                "reason": UserReport.Reason.FRAUD,
+                "details": "İlgili ilan hakkında somut güvenlik bildirimi.",
+                "related_listing": other_listing.pk,
+            },
+        )
+        report = UserReport.objects.get(reporter=self.reporter, reported_user=self.seller)
+        self.assertIsNone(report.related_listing)
+        report.delete()
+        self.client.post(
+            url,
+            {
+                "reason": UserReport.Reason.FRAUD,
+                "details": "Hedef satıcıya ait ilan hakkında bildirim.",
+                "related_listing": target_listing.pk,
+            },
+        )
+        report = UserReport.objects.get(reporter=self.reporter, reported_user=self.seller)
+        self.assertEqual(report.related_listing, target_listing)
+
+    def test_open_report_is_not_exposed_as_public_score_penalty(self):
+        from .trust import build_trust_profile
+
+        UserReport.objects.create(
+            reporter=self.reporter,
+            reported_user=self.seller,
+            reason=UserReport.Reason.FRAUD,
+            details="İnceleme bekleyen bildirim.",
+        )
+        public = build_trust_profile(self.seller)
+        private = build_trust_profile(self.seller, include_private=True)
+        self.assertGreaterEqual(public.score, private.score)
+        self.assertNotIn("Açık şikâyet", public.public_note)
+        self.assertIn("Açık şikâyet", private.public_note)

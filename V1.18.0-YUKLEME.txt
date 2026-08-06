@@ -1,0 +1,21 @@
+İLAN ŞEHRİ v1.18.0 — GÜVENİLİR SATICI VE DOLANDIRICILIK KORUMASI
+
+MEVCUT PROJEYİ GÜNCELLEME
+1. ilansehri-v1.18.0-guvenilir-satici-dolandiricilik-korumasi-guncelleme.zip dosyasını çıkarın.
+2. ZIP içindeki dosya ve klasörleri mevcut İlan Şehri proje köküne kopyalayın.
+3. Mevcut dosyaların değiştirilmesini onaylayın.
+4. GitHub Desktop özetine şunu yazın:
+   İlan Şehri v1.18.0 güvenilir satıcı ve dolandırıcılık koruması
+5. Commit to main ve Push origin işlemlerini yapın.
+6. GitHub Actions > Django Kontrol sonucunun yeşil olmasını bekleyin.
+7. Codespaces terminalinde çalıştırın:
+
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+
+NOTLAR
+- start_codespace.sh yeni tabloları/alanları oluşturur ve mevcut ilan fotoğraflarının parmak izlerini tamamlar.
+- Eski kullanıcı, ilan, mesaj, favori, kayıtlı arama ve işlem verileri silinmez.
+- Sistem risk sinyallerine göre otomatik hesap kapatmaz veya kullanıcıyı suçlu ilan etmez.
+- Canlı sunucuya geçişte mevcut günlük bakım zamanlayıcısı ayrıca kurulacaktır.

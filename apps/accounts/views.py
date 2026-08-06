@@ -30,10 +30,11 @@ from apps.listings.models import (
     SavedSearch,
     Transaction,
 )
-from apps.listings.services import assess_listing_quality, create_notification
+from apps.listings.services import assess_listing_quality, consume_rate_limit, create_notification
 from apps.support_center.models import SupportTicket
 
 from .delivery import send_phone_verification_code
+from .trust import build_trust_profile, record_risk_event
 from .forms import (
     AccountClosureForm,
     NotificationPreferenceForm,
@@ -41,8 +42,18 @@ from .forms import (
     SignUpForm,
     VerificationConfirmForm,
     VerificationStartForm,
+    UserReportForm,
 )
-from .models import AccountClosureRequest, NotificationPreference, User, UserBlock, UserFollow, VerificationCode
+from .models import (
+    AccountClosureRequest,
+    AccountRiskEvent,
+    NotificationPreference,
+    User,
+    UserBlock,
+    UserFollow,
+    UserReport,
+    VerificationCode,
+)
 
 
 class SignUpView(CreateView):
@@ -317,6 +328,27 @@ def export_account_data(request):
         "saved_searches": list(
             SavedSearch.objects.filter(user=user).values("name", "query_params", "alert_enabled", "created_at")
         ),
+        "submitted_user_reports": list(
+            UserReport.objects.filter(reporter=user).values(
+                "reported_user__username",
+                "related_listing__title",
+                "reason",
+                "details",
+                "status",
+                "created_at",
+                "reviewed_at",
+            )
+        ),
+        "submitted_listing_reports": list(
+            user.listing_reports.values(
+                "listing__title",
+                "reason",
+                "details",
+                "status",
+                "created_at",
+                "reviewed_at",
+            )
+        ),
         "listing_matches": list(
             ListingMatch.objects.filter(Q(wanted_listing__owner=user) | Q(offered_listing__owner=user)).values(
                 "wanted_listing__title",
@@ -422,10 +454,20 @@ class PublicProfileView(DetailView):
         context["follower_count"] = UserFollow.objects.filter(seller=self.object).count()
         context["following_count"] = UserFollow.objects.filter(follower=self.object).count()
         context["is_following"] = False
+        context["trust_profile"] = build_trust_profile(
+            self.object, include_private=bool(self.request.user.is_authenticated and self.request.user.is_staff)
+        )
+        context["user_report_form"] = UserReportForm()
+        context["can_report_user"] = False
         if self.request.user.is_authenticated and self.request.user != self.object:
             context["is_blocked"] = UserBlock.objects.filter(blocker=self.request.user, blocked=self.object).exists()
             context["is_following"] = UserFollow.objects.filter(
                 follower=self.request.user, seller=self.object
+            ).exists()
+            context["can_report_user"] = not UserReport.objects.filter(
+                reporter=self.request.user,
+                reported_user=self.object,
+                status__in=[UserReport.Status.OPEN, UserReport.Status.REVIEWING],
             ).exists()
         return context
 
@@ -557,6 +599,55 @@ def confirm_verification(request):
     request.user.save(update_fields=fields)
     messages.success(request, f"{code.get_channel_display()} doğrulaması tamamlandı.")
     return redirect("accounts:verification")
+
+
+@require_POST
+def report_user(request, pk):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    target = get_object_or_404(User, pk=pk, is_active=True)
+    target_url = reverse("accounts:public_profile", kwargs={"username": target.username})
+    if target == request.user:
+        messages.warning(request, "Kendi hesabını şikâyet edemezsin.")
+        return redirect(target_url)
+    if not consume_rate_limit(request, "user_report", limit=5, period=3600):
+        messages.error(request, "Şikâyet gönderme sınırına ulaştın. Daha sonra tekrar dene.")
+        return redirect(target_url)
+    if UserReport.objects.filter(
+        reporter=request.user,
+        reported_user=target,
+        status__in=[UserReport.Status.OPEN, UserReport.Status.REVIEWING],
+    ).exists():
+        messages.info(request, "Bu kullanıcı için açık bir şikâyet kaydın zaten var.")
+        return redirect(target_url)
+    form = UserReportForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Şikâyet bilgilerini kontrol et.")
+        return redirect(target_url)
+    report = form.save(commit=False)
+    report.reporter = request.user
+    report.reported_user = target
+    related_listing_id = request.POST.get("related_listing", "").strip()
+    if related_listing_id:
+        report.related_listing = Listing.objects.filter(pk=related_listing_id, owner=target).first()
+    report.save()
+    severity = (
+        AccountRiskEvent.Severity.HIGH
+        if report.reason in {UserReport.Reason.FRAUD, UserReport.Reason.HARASSMENT, UserReport.Reason.PROHIBITED}
+        else AccountRiskEvent.Severity.MEDIUM
+    )
+    record_risk_event(
+        subject_user=target,
+        event_type=AccountRiskEvent.EventType.USER_REPORT,
+        severity=severity,
+        fingerprint=f"user-report:{report.pk}",
+        summary=f"Kullanıcı şikâyeti: {report.get_reason_display()}",
+        listing=report.related_listing,
+        user_report=report,
+        details={"reason": report.reason, "details": report.details[:500]},
+    )
+    messages.success(request, "Şikâyetin güvenlik ekibine gönderildi.")
+    return redirect(target_url)
 
 
 @require_POST

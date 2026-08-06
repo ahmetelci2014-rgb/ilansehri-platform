@@ -13,6 +13,7 @@ from .views import (
     confirm_verification,
     export_account_data,
     request_account_closure,
+    report_user,
     start_verification,
     toggle_block,
     toggle_follow,
@@ -35,5 +36,6 @@ urlpatterns = [
     path("dogrulama/onayla/", confirm_verification, name="verification_confirm"),
     path("kullanici/<str:username>/", PublicProfileView.as_view(), name="public_profile"),
     path("kullanici/<int:pk>/takip/", toggle_follow, name="toggle_follow"),
+    path("kullanici/<int:pk>/sikayet/", report_user, name="report_user"),
     path("kullanici/<int:pk>/engelle/", toggle_block, name="toggle_block"),
 ]

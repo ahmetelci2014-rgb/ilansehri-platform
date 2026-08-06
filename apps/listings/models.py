@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import hashlib
 import uuid
 
 from django.conf import settings
@@ -279,12 +280,38 @@ class ListingImage(models.Model):
     listing = models.ForeignKey(Listing, related_name="images", on_delete=models.CASCADE)
     image = models.ImageField(upload_to="listings/%Y/%m/")
     alt_text = models.CharField(max_length=180, blank=True)
+    fingerprint = models.CharField(max_length=64, blank=True, db_index=True)
     sort_order = models.PositiveIntegerField(default=0)
     is_cover = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("sort_order", "id")
+
+    def save(self, *args, **kwargs):
+        if self.image and not self.fingerprint:
+            try:
+                file_obj = self.image.file
+                position = file_obj.tell() if hasattr(file_obj, "tell") else None
+                content = file_obj.read()
+                self.fingerprint = hashlib.sha256(content).hexdigest()
+                if hasattr(file_obj, "seek"):
+                    file_obj.seek(position or 0)
+            except (OSError, ValueError):
+                self.fingerprint = ""
+        super().save(*args, **kwargs)
+
+    @property
+    def duplicate_owner_count(self) -> int:
+        if not self.fingerprint:
+            return 0
+        return (
+            ListingImage.objects.filter(fingerprint=self.fingerprint)
+            .exclude(listing__owner_id=self.listing.owner_id)
+            .values("listing__owner_id")
+            .distinct()
+            .count()
+        )
 
     def __str__(self) -> str:
         return f"{self.listing} · görsel {self.pk}"

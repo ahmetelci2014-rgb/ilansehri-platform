@@ -1,0 +1,28 @@
+{
+  "product": "İlan Şehri",
+  "version": "v1.18.0",
+  "title": "Güvenilir Satıcı Profili ve Dolandırıcılık Koruması",
+  "database_changes": [
+    "accounts_userreport tablosu",
+    "accounts_accountriskevent tablosu",
+    "listings_listingimage.fingerprint alanı"
+  ],
+  "compatibility_commands": [
+    "python manage.py ensure_v118_schema",
+    "python manage.py backfill_image_fingerprints --limit 5000"
+  ],
+  "safety_principles": [
+    "otomatik hesap kapatma yok",
+    "kamuya açık şikâyet sayısı yok",
+    "fotoğraflar üçüncü tarafa gönderilmez",
+    "personel incelemesi gereklidir"
+  ],
+  "features": [
+    "açıklanabilir satıcı güven profili",
+    "kullanıcı şikâyeti ve tekrar engeli",
+    "ilan ve mesaj risk olayları",
+    "yerel fotoğraf parmak izi ve hesaplar arası tekrar kontrolü",
+    "personel güvenlik inceleme merkezi",
+    "geriye uyumlu şema ve parmak izi tamamlama"
+  ]
+}

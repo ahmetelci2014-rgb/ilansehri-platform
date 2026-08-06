@@ -26,8 +26,8 @@ def require(text: str, needle: str, source: str) -> None:
 
 def main() -> int:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if version != "v1.17.0":
-        fail(f"VERSION v1.17.0 olmalı, bulundu: {version}")
+    if version != "v1.18.0":
+        fail(f"VERSION v1.18.0 olmalı, bulundu: {version}")
 
     base = (ROOT / "templates/base.html").read_text(encoding="utf-8")
     views = (ROOT / "apps/core/views.py").read_text(encoding="utf-8")
@@ -44,8 +44,9 @@ def main() -> int:
 
     require(base, "css/v132-mobile-system.css", "templates/base.html")
     require(base, "js/v132-mobile-system.js", "templates/base.html")
-    require(base, "v1.17.0", "templates/base.html")
-    require(views, 'const CACHE = "ilansehri-v1170";', "apps/core/views.py")
+    require(base, "v1.18.0", "templates/base.html")
+    require(base, "v118-trust-safety.css", "templates/base.html")
+    require(views, 'const CACHE = "ilansehri-v1180";', "apps/core/views.py")
     require(views, "/static/css/v132-mobile-system.css", "apps/core/views.py")
     require(base, "css/v14-matching.css", "templates/base.html")
     require(base, "css/v141-price-guide.css", "templates/base.html")
@@ -60,9 +61,10 @@ def main() -> int:
     require(views, "/static/css/v15-message-safety.css", "apps/core/views.py")
     require(views, "/static/js/v15-message-safety.js", "apps/core/views.py")
     require(views, "/static/css/v117-search-alerts.css", "apps/core/views.py")
+    require(views, "/static/css/v118-trust-safety.css", "apps/core/views.py")
     require(views, "/static/js/v116-location-discovery.js", "apps/core/views.py")
     require(views, "/static/js/v132-mobile-system.js", "apps/core/views.py")
-    require(views, '"version": "1.17.0"', "apps/core/views.py")
+    require(views, '"version": "1.18.0"', "apps/core/views.py")
     require(listing_form, "data-price-guide-assistant", "templates/listings/form.html")
     require(listing_form, "data-listing-location-capture", "templates/listings/form.html")
     require(location_js, "data-listing-latitude", "static/js/v116-location-discovery.js")
@@ -73,6 +75,19 @@ def main() -> int:
     require(listing_detail, "listings/_price_guide.html", "templates/listings/detail.html")
     require(pricing, "def build_price_guide", "apps/listings/pricing.py")
     require(pricing, "_remove_outliers", "apps/listings/pricing.py")
+    accounts_models = (ROOT / "apps/accounts/models.py").read_text(encoding="utf-8")
+    listing_models = (ROOT / "apps/listings/models.py").read_text(encoding="utf-8")
+    accounts_urls = (ROOT / "apps/accounts/urls.py").read_text(encoding="utf-8")
+    listing_urls = (ROOT / "apps/listings/urls.py").read_text(encoding="utf-8")
+    trust_module = (ROOT / "apps/accounts/trust.py").read_text(encoding="utf-8")
+    safety_module = (ROOT / "apps/listings/safety.py").read_text(encoding="utf-8")
+    require(accounts_models, "class UserReport", "apps/accounts/models.py")
+    require(accounts_models, "class AccountRiskEvent", "apps/accounts/models.py")
+    require(listing_models, "fingerprint = models.CharField", "apps/listings/models.py")
+    require(accounts_urls, 'name="report_user"', "apps/accounts/urls.py")
+    require(listing_urls, 'name="moderate_risk_event"', "apps/listings/urls.py")
+    require(trust_module, "def build_trust_profile", "apps/accounts/trust.py")
+    require(safety_module, "def assess_listing_safety", "apps/listings/safety.py")
 
     required_css_groups = (
         "body.page-dashboard .v16-account-layout",
@@ -129,7 +144,7 @@ def main() -> int:
     if offenders:
         fail("Mobil taşma riski taşıyan inline genişlikler: " + ", ".join(offenders))
 
-    print("Mobil sözleşme kontrolü başarılı: v1.17.0")
+    print("Mobil sözleşme kontrolü başarılı: v1.18.0")
     return 0
 
 

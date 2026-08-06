@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Moderasyon Paneli | İlan Şehri{% endblock %}
+{% block title %}Güvenlik ve Moderasyon | İlan Şehri{% endblock %}
+{% block robots_meta %}noindex,nofollow{% endblock %}
 {% block content %}
-<section class="moderation-hero"><div class="shell"><span class="section-label light-label">YÖNETİCİ PANELİ</span><h1>İlan güvenliği ve şikâyet yönetimi</h1><p>Filtrele, toplu işlem uygula ve tüm moderasyon hareketlerini kayıt altında tut.</p></div></section>
+<section class="moderation-hero"><div class="shell"><span class="section-label light-label">YÖNETİCİ PANELİ</span><h1>İlan güvenliği ve risk inceleme merkezi</h1><p>İlanları, kullanıcı şikâyetlerini, otomatik risk işaretlerini ve işlem uyuşmazlıklarını tek ekrandan yönet.</p></div></section>
 <section class="section"><div class="shell">
-  <div class="moderation-summary">
-    <article><span>⏳</span><div><strong>{{ pending_total }}</strong><small>Toplam bekleyen ilan</small></div></article>
-    <article><span>🔎</span><div><strong>{{ pending_listings|length }}</strong><small>Filtrede gösterilen</small></div></article>
-    <article><span>🚩</span><div><strong>{{ open_reports|length }}</strong><small>Açık şikâyet</small></div></article>
+  <div class="moderation-summary v118-moderation-summary">
+    <article><span>⏳</span><div><strong>{{ pending_total }}</strong><small>Onay bekleyen ilan</small></div></article>
+    <article><span>🚩</span><div><strong>{{ open_reports|length }}</strong><small>Açık ilan şikâyeti</small></div></article>
+    <article><span>👤</span><div><strong>{{ open_user_reports|length }}</strong><small>Açık kullanıcı şikâyeti</small></div></article>
+    <article><span>🛡</span><div><strong>{{ open_risk_events|length }}</strong><small>Otomatik risk kaydı</small></div></article>
     <article><span>⚖️</span><div><strong>{{ disputes|length }}</strong><small>İşlem uyuşmazlığı</small></div></article>
   </div>
 
@@ -26,28 +28,51 @@
       <article class="moderation-card v111-moderation-card">
         <label class="v111-card-select" title="Toplu işleme ekle"><input form="bulk-moderation-form" type="checkbox" name="listing_ids" value="{{ listing.pk }}" data-moderation-checkbox><span>Seç</span></label>
         <div class="moderation-card-media">{% with cover=listing.images.first %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}">{% else %}<div class="listing-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}</div>
-        <div class="moderation-card-copy"><div><span class="badge">{{ listing.get_kind_display }}</span><span class="badge badge-soft">{{ listing.get_action_display }}</span></div><h3><a href="{{ listing.get_absolute_url }}">{{ listing.title }}</a></h3><p>{{ listing.description|truncatechars:180 }}</p><div class="v17-moderation-quality tone-{{ listing.quality_profile.tone }}"><b>{{ listing.quality_profile.score }}/100 · {{ listing.quality_profile.level }}</b><span>{{ listing.quality_profile.passed_count }}/{{ listing.quality_profile.total_count }} ölçüt tamam</span></div>{% if listing.quality_profile.risk_flags %}<div class="v17-risk-flags">{% for flag in listing.quality_profile.risk_flags %}<span>⚠ {{ flag }}</span>{% endfor %}</div>{% endif %}<small>{{ listing.owner.display_name }} · {{ listing.city }}/{{ listing.district }} · {{ listing.created_at|timesince }} önce</small></div>
+        <div class="moderation-card-copy"><div><span class="badge">{{ listing.get_kind_display }}</span><span class="badge badge-soft">{{ listing.get_action_display }}</span></div><h3><a href="{{ listing.get_absolute_url }}">{{ listing.title }}</a></h3><p>{{ listing.description|truncatechars:180 }}</p><div class="v17-moderation-quality tone-{{ listing.quality_profile.tone }}"><b>{{ listing.quality_profile.score }}/100 · {{ listing.quality_profile.level }}</b><span>{{ listing.quality_profile.passed_count }}/{{ listing.quality_profile.total_count }} kalite ölçütü</span></div><div class="v118-risk-score tone-{{ listing.safety_profile.tone }}"><b>Güvenlik {{ listing.safety_profile.score }}/100</b><span>{{ listing.safety_profile.label }}</span></div>{% if listing.safety_profile.flags %}<div class="v17-risk-flags">{% for flag in listing.safety_profile.flags %}<span>⚠ {{ flag }}</span>{% endfor %}</div>{% endif %}<small>{{ listing.owner.display_name }} · {{ listing.city }}/{{ listing.district }} · {{ listing.created_at|timesince }} önce</small></div>
         <div class="moderation-actions"><form method="post" action="{% url 'listings:moderate_listing' listing.pk 'approve' %}">{% csrf_token %}<button class="button full" type="submit">Onayla ve Yayınla</button></form><form method="post" action="{% url 'listings:moderate_listing' listing.pk 'reject' %}">{% csrf_token %}<textarea name="review_note" rows="3" required placeholder="Düzeltme notunu yaz"></textarea><button class="button danger-button full" type="submit">Düzeltme İste</button></form></div>
       </article>
-    {% empty %}<div class="empty-state"><div class="empty-icon">✅</div><h3>Bu filtrede bekleyen ilan yok</h3><p>Filtreleri temizleyebilir veya moderasyon kuyruğuna daha sonra dönebilirsin.</p><a class="button secondary" href="{% url 'listings:moderation' %}">Filtreleri temizle</a></div>{% endfor %}
+    {% empty %}<div class="empty-state"><div class="empty-icon">✅</div><h3>Bu filtrede bekleyen ilan yok</h3><p>Filtreleri temizleyebilir veya moderasyon kuyruğuna daha sonra dönebilirsin.</p></div>{% endfor %}
+  </div>
+</div></section>
+
+<section class="section dashboard-soft"><div class="shell">
+  <div class="dashboard-panel-head"><div><span class="section-label">RİSKLİ HESAP İNCELEMESİ</span><h2>Birden fazla güvenlik sinyali bulunan hesaplar</h2><p>Bu liste yalnız ekip içindir; sistem otomatik ceza uygulamaz.</p></div></div>
+  <div class="v118-risk-account-grid">
+    {% for account in risky_accounts %}
+      <article><div class="v118-account-avatar">{{ account.display_name|first|upper }}</div><div><h3><a href="{% url 'accounts:public_profile' account.username %}">{{ account.display_name }}</a></h3><p>{{ account.risk_profile.public_note }}</p><div class="v118-account-metrics"><span>İç puan: <b>{{ account.risk_profile.score }}/100</b></span><span>Şikâyet: <b>{{ account.risk_profile.active_report_count }}</b></span><span>Risk: <b>{{ account.risk_profile.active_risk_count }}</b></span><span>Uyuşmazlık: <b>{{ account.risk_profile.dispute_count }}</b></span></div></div><a class="market-secondary-button" href="{% url 'admin:accounts_user_change' account.pk %}">Teknik kaydı aç</a></article>
+    {% empty %}<div class="empty-state"><div class="empty-icon">🛡</div><h3>İnceleme bekleyen riskli hesap yok</h3></div>{% endfor %}
+  </div>
+</div></section>
+
+<section class="section"><div class="shell">
+  <div class="dashboard-panel-head"><div><span class="section-label">OTOMATİK RİSK KAYITLARI</span><h2>Mesaj, fotoğraf ve ilan içeriği sinyalleri</h2></div></div>
+  <div class="report-admin-list">
+    {% for event in open_risk_events %}
+      <article class="report-admin-card v118-risk-event"><div><span class="report-reason severity-{{ event.severity }}">{{ event.get_severity_display }} · {{ event.get_event_type_display }}</span><h3><a href="{% url 'accounts:public_profile' event.subject_user.username %}">{{ event.subject_user.display_name }}</a></h3><p>{{ event.summary }}</p><small>{{ event.created_at|timesince }} önce · {{ event.get_status_display }}{% if event.source_listing %} · <a href="{{ event.source_listing.get_absolute_url }}">İlanı aç</a>{% endif %}</small></div><div class="report-actions"><form method="post" action="{% url 'listings:moderate_risk_event' event.pk 'review' %}">{% csrf_token %}<button>İnceleniyor</button></form><form method="post" action="{% url 'listings:moderate_risk_event' event.pk 'resolve' %}">{% csrf_token %}<button>Çözüldü</button></form><form method="post" action="{% url 'listings:moderate_risk_event' event.pk 'dismiss' %}">{% csrf_token %}<button>İşlem yok</button></form></div></article>
+    {% empty %}<div class="empty-state"><div class="empty-icon">✓</div><h3>Açık otomatik risk kaydı yok</h3></div>{% endfor %}
+  </div>
+</div></section>
+
+<section class="section dashboard-soft"><div class="shell">
+  <div class="dashboard-panel-head"><div><span class="section-label">KULLANICI ŞİKÂYETLERİ</span><h2>Satıcı ve hesap bildirimleri</h2></div></div>
+  <div class="report-admin-list">
+    {% for report in open_user_reports %}
+      <article class="report-admin-card"><div><span class="report-reason">{{ report.get_reason_display }}</span><h3><a href="{% url 'accounts:public_profile' report.reported_user.username %}">{{ report.reported_user.display_name }}</a></h3><p>{{ report.details|default:"Ek açıklama yok." }}</p><small>Bildiren: {{ report.reporter.display_name }} · {{ report.created_at|timesince }} önce{% if report.related_listing %} · <a href="{{ report.related_listing.get_absolute_url }}">İlgili ilan</a>{% endif %}</small></div><div class="report-actions"><form method="post" action="{% url 'listings:moderate_user_report' report.pk 'review' %}">{% csrf_token %}<button>İnceleniyor</button></form><form method="post" action="{% url 'listings:moderate_user_report' report.pk 'resolve' %}">{% csrf_token %}<button>Çözüldü</button></form><form method="post" action="{% url 'listings:moderate_user_report' report.pk 'dismiss' %}">{% csrf_token %}<button>İşlem yok</button></form></div></article>
+    {% empty %}<div class="empty-state"><div class="empty-icon">👤</div><h3>Açık kullanıcı şikâyeti yok</h3></div>{% endfor %}
+  </div>
+</div></section>
+
+<section class="section"><div class="shell">
+  <div class="dashboard-panel-head"><div><span class="section-label">İLAN ŞİKÂYETLERİ</span><h2>Açık güvenlik bildirimleri</h2></div></div>
+  <div class="report-admin-list">
+    {% for report in open_reports %}
+      <article class="report-admin-card"><div><span class="report-reason">{{ report.get_reason_display }}</span><h3><a href="{{ report.listing.get_absolute_url }}">{{ report.listing.title }}</a></h3><p>{{ report.details|default:"Ek açıklama yok." }}</p><small>{{ report.reporter.display_name }} · {{ report.created_at|timesince }} önce · {{ report.get_status_display }}</small></div><div class="report-actions"><form method="post" action="{% url 'listings:moderate_report' report.pk 'review' %}">{% csrf_token %}<button>İnceleniyor</button></form><form method="post" action="{% url 'listings:moderate_report' report.pk 'resolve' %}">{% csrf_token %}<button>Çözüldü</button></form><form method="post" action="{% url 'listings:moderate_report' report.pk 'dismiss' %}">{% csrf_token %}<button>İşlem yok</button></form></div></article>
+    {% empty %}<div class="empty-state"><div class="empty-icon">🛡</div><h3>Açık ilan şikâyeti yok</h3></div>{% endfor %}
   </div>
 </div></section>
 
 <section class="section dashboard-soft"><div class="shell">
   <div class="dashboard-panel-head"><div><span class="section-label">İŞLEM UYUŞMAZLIKLARI</span><h2>Destek incelemesi bekleyen işlemler</h2></div></div>
-  <div class="report-admin-list">
-    {% for transaction in disputes %}
-      <article class="report-admin-card"><div><span class="report-reason">{{ transaction.get_status_display }}</span><h3><a href="{{ transaction.get_absolute_url }}">{{ transaction.listing.title }}</a></h3><p>{{ transaction.dispute_reason|truncatechars:240 }}</p><small>Alıcı: {{ transaction.buyer.display_name }} · Satıcı: {{ transaction.seller.display_name }} · {{ transaction.updated_at|timesince }} önce</small></div><a class="button secondary" href="{{ transaction.get_absolute_url }}">Kaydı incele</a></article>
-    {% empty %}<div class="empty-state"><div class="empty-icon">⚖️</div><h3>Açık uyuşmazlık yok</h3><p>İşlem uyuşmazlıkları burada listelenecek.</p></div>{% endfor %}
-  </div>
-</div></section>
-
-<section class="section"><div class="shell">
-  <div class="dashboard-panel-head"><div><span class="section-label">ŞİKÂYETLER</span><h2>Açık güvenlik bildirimleri</h2></div></div>
-  <div class="report-admin-list">
-    {% for report in open_reports %}
-      <article class="report-admin-card"><div><span class="report-reason">{{ report.get_reason_display }}</span><h3><a href="{{ report.listing.get_absolute_url }}">{{ report.listing.title }}</a></h3><p>{{ report.details|default:"Ek açıklama yok." }}</p><small>{{ report.reporter.display_name }} · {{ report.created_at|timesince }} önce · {{ report.get_status_display }}</small></div><div class="report-actions"><form method="post" action="{% url 'listings:moderate_report' report.pk 'review' %}">{% csrf_token %}<button type="submit">İnceleniyor</button></form><form method="post" action="{% url 'listings:moderate_report' report.pk 'resolve' %}">{% csrf_token %}<button type="submit">Çözüldü</button></form><form method="post" action="{% url 'listings:moderate_report' report.pk 'dismiss' %}">{% csrf_token %}<button type="submit">İşlem Gerekmiyor</button></form></div></article>
-    {% empty %}<div class="empty-state"><div class="empty-icon">🛡️</div><h3>Açık şikâyet yok</h3><p>Güvenlik bildirimleri burada listelenecek.</p></div>{% endfor %}
-  </div>
+  <div class="report-admin-list">{% for transaction in disputes %}<article class="report-admin-card"><div><span class="report-reason">{{ transaction.get_status_display }}</span><h3><a href="{{ transaction.get_absolute_url }}">{{ transaction.listing.title }}</a></h3><p>{{ transaction.dispute_reason|truncatechars:240 }}</p><small>Alıcı: {{ transaction.buyer.display_name }} · Satıcı: {{ transaction.seller.display_name }}</small></div><a class="button secondary" href="{{ transaction.get_absolute_url }}">Kaydı incele</a></article>{% empty %}<div class="empty-state"><div class="empty-icon">⚖️</div><h3>Açık uyuşmazlık yok</h3></div>{% endfor %}</div>
 </div></section>
 {% endblock %}
