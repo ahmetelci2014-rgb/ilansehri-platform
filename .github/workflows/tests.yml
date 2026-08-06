@@ -20,6 +20,8 @@ jobs:
         run: cp .env.example .env
       - name: Python sözdizimini kontrol et
         run: python -m compileall -q .
+      - name: Mobil sözleşmeyi kontrol et
+        run: python scripts/check_mobile_contract.py
       - name: AI servis importlarını doğrula
         run: |
           python -c "from apps.ai_listing.services.exceptions import SafetyBlockedError"

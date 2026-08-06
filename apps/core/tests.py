@@ -82,6 +82,8 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "css/v113-mobile-market.css")
         self.assertContains(response, "js/v113-mobile-market.js")
+        self.assertContains(response, "css/v132-mobile-system.css")
+        self.assertContains(response, "js/v132-mobile-system.js")
         self.assertContains(response, "data-mobile-market-search")
         self.assertContains(response, "page-home")
 
@@ -103,6 +105,30 @@ class MobileMarketplaceExperienceTests(TestCase):
     def test_service_worker_uses_mobile_release_cache(self):
         response = self.client.get(reverse("core:service_worker"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'const CACHE = "ilansehri-v1131";')
+        self.assertContains(response, 'const CACHE = "ilansehri-v1132";')
         self.assertContains(response, "/static/css/v113-mobile-market.css")
         self.assertContains(response, "/static/js/v113-mobile-market.js")
+        self.assertContains(response, "/static/css/v132-mobile-system.css")
+        self.assertContains(response, "/static/js/v132-mobile-system.js")
+
+
+class MobileSystemContractTests(TestCase):
+    def test_health_and_shell_report_mobile_system_release(self):
+        health = self.client.get(reverse("core:health"))
+        self.assertEqual(health.status_code, 200)
+        self.assertEqual(health.json()["version"], "1.13.2")
+
+        shell = self.client.get(reverse("support_center:help_center"))
+        self.assertEqual(shell.status_code, 200)
+        self.assertContains(shell, "css/v132-mobile-system.css")
+        self.assertContains(shell, "js/v132-mobile-system.js")
+        self.assertContains(shell, "app-support_center")
+        self.assertContains(shell, "page-help_center")
+
+    def test_authenticated_account_page_uses_shared_mobile_shell(self):
+        user = User.objects.create_user(username="mobile-shell-user", password="StrongPass_2026")
+        self.client.force_login(user)
+        response = self.client.get(reverse("accounts:dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "css/v132-mobile-system.css")
+        self.assertContains(response, "page-dashboard")

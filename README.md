@@ -1,15 +1,13 @@
 # İlan Şehri
 
-**Güncel sürüm: v1.13.1 — Mobil Keşif ve İlan Bilgi Akışı**
-
-> **v1.13.1:** Mobil hızlı filtreler, ilan bilgi kartları, satıcı özeti, arama temizleme ve bildirim sayaçları eklendi. Masaüstü ve Gemini akışı korunur.
+> Güncel sürüm: **v1.13.2** — site genelindeki hesap, ilan, mesaj, teklif, destek, operasyon ve yönetim ekranları için ortak mobil sistem ve otomatik görsel denetim eklendi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
 ## Çalışan ana modüller
 
 - Konum ve kategori odaklı fotoğraflı marketplace akışı
-- Mobilde kompakt ilan akışı, alttan açılan filtreler, hızlı arama ve sabit tek el navigasyonu
+- Site genelinde ortak mobil ekran sistemi, kompakt ilan akışı, alttan açılan filtreler ve sabit tek el navigasyonu
 - Fotoğrafla başlayan yapay zekâ ilan hazırlama, güvenli görsel analiz ve kullanıcı onayı
 - Kategoriye özel gelişmiş arama, filtreleme, sıralama ve ilan karşılaştırma
 - Favoriler, kayıtlı aramalar, son görüntülenenler ve fiyat düşüşü takibi
@@ -22,7 +20,7 @@
 - Yardım Merkezi, hesap içi destek talepleri, personel destek kuyruğu ve işlem günlüğü
 - Tam Yönetim operasyonları ve İlan Şehri Kazanç Ağı görev sistemi
 - PWA, Docker, PostgreSQL, WhiteNoise ve Gunicorn canlı sunucu hazırlığı
-- GitHub Actions migration, güvenlik, statik dosya ve otomatik test kontrolleri
+- GitHub Actions migration, güvenlik, statik dosya, mobil sözleşme ve Playwright ekran görüntüsü kontrolleri
 
 ## Codespaces ile çalıştırma
 
@@ -72,7 +70,7 @@ Bu komut süresi dolan ilanları kapatır, eski doğrulama kodlarını temizler 
 - Alan adı ve `CSRF_TRUSTED_ORIGINS`
 - SMTP e-posta hesabı
 - Telefon doğrulaması için SMS servisi
-- Yapay zekâ görsel analizi için OpenAI API anahtarı ve API hesabı
+- Yapay zekâ görsel analizi için Gemini API anahtarı ve API hesabı
 - Kullanıcı görselleri için kalıcı disk veya nesne depolama
 - Gerçek şirket bilgileriyle hukukçu tarafından kontrol edilmiş yasal metinler
 
@@ -137,7 +135,7 @@ Ayrıntılar: `docs/NOTIFICATION_MODERATION.md`
 - AI hızlı başlangıç alanı ilan formunun en üstüne taşındı.
 - Kullanıcı önce 1–8 fotoğraf seçer; AI başlık, açıklama, kategori, durum, marka, model, renk, etiket ve teknik özellik önerir.
 - Görsel yükleme alanı sürükle-bırak, mobil önizleme, tek tek silme ve kapak adayı göstergesiyle yeniden tasarlandı.
-- OpenAI Responses API tabanlı gerçek görsel sağlayıcısı eklendi.
+- Gemini tabanlı gerçek görsel analiz sağlayıcısı kullanılır.
 - Görseller analizden önce moderasyon, gerçek dosya türü, boyut, EXIF temizleme ve güvenli yeniden kodlama kontrollerinden geçer.
 - Katı JSON şeması doğrulanmadan hiçbir AI alanı forma aktarılmaz.
 - Düşük güvenli bilgiler soru olarak gösterilir; fiyat AI tarafından doldurulmaz.
@@ -146,3 +144,21 @@ Ayrıntılar: `docs/NOTIFICATION_MODERATION.md`
 Kurulum ve güvenlik: `docs/AI_LISTING_V1122.md`
 
 Dosya raporu: `docs/AI_LISTING_V1122_FILE_REPORT.md`
+
+
+## v1.13.2 site geneli mobil sistem
+
+- Hesap, profil, giriş, kayıt ve doğrulama ekranları ortak mobil ölçülere getirildi.
+- Mesaj, teklif, bildirim, destek, işlem, Tam Yönetim, Kazanç Ağı ve personel ekranlarında taşma ve dokunma alanları düzenlendi.
+- 360, 390 ve 430 piksel ekranlarda gerçek tarayıcı görüntüsü alan Playwright denetimi eklendi.
+- Ana GitHub Actions akışına bağımlılıksız mobil sözleşme kontrolü eklendi.
+- Mobil ekran görüntüleri ve JSON/Markdown raporu `Mobil Görsel Denetim` workflow artifact'i olarak saklanır.
+- Masaüstü görünümü, Gemini sistemi ve veritabanı modelleri değiştirilmedi; migration yoktur.
+
+Yerel mobil rapor komutu:
+
+```bash
+python scripts/mobile_audit.py --base-url http://127.0.0.1:8000 --output mobile-audit-artifacts
+```
+
+Ayrıntılar: `docs/MOBILE_AUDIT.md`

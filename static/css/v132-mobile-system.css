@@ -1,0 +1,655 @@
+/* İlan Şehri v1.13.2 — site geneli mobil sistem */
+:root{
+  --v132-touch:46px;
+  --v132-gap:12px;
+  --v132-card-radius:18px;
+  --v132-mobile-edge:12px;
+  --v132-bottom-safe:calc(82px + env(safe-area-inset-bottom));
+}
+
+.v132-mobile-only{display:none}
+
+@media(max-width:780px){
+  html{font-size:16px;scroll-padding-bottom:var(--v132-bottom-safe)}
+  body.marketplace-body{
+    min-width:320px;
+    background:#f4f7fb;
+    text-rendering:optimizeLegibility;
+  }
+  body.marketplace-body main{min-width:0;overflow:clip}
+  body.marketplace-body main>*{min-width:0}
+  body.marketplace-body .shell{
+    width:calc(100% - (var(--v132-mobile-edge) * 2));
+    max-width:none;
+  }
+  body.marketplace-body img{max-width:100%;height:auto}
+  body.marketplace-body h1,
+  body.marketplace-body h2,
+  body.marketplace-body h3,
+  body.marketplace-body p,
+  body.marketplace-body a,
+  body.marketplace-body span,
+  body.marketplace-body b,
+  body.marketplace-body strong,
+  body.marketplace-body small{overflow-wrap:anywhere}
+  body.marketplace-body button,
+  body.marketplace-body input,
+  body.marketplace-body select,
+  body.marketplace-body textarea{max-width:100%}
+  body.marketplace-body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  body.marketplace-body select,
+  body.marketplace-body textarea{
+    min-height:var(--v132-touch);
+    font-size:16px;
+    border-radius:12px;
+  }
+  body.marketplace-body textarea{min-height:112px;resize:vertical}
+  body.marketplace-body button,
+  body.marketplace-body .button,
+  body.marketplace-body .market-secondary-button{
+    min-height:44px;
+    touch-action:manipulation;
+  }
+  body.marketplace-body .button,
+  body.marketplace-body .market-secondary-button{
+    padding:11px 15px;
+    border-radius:12px;
+    line-height:1.2;
+    text-align:center;
+  }
+  body.marketplace-body .section{padding:32px 0}
+  body.marketplace-body .section-label{font-size:9px;letter-spacing:1.15px}
+  body.marketplace-body .market-page-title,
+  body.marketplace-body .account-heading,
+  body.marketplace-body .page-head,
+  body.marketplace-body .support-page-head,
+  body.marketplace-body .support-staff-head,
+  body.marketplace-body .staff-dashboard-head{
+    gap:12px;
+    padding-top:22px;
+    padding-bottom:18px;
+  }
+  body.marketplace-body .market-page-title h1,
+  body.marketplace-body .account-heading h1,
+  body.marketplace-body .page-head h1,
+  body.marketplace-body .support-page-head h1,
+  body.marketplace-body .support-staff-head h1,
+  body.marketplace-body .staff-dashboard-head h1{
+    margin:5px 0 6px;
+    font-size:25px;
+    line-height:1.1;
+    letter-spacing:-.8px;
+  }
+  body.marketplace-body .market-page-title p,
+  body.marketplace-body .account-heading p,
+  body.marketplace-body .page-head p,
+  body.marketplace-body .support-page-head p,
+  body.marketplace-body .support-staff-head p{font-size:12px;line-height:1.5}
+  body.marketplace-body .market-page-title>.button,
+  body.marketplace-body .account-heading>.button,
+  body.marketplace-body .page-head>.button,
+  body.marketplace-body .support-page-head>.button{width:100%}
+
+  /* Üst ve alt çerçeve */
+  body.marketplace-body .market-utility,
+  body.marketplace-body .market-nav{display:none}
+  body.marketplace-body .market-header{
+    position:sticky;
+    top:0;
+    z-index:300;
+  }
+  body.marketplace-body .market-header-row{padding-inline:2px}
+  body.marketplace-body .market-header-actions{margin-left:auto}
+  body.marketplace-body .market-header-actions>a:not(.market-post-button),
+  body.marketplace-body .market-header-actions .market-post-button{display:none}
+  body.marketplace-body .menu-toggle{display:flex!important;margin-left:auto}
+  body.marketplace-body .mobile-menu{
+    z-index:450;
+    overscroll-behavior:contain;
+  }
+  body.marketplace-body .mobile-menu-inner{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:0;
+  }
+  body.marketplace-body .mobile-menu a,
+  body.marketplace-body .mobile-logout{font-size:14px}
+  body.marketplace-body .message-stack{
+    position:fixed;
+    left:10px;
+    right:10px;
+    top:72px;
+    z-index:700;
+    width:auto;
+  }
+  body.marketplace-body .message{align-items:flex-start;padding:12px 13px;border-radius:14px;font-size:12px}
+  body.marketplace-body .market-footer{
+    margin-top:26px;
+    padding:25px 0 98px;
+  }
+  body.marketplace-body .market-footer-row{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:15px;
+  }
+  body.marketplace-body .market-footer-row>div{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px 18px;
+    width:100%;
+  }
+  body.marketplace-body .market-footer-row>div a{font-size:12px}
+  body.marketplace-body .market-footer-row>small{font-size:10px}
+  body.marketplace-body .compare-floating{
+    left:12px;
+    right:12px;
+    bottom:calc(76px + env(safe-area-inset-bottom));
+    width:auto;
+    justify-content:center;
+  }
+  body.marketplace-body .v18-scroll-top{bottom:calc(86px + env(safe-area-inset-bottom));right:12px}
+  .v132-mobile-only{display:block}
+
+  /* Ortak kart ve form sistemi */
+  body.marketplace-body .form-page,
+  body.marketplace-body .account-page,
+  body.marketplace-body .following-page,
+  body.marketplace-body .inbox-page,
+  body.marketplace-body .compare-page,
+  body.marketplace-body .saved-search-page,
+  body.marketplace-body .offer-center,
+  body.marketplace-body .notification-page,
+  body.marketplace-body .chat-page,
+  body.marketplace-body .transaction-page,
+  body.marketplace-body .support-ticket-page,
+  body.marketplace-body .support-staff-page,
+  body.marketplace-body .staff-dashboard{
+    padding-top:18px;
+    padding-bottom:28px;
+  }
+  body.marketplace-body .form-page{width:calc(100% - 24px);margin-inline:auto}
+  body.marketplace-body .form-page.narrow{max-width:none}
+  body.marketplace-body .panel-form,
+  body.marketplace-body .auth-form,
+  body.marketplace-body .support-form-card,
+  body.marketplace-body .v111-pref-card,
+  body.marketplace-body .v19-settings-card,
+  body.marketplace-body .v19-closure-card,
+  body.marketplace-body .description-card,
+  body.marketplace-body .transaction-action-card,
+  body.marketplace-body .safe-box,
+  body.marketplace-body .warning-card,
+  body.marketplace-body .delete-card{
+    padding:17px;
+    border-radius:var(--v132-card-radius);
+  }
+  body.marketplace-body .form-grid,
+  body.marketplace-body .support-form-grid{
+    grid-template-columns:1fr!important;
+    gap:13px;
+  }
+  body.marketplace-body .field,
+  body.marketplace-body .panel-form p,
+  body.marketplace-body .auth-form p{min-width:0;margin:0 0 13px}
+  body.marketplace-body .field label,
+  body.marketplace-body .panel-form label,
+  body.marketplace-body .auth-form label{font-size:12px;font-weight:800}
+  body.marketplace-body .help-text{font-size:10px;line-height:1.4}
+  body.marketplace-body .field-error{font-size:10px}
+  body.marketplace-body .hero-buttons,
+  body.marketplace-body .verification-actions,
+  body.marketplace-body .inline-action-group,
+  body.marketplace-body .inline-action,
+  body.marketplace-body .v111-pref-actions,
+  body.marketplace-body .v19-settings-actions{
+    align-items:stretch;
+    flex-direction:column;
+    gap:9px;
+  }
+  body.marketplace-body .hero-buttons>* ,
+  body.marketplace-body .verification-actions>* ,
+  body.marketplace-body .inline-action-group>* ,
+  body.marketplace-body .inline-action>* ,
+  body.marketplace-body .v111-pref-actions>* ,
+  body.marketplace-body .v19-settings-actions>*{width:100%}
+  body.marketplace-body details>summary{
+    min-height:44px;
+    display:flex;
+    align-items:center;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+
+  /* Giriş, kayıt ve yasal sayfalar */
+  body.app-core.page-about .legal-hero,
+  body.app-core.page-how_it_works .legal-hero,
+  body.app-core.page-trust .legal-hero,
+  body.app-core.page-terms .legal-hero,
+  body.app-core.page-privacy .legal-hero,
+  body.app-core.page-kvkk .legal-hero,
+  body.app-core.page-cookies .legal-hero{
+    padding:34px 0 26px;
+  }
+  body.marketplace-body .legal-hero h1{font-size:29px;line-height:1.08;letter-spacing:-1px}
+  body.marketplace-body .legal-page{
+    width:calc(100% - 24px);
+    padding:24px 0 32px;
+    font-size:14px;
+    line-height:1.7;
+  }
+  body.marketplace-body .legal-page h2{font-size:20px;margin-top:27px}
+  body.marketplace-body .value-grid,
+  body.marketplace-body .big-steps{grid-template-columns:1fr!important;gap:11px}
+  body.marketplace-body .value-grid>*,
+  body.marketplace-body .big-steps>*{padding:16px;border-radius:16px}
+  body.marketplace-body .auth-section{min-height:auto;padding:18px 0 32px}
+  body.marketplace-body .auth-shell,
+  body.marketplace-body .signup-layout{grid-template-columns:1fr!important;width:calc(100% - 24px)}
+  body.marketplace-body .auth-visual,
+  body.marketplace-body .signup-benefit{display:none}
+  body.marketplace-body .auth-form-wrap,
+  body.marketplace-body .signup-form-card,
+  body.marketplace-body .v19-auth-card{padding:20px 17px;border-radius:20px}
+  body.marketplace-body .auth-form-head h1,
+  body.marketplace-body .signup-head h1{font-size:27px;line-height:1.08}
+  body.marketplace-body .signup-head{padding:31px 0 25px}
+  body.marketplace-body .signup-section{padding:18px 0 32px}
+  body.marketplace-body .v19-auth-page{padding:22px 12px 36px;min-height:auto}
+  body.marketplace-body .v17-error-page,
+  body.marketplace-body .offline-page{min-height:calc(100dvh - 150px);padding:40px 12px}
+
+  /* Hesap ve profil */
+  body.page-dashboard .v16-account-hero{padding:16px 0 12px}
+  body.page-dashboard .v16-account-hero-card{
+    grid-template-columns:auto minmax(0,1fr);
+    gap:12px;
+    padding:15px;
+    border-radius:20px;
+  }
+  body.page-dashboard .v16-account-avatar{width:52px;height:52px;font-size:20px}
+  body.page-dashboard .v16-account-copy h1{font-size:21px;margin:3px 0}
+  body.page-dashboard .v16-account-copy p{font-size:10px}
+  body.page-dashboard .v16-account-badges{gap:5px;margin-top:8px}
+  body.page-dashboard .v16-account-badges span{font-size:8px;padding:4px 6px}
+  body.page-dashboard .v16-trust-gauge{grid-column:1/-1;width:100%;height:auto;min-height:58px;border-radius:15px}
+  body.page-dashboard .v16-account-layout{display:block;padding-top:0}
+  body.page-dashboard .v16-account-sidebar{
+    position:relative;
+    top:auto;
+    display:flex;
+    overflow-x:auto;
+    gap:7px;
+    margin:0 0 12px;
+    padding:3px 0 8px;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    scrollbar-width:none;
+  }
+  body.page-dashboard .v16-account-sidebar::-webkit-scrollbar{display:none}
+  body.page-dashboard .v16-account-sidebar hr{display:none}
+  body.page-dashboard .v16-account-sidebar a{
+    flex:0 0 auto;
+    min-height:39px;
+    padding:8px 10px;
+    border:1px solid #dbe3ec;
+    border-radius:12px;
+    background:#fff;
+    font-size:10px;
+    white-space:nowrap;
+  }
+  body.page-dashboard .v16-account-sidebar a span{font-size:14px}
+  body.page-dashboard .v16-dashboard-main{min-width:0}
+  body.page-dashboard .v18-profile-completion{grid-template-columns:1fr;padding:15px;border-radius:18px}
+  body.page-dashboard .v18-profile-score{display:none}
+  body.page-dashboard .v18-profile-copy h2{font-size:18px}
+  body.page-dashboard .v18-profile-steps{display:flex;overflow-x:auto;gap:6px;padding-bottom:3px}
+  body.page-dashboard .v18-profile-steps a{flex:0 0 auto;font-size:9px;padding:7px 8px}
+  body.page-dashboard .v16-dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  body.page-dashboard .v16-dashboard-stat{padding:13px;border-radius:15px}
+  body.page-dashboard .v16-dashboard-stat strong{font-size:21px}
+  body.page-dashboard .v16-dashboard-stat small{font-size:8px}
+  body.page-dashboard .v16-dashboard-actions{grid-template-columns:1fr;gap:8px}
+  body.page-dashboard .v16-dashboard-action{min-height:68px;padding:11px 12px;border-radius:16px}
+  body.page-dashboard .v16-dashboard-panel{padding:14px;border-radius:18px}
+  body.page-dashboard .v16-dashboard-panel-head{align-items:flex-start;gap:9px;flex-direction:column}
+  body.page-dashboard .v16-dashboard-panel-head h2{font-size:19px}
+  body.page-dashboard .v16-dashboard-panel-head>a{width:100%;text-align:center;padding:9px;border-radius:10px;background:#eff6ff}
+  body.page-dashboard .v16-data-row{align-items:flex-start;gap:10px;flex-direction:column;padding:12px 2px}
+  body.page-dashboard .v16-data-row>strong{align-self:flex-start}
+  body.page-dashboard .v16-my-listing{grid-template-columns:84px minmax(0,1fr);gap:10px;padding:10px}
+  body.page-dashboard .v16-my-listing-media{width:84px;height:84px}
+  body.page-dashboard .v16-my-listing-actions{grid-column:1/-1;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  body.page-dashboard .v16-my-listing-actions a,
+  body.page-dashboard .v16-my-listing-actions form,
+  body.page-dashboard .v16-my-listing-actions button{width:100%;min-height:38px;text-align:center}
+
+  body.page-profile_edit .profile-preview,
+  body.page-verification .verification-grid,
+  body.page-settings .v19-settings-grid,
+  body.page-notification_preferences .v111-pref-layout,
+  body.page-public_profile .seller-store-grid{grid-template-columns:1fr!important}
+  body.page-profile_edit .profile-preview{position:relative;top:auto;order:-1}
+  body.page-verification .verification-grid{gap:10px}
+  body.page-verification .verify-card{padding:16px;border-radius:17px}
+  body.page-settings .v19-settings-card{grid-template-columns:auto minmax(0,1fr);gap:12px}
+  body.page-settings .v19-settings-actions{grid-column:1/-1}
+  body.page-notification_preferences .v111-pref-side{position:relative;top:auto}
+  body.page-notification_preferences .v111-toggle-row{align-items:flex-start;gap:11px;padding:13px 0}
+  body.page-following .followed-seller-strip{display:flex;overflow-x:auto;gap:8px;padding-bottom:8px}
+  body.page-following .followed-seller-strip>*{flex:0 0 min(78vw,280px)}
+  body.page-public_profile .seller-store-head{padding:22px 0}
+  body.page-public_profile .seller-store-grid{gap:15px}
+  body.page-public_profile .seller-store-actions{align-items:stretch;flex-direction:column}
+  body.page-public_profile .seller-store-actions>*{width:100%}
+  body.page-public_profile .seller-store-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  body.page-public_profile .seller-review-list{grid-template-columns:1fr}
+
+  /* İlan yan ekranları */
+  body.page-favorites .market-card-grid,
+  body.page-seller_listings .market-card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  body.page-compare .compare-scroll{
+    margin-inline:-12px;
+    padding-inline:12px;
+    overflow-x:auto;
+    scroll-snap-type:x proximity;
+  }
+  body.page-compare .compare-table{min-width:700px}
+  body.page-compare .compare-value,
+  body.page-compare .compare-label{padding:10px;font-size:11px}
+  body.page-compare .compare-item{scroll-snap-align:start}
+  body.page-delete .delete-page{padding-top:25px}
+  body.page-delete .delete-card h1{font-size:24px}
+  body.page-drafts .v19-drafts-page{padding-top:17px}
+  body.page-drafts .v19-draft-grid{grid-template-columns:1fr}
+  body.page-drafts .v19-draft-card{grid-template-columns:1fr;padding:15px}
+  body.page-drafts .v19-draft-actions{align-items:stretch;flex-direction:column}
+  body.page-drafts .v19-draft-actions>*{width:100%}
+  body.page-saved_searches .saved-search-grid{grid-template-columns:1fr}
+  body.page-saved_searches .saved-search-card{padding:15px;border-radius:17px}
+  body.page-saved_searches .saved-search-actions{align-items:stretch;flex-direction:column}
+  body.page-saved_searches .saved-search-actions>*{width:100%}
+
+  body.page-conversation_list .market-page-title{align-items:stretch;flex-direction:column}
+  body.page-conversation_list .inbox-toolbar{align-items:stretch;flex-direction:column;gap:10px}
+  body.page-conversation_list .inbox-toolbar nav{display:flex;overflow-x:auto;gap:6px;padding-bottom:3px}
+  body.page-conversation_list .inbox-toolbar nav a{flex:0 0 auto;white-space:nowrap}
+  body.page-conversation_list .inbox-toolbar form{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto}
+  body.page-conversation_list .conversation-list>a{
+    grid-template-columns:62px minmax(0,1fr) auto;
+    gap:10px;
+    padding:11px;
+  }
+  body.page-conversation_list .conversation-cover{width:62px;height:62px}
+  body.page-conversation_list .conversation-copy b{font-size:12px}
+  body.page-conversation_list .conversation-copy p{font-size:10px;-webkit-line-clamp:2}
+  body.page-conversation_list .conversation-state time{font-size:8px}
+  body.page-conversation_detail .chat-page{width:100%;padding:0 0 var(--v132-bottom-safe)}
+  body.page-conversation_detail .chat-head{
+    position:sticky;
+    top:60px;
+    z-index:100;
+    align-items:flex-start;
+    grid-template-columns:auto minmax(0,1fr);
+    gap:8px;
+    padding:10px 12px;
+    border-radius:0;
+  }
+  body.page-conversation_detail .chat-head h1{font-size:14px;margin:0}
+  body.page-conversation_detail .chat-head p{font-size:9px}
+  body.page-conversation_detail .chat-head-actions{grid-column:1/-1;width:100%;display:flex;gap:6px}
+  body.page-conversation_detail .chat-head-actions>*{flex:1}
+  body.page-conversation_detail .chat-layout{display:flex;flex-direction:column;gap:0}
+  body.page-conversation_detail .chat-thread{
+    min-height:46dvh;
+    max-height:none;
+    padding:13px 12px;
+    border-radius:0;
+  }
+  body.page-conversation_detail .chat-bubble{max-width:86%;padding:10px 11px;border-radius:15px}
+  body.page-conversation_detail .chat-side-panel{position:relative;top:auto;padding:12px;border-radius:0}
+  body.page-conversation_detail .chat-form{position:sticky;bottom:var(--v132-bottom-safe);z-index:20;background:#fff;padding-top:8px}
+
+  body.page-notifications .notification-hero{padding:22px 0}
+  body.page-notifications .notification-hero-row,
+  body.page-notifications .notification-toolbar{align-items:stretch;flex-direction:column}
+  body.page-notifications .notification-hero-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  body.page-notifications .notification-hero-stats div{min-width:0;padding:12px}
+  body.page-notifications .notification-status-tabs,
+  body.page-notifications .notification-type-tabs{width:100%;overflow-x:auto}
+  body.page-notifications .professional-notifications .notification-row{grid-template-columns:auto minmax(0,1fr);gap:9px;padding:12px}
+  body.page-notifications .professional-notifications .notification-open{grid-column:2;justify-self:start}
+  body.page-offer_center .offer-hero{padding:22px 0}
+  body.page-offer_center .offer-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  body.page-offer_center .offer-tabs{overflow-x:auto;flex-wrap:nowrap}
+  body.page-offer_center .offer-tabs a{flex:0 0 auto;white-space:nowrap}
+  body.page-offer_center .offer-card{grid-template-columns:1fr;padding:14px}
+  body.page-offer_center .offer-card-actions{align-items:stretch;flex-direction:column}
+  body.page-offer_center .offer-card-actions>*{width:100%}
+  body.page-offer_center .counter-offer-box[open]>form{bottom:var(--v132-bottom-safe)}
+  body.page-transaction_detail .detail-columns,
+  body.page-task_detail .detail-columns,
+  body.page-detail .detail-columns{grid-template-columns:1fr!important}
+  body.page-transaction_detail .transaction-party-grid{grid-template-columns:1fr;gap:8px}
+  body.page-transaction_detail .transaction-steps{overflow-x:auto;display:flex;gap:7px;padding-bottom:5px}
+  body.page-transaction_detail .transaction-steps>*{flex:0 0 min(72vw,260px)}
+
+  /* İlan oluşturma */
+  body.page-create .v16-listing-wizard,
+  body.page-update .v16-listing-wizard{padding:18px 0 var(--v132-bottom-safe)}
+  body.page-create .v16-wizard-intro,
+  body.page-update .v16-wizard-intro{text-align:left;margin-bottom:13px}
+  body.page-create .v16-wizard-intro h1,
+  body.page-update .v16-wizard-intro h1{font-size:25px;letter-spacing:-.8px}
+  body.page-create .listing-progress-card,
+  body.page-update .listing-progress-card{
+    top:60px;
+    margin:0 -12px 12px;
+    padding:11px 12px;
+    border-radius:0;
+  }
+  body.page-create .listing-progress-card nav,
+  body.page-update .listing-progress-card nav{gap:3px}
+  body.page-create .listing-progress-card nav a,
+  body.page-update .listing-progress-card nav a{padding:5px 2px}
+  body.page-create .listing-editor,
+  body.page-update .listing-editor{padding:15px;border-radius:18px}
+  body.page-create .v16-wizard-footer,
+  body.page-update .v16-wizard-footer{
+    position:sticky;
+    bottom:var(--v132-bottom-safe);
+    z-index:30;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    margin:15px -15px -15px;
+    padding:10px 15px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.97);
+    border-top:1px solid #e2e8f0;
+    backdrop-filter:blur(14px);
+  }
+  body.page-create .v16-wizard-footer>* ,
+  body.page-update .v16-wizard-footer>*{width:100%;margin:0}
+  body.page-create .v16-wizard-footer .v19-save-draft,
+  body.page-update .v16-wizard-footer .v19-save-draft{grid-column:1/-1}
+
+  /* Destek */
+  body.page-help_center .support-hero{padding:25px 0}
+  body.page-help_center .support-hero-grid,
+  body.page-help_center .support-content,
+  body.page-ticket_create .support-form-layout,
+  body.page-ticket_detail .support-detail-layout,
+  body.page-staff_detail .support-staff-detail,
+  body.page-staff_board .support-staff-layout{grid-template-columns:1fr!important}
+  body.page-help_center .support-hero-actions{align-items:stretch;flex-direction:column}
+  body.page-help_center .support-hero-actions>*{width:100%}
+  body.page-help_center .support-faq-grid{grid-template-columns:1fr;gap:11px}
+  body.page-help_center .support-faq-group{padding:15px;border-radius:17px}
+  body.page-help_center .support-contact-strip{align-items:stretch;flex-direction:column;gap:10px;padding:15px}
+  body.page-ticket_list .support-filter-tabs{display:flex;overflow-x:auto;gap:6px;padding-bottom:5px}
+  body.page-ticket_list .support-filter-tabs a{flex:0 0 auto;white-space:nowrap}
+  body.page-ticket_list .support-ticket-row{
+    grid-template-columns:auto minmax(0,1fr);
+    gap:8px;
+    padding:12px;
+  }
+  body.page-ticket_list .support-ticket-state{grid-column:2;align-items:flex-start;justify-self:start}
+  body.page-ticket_detail .support-thread,
+  body.page-staff_detail .support-thread{padding:12px;border-radius:17px}
+  body.page-ticket_detail .support-message,
+  body.page-staff_detail .support-message{grid-template-columns:35px minmax(0,1fr);gap:8px;padding:11px}
+  body.page-ticket_detail .support-detail-aside,
+  body.page-staff_detail .support-staff-control,
+  body.page-staff_board .support-activity-log{position:relative;top:auto}
+  body.page-ticket_create .support-form-aside{order:-1}
+  body.page-staff_board .support-staff-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  body.page-staff_board .support-staff-filter{grid-template-columns:1fr 1fr;gap:8px}
+  body.page-staff_board .support-staff-table-head{display:none}
+  body.page-staff_board .support-staff-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:7px 10px;
+    padding:13px;
+    margin-bottom:8px;
+    border:1px solid #dbe3ec;
+    border-radius:15px;
+    background:#fff;
+  }
+  body.page-staff_board .support-staff-row>span:nth-child(2),
+  body.page-staff_board .support-staff-row>span:nth-child(3){font-size:10px;color:#64748b}
+  body.page-staff_board .support-staff-row>span:nth-child(n+4){justify-self:end}
+
+  /* Tam Yönetim, Kazanç Ağı ve yönetim */
+  body.app-managed_services .operation-summary,
+  body.app-managed_services .detail-columns,
+  body.app-partners .detail-columns{grid-template-columns:1fr!important}
+  body.app-managed_services .operations-list,
+  body.app-managed_services .data-list,
+  body.app-partners .data-list{gap:8px}
+  body.app-managed_services .operations-list>* ,
+  body.app-managed_services .data-list>* ,
+  body.app-partners .data-list>*{padding:13px;border-radius:15px}
+  body.page-task_list .task-grid{grid-template-columns:1fr;gap:10px}
+  body.page-task_list .task-card{padding:15px;border-radius:17px}
+  body.page-task_detail .task-reward{width:100%;text-align:left}
+  body.page-partner_dashboard .dashboard-stats,
+  body.page-dashboard.app-partners .dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  body.page-moderation .moderation-grid,
+  body.page-staff_dashboard .staff-stat-grid,
+  body.page-staff_dashboard .staff-grid-two,
+  body.page-staff_dashboard .staff-user-grid,
+  body.page-staff_dashboard .v17-launch-metrics,
+  body.page-staff_dashboard .v17-ranking-grid{grid-template-columns:1fr!important;gap:9px}
+  body.page-staff_dashboard .staff-head-actions{align-items:stretch;flex-direction:column}
+  body.page-staff_dashboard .staff-head-actions>*{width:100%}
+  body.page-staff_dashboard .staff-grid-main{grid-template-columns:1fr}
+  body.page-staff_dashboard .staff-panel{padding:14px;border-radius:17px}
+  body.page-staff_dashboard .staff-panel-head{align-items:flex-start;flex-direction:column}
+  body.page-staff_dashboard .activity-chart{overflow-x:auto;padding-bottom:5px}
+  body.page-staff_dashboard .activity-day{min-width:38px}
+  body.page-staff_dashboard .staff-list>* ,
+  body.page-staff_dashboard .staff-log-row{align-items:flex-start;gap:8px;padding:10px 0}
+
+  /* Yatay taşma savunması */
+  body.marketplace-body .compare-scroll,
+  body.marketplace-body .notification-status-tabs,
+  body.marketplace-body .notification-type-tabs,
+  body.marketplace-body .offer-tabs,
+  body.marketplace-body .support-filter-tabs,
+  body.marketplace-body .v16-account-sidebar,
+  body.marketplace-body .v18-profile-steps{
+    overscroll-behavior-inline:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  body.marketplace-body [data-mobile-overflow="true"]{outline:2px dashed #dc2626;outline-offset:-2px}
+}
+
+@media(max-width:520px){
+  :root{--v132-mobile-edge:10px}
+  body.marketplace-body .market-footer-row>div{grid-template-columns:1fr 1fr}
+  body.page-dashboard .v16-dashboard-stats{grid-template-columns:1fr 1fr}
+  body.page-favorites .market-card-grid,
+  body.page-seller_listings .market-card-grid{grid-template-columns:1fr 1fr}
+  body.page-offer_center .offer-summary-grid,
+  body.page-notifications .notification-hero-stats,
+  body.page-staff_board .support-staff-stats{grid-template-columns:1fr 1fr}
+  body.page-staff_board .support-staff-filter{grid-template-columns:1fr}
+}
+
+@media(max-width:380px){
+  :root{--v132-mobile-edge:8px}
+  body.marketplace-body .market-brand>b{font-size:16px}
+  body.marketplace-body .market-footer-row>div{grid-template-columns:1fr}
+  body.page-dashboard .v16-account-hero-card{grid-template-columns:1fr;text-align:center}
+  body.page-dashboard .v16-account-avatar{margin:auto}
+  body.page-dashboard .v16-account-badges{justify-content:center}
+  body.page-dashboard .v16-dashboard-stats{grid-template-columns:1fr 1fr}
+  body.page-conversation_list .conversation-list>a{grid-template-columns:52px minmax(0,1fr)}
+  body.page-conversation_list .conversation-cover{width:52px;height:52px}
+  body.page-conversation_list .conversation-state{grid-column:2;justify-self:start;display:flex;gap:6px}
+  body.page-favorites .market-card-grid,
+  body.page-seller_listings .market-card-grid{grid-template-columns:1fr}
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.marketplace-body *,
+  body.marketplace-body *::before,
+  body.marketplace-body *::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+
+/* v1.13.2 görsel denetim rötuşları */
+@media(max-width:780px){
+  body.page-dashboard .v16-trust-gauge>div{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:7px;
+  }
+  body.page-dashboard .v16-trust-gauge strong{font-size:27px;line-height:1}
+  body.page-dashboard .v16-trust-gauge span{font-size:10px;color:#64748b}
+
+  body.page-conversation_list .conversation-list>a{
+    position:relative;
+    padding-right:58px;
+  }
+  body.page-conversation_list .conversation-state{
+    position:absolute;
+    right:10px;
+    top:10px;
+    bottom:10px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    flex-direction:column;
+    gap:5px;
+  }
+  body.page-conversation_list .conversation-state time{display:block;max-width:50px;text-align:right}
+  body.page-conversation_list .conversation-state strong{flex:none}
+  body.page-conversation_list .conversation-state i{margin-top:auto}
+
+  body.page-staff_board.app-support_center .support-staff-row>span{
+    display:block!important;
+    min-width:0;
+  }
+  body.page-staff_board.app-support_center .support-staff-row>span:first-child{grid-column:1/-1}
+  body.page-staff_board.app-support_center .support-staff-row>span:nth-child(2){grid-column:1}
+  body.page-staff_board.app-support_center .support-staff-row>span:nth-child(3){grid-column:1}
+  body.page-staff_board.app-support_center .support-staff-row>span:nth-child(4){grid-column:2;grid-row:2}
+  body.page-staff_board.app-support_center .support-staff-row>span:nth-child(5){grid-column:2;grid-row:3}
+  body.page-staff_board.app-support_center .support-staff-row>span:nth-child(6){grid-column:1/-1;font-size:9px;color:#94a3b8}
+  body.page-staff_board.app-support_center .support-staff-row .ticket-priority,
+  body.page-staff_board.app-support_center .support-staff-row .ticket-status{display:inline-flex!important;white-space:nowrap}
+}
+
+@media(max-width:380px){
+  body.page-conversation_list .conversation-list>a{grid-template-columns:52px minmax(0,1fr);padding-right:52px}
+  body.page-conversation_list .conversation-state{grid-column:auto;justify-self:auto}
+}
+@media(max-width:780px){
+  body.page-staff_board.app-support_center .support-staff-table{min-width:0!important;width:100%}
+  body.page-staff_board.app-support_center .support-staff-row{
+    min-width:0!important;
+    width:100%!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+  }
+}

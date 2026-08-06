@@ -1,14 +1,23 @@
-# Changelog
+# Değişiklik Günlüğü
 
-## v1.13.1 — Mobil Keşif ve İlan Bilgi Akışı
+## v1.13.2 — Site geneli mobil sistem ve otomatik denetim
 
-- Mobil ilan listesine yatay hızlı filtreler eklendi: en yeni, fiyatı düşen, doğrulanmış, güvenceli ve kullanıcının şehri.
-- Mobil filtre paneli seçilen ilan türüne göre araç ve emlak alanlarını otomatik gösteriyor.
-- İlan kartlarında yerel fiyat biçimi, kategori rozeti ve daha temiz kompakt bilgi düzeni kullanılıyor.
-- İlan detayına öne çıkan özellik kartları ve yukarı taşınmış satıcı özeti eklendi.
-- Ziyaretçilerde teknik ilan kalite paneli mobilde gizlenerek içerik ve iletişim önceliklendirildi.
-- Mobil aramaya tek dokunuşla temizleme, alt menüye mesaj/bildirim sayaçları eklendi.
-- PWA cache sürümü `ilansehri-v1131` olarak yenilendi.
+- Mobil iyileştirme yalnız ilan sayfalarından çıkarılarak hesap, giriş, profil, mesaj, teklif, bildirim, destek, işlem, Tam Yönetim, Kazanç Ağı ve personel ekranlarına yayıldı.
+- Ortak form alanları, kartlar, başlıklar, butonlar ve yatay kaydırılabilir alanlar 360–430 piksel telefon ekranlarına uyarlandı.
+- Mesaj listesi, destek kuyruğu ve hesap panelinde bilgi hiyerarşisi ve tek elle kullanım güçlendirildi.
+- Site genelindeki fiyat gösterimleri Türkçe binlik ayırıcıyla tutarlı hâle getirildi.
+- `v132-mobile-system.css` ve `v132-mobile-system.js` eklendi.
+- Gerçek Chromium üzerinde 360, 390 ve 430 piksel ekran görüntüsü, yatay taşma, tarayıcı hatası ve dokunma hedefi raporu üreten Playwright denetimi eklendi.
+- Ana test workflow'una bağımlılıksız mobil sözleşme kontrolü eklendi; görsel denetim ayrı ve engelleyici olmayan workflow olarak çalışır.
+- PWA önbelleği `ilansehri-v1132` olarak yenilendi.
+- Gemini sağlayıcısı ve veritabanı modelleri değiştirilmedi; migration yoktur.
+
+## v1.13.1 — Mobil keşif ve ilan bilgi akışı
+
+- Mobil hızlı filtreler, sonuç özeti ve ilan türüne duyarlı filtre alanları eklendi.
+- İlan kartlarında yerel fiyat gruplaması ve kategori rozeti güçlendirildi.
+- İlan detayında temel özellikler ve satıcı özeti mobilde öne taşındı.
+- Mobil arama temizleme düğmesi ve alt menü sayaçları eklendi.
 
 ## v1.13.0.1 — Mobil fiyat biçimlendirme düzeltmesi
 

@@ -12,6 +12,7 @@
 - Kazanç Ağı görev ortağı ve görev yönetimi
 - PWA, yasal sayfalar ve canlı sunucu hazırlığı
 - Yardım Merkezi, kullanıcı destek talepleri ve personel destek operasyonu
+- Site geneli mobil tasarım sözleşmesi ve Playwright ekran görüntüsü denetimi
 
 ## Canlı lansman öncesi dış bağımlılıklar
 

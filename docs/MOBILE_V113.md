@@ -51,3 +51,25 @@ Bu sürüm masaüstü tasarımını değiştirmeden, `780px` ve altındaki ekran
 - Detay sayfasında temel özellikler ve satıcı özeti
 - Mobil arama temizleme düğmesi ve alt menü sayaçları
 - PWA cache: `ilansehri-v1131`
+
+
+## v1.13.2 site geneli kapsam
+
+v1.13.2 ile mobil katman yalnız keşif ekranlarıyla sınırlı değildir. Aşağıdaki alanlar aynı dokunma hedefi, boşluk, kart ve form sözleşmesini kullanır:
+
+- Giriş, kayıt, şifre ve hesap güvenliği
+- Hesabım, profil, doğrulama ve bildirim tercihleri
+- Favoriler, taslaklar, kayıtlı aramalar ve karşılaştırma
+- Mesajlar, teklifler, bildirimler ve güvenli işlem ayrıntıları
+- Yardım Merkezi, kullanıcı destek talepleri ve personel destek kuyruğu
+- Tam Yönetim, Kazanç Ağı, moderasyon ve yönetim panelleri
+
+Yeni dosyalar:
+
+- `static/css/v132-mobile-system.css`
+- `static/js/v132-mobile-system.js`
+- `scripts/check_mobile_contract.py`
+- `scripts/mobile_audit.py`
+- `.github/workflows/mobile-audit.yml`
+
+PWA cache: `ilansehri-v1132`

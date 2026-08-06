@@ -1,0 +1,37 @@
+İLAN ŞEHRİ v1.13.2 — SİTE GENELİ MOBİL SİSTEM
+
+Bu sürüm:
+- Mobil iyileştirmeyi hesap, profil, giriş, kayıt, mesaj, teklif,
+  bildirim, destek, güvenli işlem, Tam Yönetim, Kazanç Ağı,
+  moderasyon ve yönetim ekranlarına yayar.
+- Ortak dokunma hedefi, form, kart, başlık ve yatay kaydırma
+  kuralları uygular.
+- 360, 390 ve 430 piksel ekranlarda gerçek Chromium görüntüsü alan
+  Playwright mobil denetim workflow'u ekler.
+- Ana GitHub Actions akışına mobil sözleşme kontrolü ekler.
+- Site genelindeki fiyatları Türkçe binlik ayırıcıyla tutarlı gösterir.
+- Masaüstü görünümünü ve Gemini sistemini değiştirmez.
+- Yeni migration içermez.
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. GitHub Desktop Summary:
+   İlan Şehri v1.13.2 site geneli mobil sistem
+4. Commit to main ve Push origin.
+5. Önce Django Kontrol workflow'unun yeşil olmasını bekleyin.
+6. Mobil Görsel Denetim ayrı çalışır. Bu workflow engelleyici değildir;
+   tamamlandığında ekran görüntülerini artifact olarak saklar.
+7. Django Kontrol yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+8. Mobil tarayıcıda sayfayı yenileyin. Eski görünüm kalırsa
+   Service Worker kaydını kaldırıp site verilerini temizleyin.
+
+Not:
+Yerel çalışma ortamında sabitlenmiş Django sürümü kurulamadığı için tam
+Django testleri burada çalıştırılmadı. Python/JavaScript/Bash/YAML,
+mobil sözleşme, CSS denge, temsilî Chromium görünümü ve ZIP bütünlüğü
+kontrol edildi. Tam uygulama testi GitHub Actions tarafından yapılacaktır.

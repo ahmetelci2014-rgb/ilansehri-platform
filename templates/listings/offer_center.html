@@ -10,9 +10,9 @@
         <div class="offer-listing-photo">{% with cover=offer.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ offer.listing.title }}">{% else %}<span>▣</span>{% endif %}{% endwith %}</div>
         <div class="offer-center-main">
           <div class="offer-card-head"><div><small>{% if user == offer.sender %}Satıcı: {{ offer.listing.owner.display_name }}{% else %}Alıcı: {{ offer.sender.display_name }}{% endif %}</small><h2><a href="{{ offer.listing.get_absolute_url }}">{{ offer.listing.title }}</a></h2></div><span class="offer-status status-{{ offer.status }}">{{ offer.get_status_display }}</span></div>
-          <div class="offer-current-price"><strong>{% if offer.amount %}{{ offer.amount|floatformat:0 }} TL{% else %}Tutar belirtilmedi{% endif %}</strong>{% if offer.counter_count %}<span>{{ offer.counter_count }} karşı teklif</span>{% endif %}</div>
+          <div class="offer-current-price"><strong>{% if offer.amount %}{{ offer.amount|floatformat:"0g" }} TL{% else %}Tutar belirtilmedi{% endif %}</strong>{% if offer.counter_count %}<span>{{ offer.counter_count }} karşı teklif</span>{% endif %}</div>
           <div class="offer-timeline">
-            {% for event in offer.events.all %}<div><span class="timeline-dot"></span><div><b>{{ event.actor.display_name|default:'Sistem' }}</b><em>{{ event.get_event_type_display }} · {{ event.created_at|date:'d.m H:i' }}</em>{% if event.amount %}<strong>{{ event.amount|floatformat:0 }} TL</strong>{% endif %}{% if event.message %}<p>{{ event.message }}</p>{% endif %}</div></div>{% empty %}<p>Teklif geçmişi bulunmuyor.</p>{% endfor %}
+            {% for event in offer.events.all %}<div><span class="timeline-dot"></span><div><b>{{ event.actor.display_name|default:'Sistem' }}</b><em>{{ event.get_event_type_display }} · {{ event.created_at|date:'d.m H:i' }}</em>{% if event.amount %}<strong>{{ event.amount|floatformat:"0g" }} TL</strong>{% endif %}{% if event.message %}<p>{{ event.message }}</p>{% endif %}</div></div>{% empty %}<p>Teklif geçmişi bulunmuyor.</p>{% endfor %}
           </div>
           {% if offer.status == 'pending' %}
             <div class="offer-response-row">
