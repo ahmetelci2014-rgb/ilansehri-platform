@@ -21,17 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
     viewButtons.forEach((button) => button.addEventListener("click", () => applyView(button.dataset.resultView)));
   }
 
-  const mainImage = document.querySelector("[data-v16-main-image]");
-  const galleryThumbs = document.querySelectorAll("[data-v16-gallery-thumb]");
-  galleryThumbs.forEach((button, index) => {
-    if (index === 0) button.classList.add("active");
-    button.addEventListener("click", () => {
-      if (!mainImage) return;
-      mainImage.src = button.dataset.v16GalleryThumb;
-      galleryThumbs.forEach((item) => item.classList.toggle("active", item === button));
-    });
-  });
-
   const wizard = document.querySelector("[data-v16-wizard]");
   if (!wizard) return;
 

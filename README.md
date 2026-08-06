@@ -1,15 +1,15 @@
 # İlan Şehri
 
-## v1.22 Mobil görsel düzen ve ilan kalitesi
+## v1.23 İlan detay ve mobil alıcı deneyimi
 
-- Ana sayfa kategori alanı, alt kategori kısayolları bulunan profesyonel kategori merkezine dönüştürüldü.
-- Ana vitrindeki görev ortağı sayacı kaldırıldı; aktif şehir ve ilan pazarı verileri öne çıkarıldı.
-- İlan kartlarında kategori, pazarlık, fotoğraf, satıcı ve mahalle bilgileri daha dengeli gösteriliyor.
-- İlan verme ekranına gerçek zamanlı ilerleme göstergesi ve yayın öncesi eksik kontrol listesi eklendi.
-- Ana sayfa araması şehir yanında ilçe girişini de destekliyor.
-- Mobil kart, kategori, fotoğraf ve ilan verme düzeni 360–430 px ekranlar için yeniden dengelendi.
+- İlan fotoğrafları ileri/geri düğmeleri, sayaç, klavye ve parmakla kaydırma desteğiyle gezilebilir.
+- Büyütülmüş galeri erişilebilir, kapatılabilir ve fotoğraflar arasında geçiş yapılabilir hale getirildi.
+- Satıcı kartında üyelik süresi, tamamlanan işlem, aktif ilan, doğrulama ve yanıt bilgileri birlikte gösteriliyor.
+- Mobil sabit işlem çubuğunda fiyat, mesaj ve teklif eylemleri tek elde erişilebilir hale getirildi.
+- Benzer ilanlar aynı kategori ve konuma öncelik verecek şekilde sıralanıyor.
+- İlan açıklaması, yaklaşık konum ve güvenli alışveriş uyarıları daha okunur hale getirildi.
 
-> Güncel sürüm: **v1.22.0** — mobil görsel düzen, ilan kartı ve ilan verme kalitesi güçlendirildi.
+> Güncel sürüm: **v1.23.0** — ilan detay sayfası ve mobil alıcı deneyimi güçlendirildi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
@@ -184,3 +184,7 @@ python scripts/mobile_audit.py --base-url http://127.0.0.1:8000 --output mobile-
 ```
 
 Ayrıntılar: `docs/MOBILE_AUDIT.md`
+
+
+## v1.23.0
+İlan detay galerisi, satıcı güven özeti, mobil alıcı işlem çubuğu ve kategori/konum odaklı benzer ilan akışı eklendi.

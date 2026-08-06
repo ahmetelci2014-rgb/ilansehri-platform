@@ -102,15 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  const mainImage = document.querySelector("[data-main-image]");
-  document.querySelectorAll("[data-gallery-thumb]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (!mainImage) return;
-      mainImage.src = button.dataset.galleryThumb;
-      document.querySelectorAll("[data-gallery-thumb]").forEach((item) => item.classList.remove("active"));
-      button.classList.add("active");
-    });
-  });
 
   const listingForm = document.querySelector("[data-listing-form]");
   const kindSelect = listingForm?.querySelector("#id_kind");
@@ -224,36 +215,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("[data-filter-open]")?.addEventListener("click", openFilter);
   document.querySelector("[data-filter-close]")?.addEventListener("click", closeFilter);
   filterOverlay?.addEventListener("click", closeFilter);
-
-  const gallery = document.querySelector("[data-gallery-lightbox]");
-  const lightboxImage = gallery?.querySelector("[data-lightbox-image]");
-  const mainImage = document.querySelector("[data-main-image]");
-  const openGallery = () => {
-    if (!gallery || !lightboxImage || !mainImage?.src) return;
-    lightboxImage.src = mainImage.src;
-    gallery.hidden = false;
-    document.body.classList.add("menu-open");
-  };
-  document.querySelector("[data-gallery-open]")?.addEventListener("click", (event) => {
-    if (event.target.closest("button,a")) return;
-    openGallery();
-  });
-  gallery?.querySelector("[data-gallery-close]")?.addEventListener("click", () => {
-    gallery.hidden = true;
-    document.body.classList.remove("menu-open");
-  });
-  gallery?.addEventListener("click", (event) => {
-    if (event.target === gallery) {
-      gallery.hidden = true;
-      document.body.classList.remove("menu-open");
-    }
-  });
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && gallery && !gallery.hidden) {
-      gallery.hidden = true;
-      document.body.classList.remove("menu-open");
-    }
-  });
 
   const actionDetails = document.querySelectorAll(".market-action-box");
   document.querySelector("[data-open-offer]")?.addEventListener("click", () => {

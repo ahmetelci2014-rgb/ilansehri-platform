@@ -9,103 +9,134 @@
 {% block og_image %}{% if share_image_url %}<meta property="og:image" content="{{ share_image_url }}">{% endif %}{% endblock %}
 {% block extra_head %}<script type="application/ld+json">{{ listing_schema_json|safe }}</script>{% endblock %}
 {% block content %}
-{% if listing.status != 'published' %}<div class="owner-status-banner"><div class="shell"><b>{{ listing.get_status_display }}</b><span>{{ listing.review_note|default:'Bu ilan yalnız ilan sahibi ve yetkili ekip tarafından görüntülenebilir.' }}</span></div></div>{% endif %}
-<div class="shell v16-detail">
-  <nav class="market-breadcrumb"><a href="{% url 'core:home' %}">Ana sayfa</a><span>›</span><a href="{% url 'listings:kind_landing' listing.kind %}">{{ listing.get_kind_display }}</a><span>›</span><b>{{ listing.title|truncatechars:48 }}</b></nav>
+{% if listing.status != 'published' %}
+<div class="owner-status-banner"><div class="shell"><b>{{ listing.get_status_display }}</b><span>{{ listing.review_note|default:'Bu ilan yalnız ilan sahibi ve yetkili ekip tarafından görüntülenebilir.' }}</span></div></div>
+{% endif %}
+<div class="shell v16-detail v123-detail-page" data-v123-detail-page>
+  <nav class="market-breadcrumb" aria-label="Sayfa yolu">
+    <a href="{% url 'core:home' %}">Ana sayfa</a><span>›</span>
+    <a href="{% url 'listings:kind_landing' listing.kind %}">{{ listing.get_kind_display }}</a><span>›</span>
+    {% if listing.category %}<a href="{% url 'listings:list' %}?category={{ listing.category_id }}&kind={{ listing.kind }}">{{ listing.category.name }}</a><span>›</span>{% endif %}
+    <b>{{ listing.title|truncatechars:48 }}</b>
+  </nav>
 
-  <header class="v16-detail-heading">
-    <div><div class="v16-detail-kickers"><span>{{ listing.get_action_display }}</span>{% if listing.is_featured %}<span class="featured">Öne çıkan</span>{% endif %}{% if listing.management_mode == 'full' %}<span>✓ İlan Şehri güvenceli</span>{% endif %}</div><h1>{{ listing.title }}</h1><div class="v16-detail-meta"><span>⌖ {{ listing.location_text }}</span><span>👁 {{ listing.view_count }} görüntüleme</span><span>♡ {{ listing.favorite_count }} favori</span><span>{{ listing.created_at|date:'d.m.Y' }}</span><span>İlan no: {{ listing.pk }}</span><span class="v17-quality-inline tone-{{ quality_profile.tone }}">{{ quality_profile.level }} bilgi · {{ quality_profile.score }}/100</span></div></div>
-    <div class="v16-detail-heading-actions"><button class="v16-circle-action" type="button" title="Paylaş" data-share-listing data-share-title="{{ listing.title }}" data-share-url="{{ canonical_url }}">↗</button><button class="v16-circle-action" type="button" title="Bağlantıyı kopyala" data-copy-listing data-copy-url="{{ canonical_url }}">⧉</button><form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_compared %} active{% endif %}" title="Karşılaştır">⇄</button></form>{% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_favorite %} active{% endif %}" title="Favori">{% if is_favorite %}♥{% else %}♡{% endif %}</button></form>{% endif %}</div>
+  <header class="v16-detail-heading v123-detail-heading">
+    <div>
+      <div class="v16-detail-kickers"><span>{{ listing.get_action_display }}</span>{% if listing.is_featured %}<span class="featured">Öne çıkan</span>{% endif %}{% if listing.management_mode == 'full' %}<span>✓ İlan Şehri güvenceli</span>{% endif %}</div>
+      <h1>{{ listing.title }}</h1>
+      <div class="v16-detail-meta"><span>⌖ {{ listing.location_text }}</span><span>👁 {{ listing.view_count }} görüntüleme</span><span>♡ {{ listing.favorite_count }} favori</span><span>{{ listing.created_at|date:'d.m.Y' }}</span><span>İlan no: {{ listing.pk }}</span></div>
+    </div>
+    <div class="v16-detail-heading-actions" aria-label="İlan işlemleri">
+      <button class="v16-circle-action" type="button" title="Paylaş" aria-label="İlanı paylaş" data-share-listing data-share-title="{{ listing.title }}" data-share-url="{{ canonical_url }}">↗</button>
+      <button class="v16-circle-action" type="button" title="Bağlantıyı kopyala" aria-label="Bağlantıyı kopyala" data-copy-listing data-copy-url="{{ canonical_url }}">⧉</button>
+      <form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_compared %} active{% endif %}" title="Karşılaştır" aria-label="Karşılaştırmaya ekle">⇄</button></form>
+      {% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_favorite %} active{% endif %}" title="Favori" aria-label="Favori durumunu değiştir">{% if is_favorite %}♥{% else %}♡{% endif %}</button></form>{% endif %}
+    </div>
   </header>
 
-  <div class="v113-mobile-price-summary" aria-label="İlan fiyat özeti">
-    <div>
-      <strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>
-      <small>{{ listing.location_text }} · {{ listing.created_at|timesince }} önce</small>
-    </div>
+  <div class="v113-mobile-price-summary v123-mobile-price-summary" aria-label="İlan fiyat özeti">
+    <div><strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><small>{{ listing.location_text }} · {{ listing.created_at|timesince }} önce</small></div>
     {% if listing.is_negotiable %}<span>Pazarlık var</span>{% elif listing.management_mode == 'full' %}<span>Güvenceli</span>{% else %}<span>{{ listing.get_action_display }}</span>{% endif %}
   </div>
 
   <div class="v131-mobile-facts" aria-label="Öne çıkan ilan özellikleri">
     {% if listing.kind == 'vehicle' %}
-      {% if listing.model_year %}<span><small>Model yılı</small><b>{{ listing.model_year }}</b></span>{% endif %}
-      {% if listing.mileage %}<span><small>Kilometre</small><b>{{ listing.mileage|floatformat:"0g" }} km</b></span>{% endif %}
-      {% if listing.transmission %}<span><small>Vites</small><b>{{ listing.get_transmission_display }}</b></span>{% endif %}
+      {% if listing.model_year %}<span><small>Model yılı</small><b>{{ listing.model_year }}</b></span>{% endif %}{% if listing.mileage %}<span><small>Kilometre</small><b>{{ listing.mileage|floatformat:"0g" }} km</b></span>{% endif %}{% if listing.transmission %}<span><small>Vites</small><b>{{ listing.get_transmission_display }}</b></span>{% endif %}
     {% elif listing.kind == 'real_estate' %}
-      {% if listing.room_count %}<span><small>Oda</small><b>{{ listing.room_count }}</b></span>{% endif %}
-      {% if listing.area_m2 %}<span><small>Alan</small><b>{{ listing.area_m2|floatformat:"0g" }} m²</b></span>{% endif %}
-      {% if listing.floor_location %}<span><small>Kat</small><b>{{ listing.floor_location }}</b></span>{% endif %}
+      {% if listing.room_count %}<span><small>Oda</small><b>{{ listing.room_count }}</b></span>{% endif %}{% if listing.area_m2 %}<span><small>Alan</small><b>{{ listing.area_m2|floatformat:"0g" }} m²</b></span>{% endif %}{% if listing.floor_location %}<span><small>Kat</small><b>{{ listing.floor_location }}</b></span>{% endif %}
     {% else %}
-      {% if listing.brand %}<span><small>Marka</small><b>{{ listing.brand|truncatechars:18 }}</b></span>{% endif %}
-      {% if listing.model_name %}<span><small>Model</small><b>{{ listing.model_name|truncatechars:18 }}</b></span>{% endif %}
-      {% if listing.condition %}<span><small>Durum</small><b>{{ listing.condition|truncatechars:18 }}</b></span>{% endif %}
-      {% if listing.delivery_type %}<span><small>Teslimat</small><b>{{ listing.get_delivery_type_display }}</b></span>{% endif %}
+      {% if listing.brand %}<span><small>Marka</small><b>{{ listing.brand|truncatechars:18 }}</b></span>{% endif %}{% if listing.model_name %}<span><small>Model</small><b>{{ listing.model_name|truncatechars:18 }}</b></span>{% endif %}{% if listing.condition %}<span><small>Durum</small><b>{{ listing.condition|truncatechars:18 }}</b></span>{% endif %}{% if listing.delivery_type %}<span><small>Teslimat</small><b>{{ listing.get_delivery_type_display }}</b></span>{% endif %}
     {% endif %}
   </div>
 
   {% include 'listings/_price_guide.html' with guide=price_guide variant='mobile' %}
+  {% if user == listing.owner and listing.status == 'published' %}<a class="v114-owner-match-card" href="{% url 'listings:matches' %}?tab={{ owner_match_tab|default:'wanted' }}"><div><span>◎</span><div><b>{% if owner_match_tab == 'wanted' %}Bu arama için {{ owner_match_count }} uygun ilan{% else %}Bu ilanı arayan {{ owner_match_count }} kullanıcı ilanı{% endif %}</b><small>Akıllı eşleşme sonuçlarını incele</small></div></div><strong>Sonuçları aç →</strong></a>{% endif %}
 
-  {% if user == listing.owner and listing.status == 'published' %}
-  <a class="v114-owner-match-card" href="{% url 'listings:matches' %}?tab={{ owner_match_tab|default:'wanted' }}">
-    <div><span>◎</span><div><b>{% if owner_match_tab == 'wanted' %}Bu arama için {{ owner_match_count }} uygun ilan{% else %}Bu ilanı arayan {{ owner_match_count }} kullanıcı ilanı{% endif %}</b><small>Akıllı eşleşme sonuçlarını incele</small></div></div><strong>Sonuçları aç →</strong>
-  </a>
-  {% endif %}
+  <section class="v16-detail-grid v123-detail-grid">
+    <div class="v123-detail-main">
+      <div class="v16-gallery-shell v123-gallery-shell" data-v123-gallery data-gallery-total="{{ gallery_count }}">
+        {% if gallery_count > 1 %}
+        <div class="v16-thumbs v123-gallery-thumbs" role="list" aria-label="İlan fotoğrafları">
+          {% for image in gallery_images %}<button type="button" role="listitem" class="{% if image.pk == cover_image_id %}active{% endif %}" data-v123-gallery-thumb data-gallery-index="{{ forloop.counter0 }}" data-gallery-src="{{ image.image.url }}" aria-label="{{ forloop.counter }}. fotoğrafı göster" {% if image.is_cover %}aria-current="true"{% endif %}><img src="{{ image.image.url }}" loading="lazy" alt="{{ image.alt_text|default:listing.title }} fotoğrafı {{ forloop.counter }}"></button>{% endfor %}
+        </div>
+        {% endif %}
+        <div class="v16-gallery-main v123-gallery-main" data-gallery-open data-v123-gallery-stage tabindex="0" aria-label="Fotoğraf galerisini büyüt">
+          {% with cover=listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ cover.alt_text|default:listing.title }}" loading="eager" fetchpriority="high" data-main-image data-v16-main-image data-v123-main-image>{% else %}<div class="market-card-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span><small>Bu ilana henüz fotoğraf eklenmemiş</small></div>{% endif %}{% endwith %}
+          {% if gallery_count %}<span class="v16-photo-counter v123-photo-counter"><b data-v123-gallery-counter>1 / {{ gallery_count }}</b><small>fotoğraf</small></span>{% endif %}
+          {% if gallery_count > 1 %}<button type="button" class="v123-gallery-arrow previous" data-v123-gallery-prev aria-label="Önceki fotoğraf">‹</button><button type="button" class="v123-gallery-arrow next" data-v123-gallery-next aria-label="Sonraki fotoğraf">›</button>{% endif %}
+          {% if gallery_count %}<span class="v123-gallery-hint">Büyütmek için dokun</span>{% endif %}
+        </div>
+      </div>
 
-  <section class="v16-detail-grid">
-    <div>
-      <div class="v16-gallery-shell">
-        {% if listing.images.count > 1 %}<div class="v16-thumbs">{% for image in listing.images.all %}<button type="button" data-gallery-thumb="{{ image.image.url }}" data-v16-gallery-thumb="{{ image.image.url }}"><img src="{{ image.image.url }}" alt="{{ listing.title }} fotoğrafı {{ forloop.counter }}"></button>{% endfor %}</div>{% endif %}
-        <div class="v16-gallery-main" data-gallery-open>{% with cover=listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ listing.title }}" data-main-image data-v16-main-image>{% else %}<div class="market-card-placeholder kind-{{ listing.kind }}"><span>{{ listing.get_kind_display }}</span></div>{% endif %}{% endwith %}{% if listing.images.count %}<span class="v16-photo-counter">▣ {{ listing.images.count }} fotoğraf</span>{% endif %}</div>
+      <div class="v123-buyer-assurance" aria-label="Alıcı için hızlı bilgiler">
+        <span><i>⌖</i><b>Yaklaşık konum</b><small>{{ listing.city }}{% if listing.district %} / {{ listing.district }}{% endif %}</small></span>
+        <span><i>🛡</i><b>Güven kontrolü</b><small>{{ seller_trust_profile.tier }}</small></span>
+        <span><i>💬</i><b>Yanıt bilgisi</b><small>{{ seller_trust_profile.response_label }}</small></span>
       </div>
 
       <nav class="v16-detail-nav" aria-label="İlan ayrıntıları"><a href="#aciklama">Açıklama</a>{% if listing.detail_items or listing.technical_features %}<a href="#ozellikler">Özellikler</a>{% endif %}{% if price_history %}<a href="#fiyat-gecmisi">Fiyat geçmişi</a>{% endif %}<a href="#konum">Konum</a>{% if owner_reviews %}<a href="#degerlendirmeler">Değerlendirmeler</a>{% endif %}</nav>
 
-      <a class="v131-mobile-seller-strip" href="{% url 'accounts:public_profile' listing.owner.username %}" aria-label="Satıcı profilini aç">
-        <span class="v131-mobile-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span>
-        <div><b>{{ listing.owner.display_name }}</b><small>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %} · ★ {{ listing.owner.average_rating }} · Güven {{ seller_trust_profile.score }}/100</small></div>
-        <i>›</i>
-      </a>
+      <a class="v131-mobile-seller-strip v123-mobile-seller-strip" href="{% url 'accounts:public_profile' listing.owner.username %}" aria-label="Satıcı profilini aç"><span class="v131-mobile-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span><div><b>{{ listing.owner.display_name }}</b><small>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %} · ★ {{ listing.owner.average_rating }} · Güven {{ seller_trust_profile.score }}/100</small></div><i>›</i></a>
 
       <div class="v16-detail-panels">
-        <article class="v16-detail-panel" id="aciklama"><h2>İlan açıklaması</h2><p>{{ listing.description|linebreaksbr }}</p></article>
+        <article class="v16-detail-panel v123-description-panel" id="aciklama"><div class="v123-panel-title"><div><span>İLAN AÇIKLAMASI</span><h2>İlan sahibinin açıklaması</h2></div><small>{{ listing.description|length }} karakter</small></div><div class="v123-description-copy">{{ listing.description|linebreaksbr }}</div></article>
         <article class="v16-detail-panel v17-quality-panel {% if user == listing.owner or user.is_staff %}v131-quality-owner{% else %}v131-quality-public{% endif %}" id="ilan-kalitesi"><div class="v17-quality-head"><div><span class="section-label">İLAN BİLGİ KALİTESİ</span><h2>{{ quality_profile.level }} · {{ quality_profile.score }}/100</h2><p>{{ quality_profile.passed_count }}/{{ quality_profile.total_count }} kalite ölçütü tamamlandı.</p></div><div class="v17-quality-ring tone-{{ quality_profile.tone }}" style="--quality:{{ quality_profile.score }}%"><strong>{{ quality_profile.score }}</strong></div></div><div class="v17-quality-checks">{% for check in quality_profile.checks %}<span class="{% if check.passed %}passed{% else %}missing{% endif %}">{% if check.passed %}✓{% else %}○{% endif %} {{ check.label }}</span>{% endfor %}</div>{% if user == listing.owner or user.is_staff %}{% if quality_profile.suggestions %}<div class="v17-quality-suggestions"><b>İlanı güçlendirmek için</b>{% for suggestion in quality_profile.suggestions|slice:':3' %}<p>• {{ suggestion }}</p>{% endfor %}</div>{% endif %}{% endif %}</article>
         {% if listing.detail_items or listing.technical_features %}<article class="v16-detail-panel" id="ozellikler"><h2>İlan özellikleri</h2>{% if listing.detail_items %}<dl class="market-spec-grid">{% for label,value in listing.detail_items %}<div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}</dl>{% endif %}{% if listing.technical_features %}<div class="ai-detail-feature-list"><h3>Ek teknik bilgiler</h3><ul>{% for feature in listing.technical_features %}<li>✓ {{ feature }}</li>{% endfor %}</ul></div>{% endif %}{% if listing.search_tags %}<div class="ai-detail-tags">{% for tag in listing.search_tags %}<span>#{{ tag }}</span>{% endfor %}</div>{% endif %}</article>{% endif %}
         {% if price_history %}<article class="v16-detail-panel price-history-panel" id="fiyat-gecmisi"><div class="market-panel-head"><h2>Fiyat geçmişi</h2><span>Son {{ price_history|length }} değişiklik</span></div><div class="price-history-list">{% for change in price_history %}<div class="{% if change.is_drop %}drop{% else %}rise{% endif %}"><span>{% if change.is_drop %}↓{% else %}↑{% endif %}</span><b>{{ change.old_price|floatformat:"0g" }} TL</b><em>→</em><strong>{{ change.new_price|floatformat:"0g" }} TL</strong><small>{{ change.created_at|date:'d.m.Y H:i' }}</small></div>{% endfor %}</div></article>{% endif %}
-        <article class="v16-detail-panel" id="konum"><h2>Yaklaşık konum</h2><div class="detail-location-box"><span>⌖</span><div><b>{{ listing.location_text }}</b><p>Güvenlik için açık adres gösterilmez. Buluşma noktasını satıcıyla mesajlaşarak belirleyebilirsin.</p></div></div></article>
-        {% if owner_reviews %}<article class="v16-detail-panel" id="degerlendirmeler"><div class="market-panel-head"><h2>Satıcı değerlendirmeleri</h2><a href="{% url 'accounts:public_profile' listing.owner.username %}">Satıcı profili →</a></div><div class="seller-review-grid">{% for review in owner_reviews %}<div><b>★ {{ review.rating }}/5</b><p>{{ review.comment|default:'Puan verildi.'|truncatechars:150 }}</p><small>{{ review.reviewer.display_name }} · {{ review.created_at|date:'d.m.Y' }}</small></div>{% endfor %}</div></article>{% endif %}
+        <article class="v16-detail-panel" id="konum"><h2>Yaklaşık konum</h2><div class="detail-location-box v123-location-box"><span>⌖</span><div><b>{{ listing.location_text }}</b><p>Güvenlik için açık adres gösterilmez. Buluşma noktasını platform mesajları üzerinden belirle.</p><a href="{% url 'listings:list' %}?city={{ listing.city|urlencode }}{% if listing.district %}&district={{ listing.district|urlencode }}{% endif %}">Bu bölgedeki diğer ilanları gör →</a></div></div></article>
+        {% if owner_reviews %}<article class="v16-detail-panel" id="degerlendirmeler"><div class="market-panel-head"><h2>Satıcı değerlendirmeleri</h2><a href="{% url 'accounts:public_profile' listing.owner.username %}">Tüm profil →</a></div><div class="seller-review-grid">{% for review in owner_reviews %}<div><b>★ {{ review.rating }}/5</b><p>{{ review.comment|default:'Puan verildi.'|truncatechars:150 }}</p><small>{{ review.reviewer.display_name }} · {{ review.created_at|date:'d.m.Y' }}</small></div>{% endfor %}</div></article>{% endif %}
       </div>
     </div>
 
-    <aside class="v16-summary-card">
-      <div class="v16-summary-price">{% with price_change=listing.latest_price_change %}<strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>{% if price_change and price_change.is_drop %}<del>{{ price_change.old_price|floatformat:"0g" }} TL</del><b>↓ %{{ listing.price_drop_percent }} düştü</b>{% endif %}{% endwith %}<div class="v16-summary-note">{% if listing.is_negotiable %}<span>✓ Pazarlık payı var</span>{% endif %}{% if listing.delivery_type %}<span>{{ listing.get_delivery_type_display }}</span>{% endif %}{% if listing.condition %}<span>{{ listing.condition }}</span>{% endif %}</div></div>
+    <aside class="v16-summary-card v123-summary-card" data-v123-summary-card>
+      <div class="v16-summary-price v123-summary-price">{% with price_change=listing.latest_price_change %}<small>{{ listing.get_action_display }}</small><strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>{% if price_change and price_change.is_drop %}<div class="v123-price-drop"><del>{{ price_change.old_price|floatformat:"0g" }} TL</del><b>↓ %{{ listing.price_drop_percent }} düştü</b></div>{% endif %}{% endwith %}<div class="v16-summary-note">{% if listing.is_negotiable %}<span>✓ Pazarlık payı var</span>{% endif %}{% if listing.delivery_type %}<span>{{ listing.get_delivery_type_display }}</span>{% endif %}{% if listing.condition %}<span>{{ listing.condition }}</span>{% endif %}</div></div>
 
       {% include 'listings/_price_guide.html' with guide=price_guide variant='aside' %}
 
-      <a class="v16-seller-card v118-seller-card" href="{% url 'accounts:public_profile' listing.owner.username %}"><span class="v16-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span><div><b>{{ listing.owner.display_name }}</b><small>★ {{ listing.owner.average_rating }} · {{ listing.owner.rating_count }} değerlendirme</small><em>{{ seller_trust_profile.tier }} · {{ seller_trust_profile.score }}/100</em><span>{{ seller_trust_profile.response_label }}</span></div><i>›</i></a>
+      <section class="v123-trust-card tone-{{ seller_trust_profile.tone }}" aria-label="Satıcı güven özeti">
+        <a class="v16-seller-card v118-seller-card" href="{% url 'accounts:public_profile' listing.owner.username %}"><span class="v16-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span><div><b>{{ listing.owner.display_name }}</b><small>★ {{ listing.owner.average_rating }} · {{ listing.owner.rating_count }} değerlendirme</small><em>{{ seller_trust_profile.tier }} · {{ seller_trust_profile.score }}/100</em></div><i>›</i></a>
+        <div class="v123-trust-facts"><span><b>{{ seller_trust_profile.account_age_label }}</b><small>Üyelik</small></span><span><b>{{ seller_trust_profile.completed_transactions }}</b><small>Tamamlanan işlem</small></span><span><b>{{ seller_active_listing_count }}</b><small>Aktif ilan</small></span></div>
+        <p>{{ seller_trust_profile.response_label }}</p>
+        {% if seller_trust_profile.badges %}<div class="v123-trust-badges">{% for badge in seller_trust_profile.badges|slice:':4' %}<span>✓ {{ badge }}</span>{% endfor %}</div>{% endif %}
+      </section>
 
       {% if user.is_authenticated and user != listing.owner %}<form class="detail-follow-form" method="post" action="{% url 'accounts:toggle_follow' listing.owner.pk %}">{% csrf_token %}<button class="market-secondary-button full{% if is_following %} active{% endif %}">{% if is_following %}✓ Satıcı takip ediliyor{% else %}＋ Satıcıyı takip et{% endif %}</button></form>{% endif %}
 
-      <div class="v16-contact-stack">
+      <div class="v16-contact-stack v123-contact-stack">
         {% if user == listing.owner %}<a class="button full" href="{% url 'listings:update' listing.slug %}">İlanı düzenle</a><a class="market-secondary-button full" href="{% url 'listings:offer_center' %}">Teklif Merkezini aç</a>
         {% elif listing.status != 'published' %}<div class="notice warning">Bu ilan henüz yayında değil.</div>
         {% elif user.is_authenticated %}
           {% if not blocked_between %}
-            {% if my_pending_offer %}<div class="pending-offer-card"><span>Devam eden pazarlığın</span><strong>{% if my_pending_offer.amount %}{{ my_pending_offer.amount|floatformat:"0g" }} TL{% else %}Tutar belirtilmedi{% endif %}</strong><p>{% if my_pending_offer.current_recipient_id == user.pk %}Yanıt sırası sende.{% else %}Satıcının yanıtı bekleniyor.{% endif %}</p><a class="button full" href="{% url 'listings:offer_center' %}">Pazarlığı aç</a></div>{% else %}<details class="market-action-box" open><summary>🤝 Fiyat teklifi ver</summary><form method="post">{% csrf_token %}{{ form.as_p }}<button class="button full">Teklifi gönder</button></form></details>{% endif %}
-            <details class="market-action-box" id="message-box"{% if message_safety_pending %} open{% endif %}><summary>💬 Satıcıya mesaj gönder</summary><form method="post" enctype="multipart/form-data" action="{% url 'listings:start_conversation' listing.slug %}" data-message-safety-form>{% csrf_token %}{% include 'listings/_message_form_fields.html' with form=message_form %}<button class="button full">Mesajı güvenle gönder</button></form></details>
+            {% if my_pending_offer %}<div class="pending-offer-card"><span>Devam eden pazarlığın</span><strong>{% if my_pending_offer.amount %}{{ my_pending_offer.amount|floatformat:"0g" }} TL{% else %}Tutar belirtilmedi{% endif %}</strong><p>{% if my_pending_offer.current_recipient_id == user.pk %}Yanıt sırası sende.{% else %}İlan sahibinin yanıtı bekleniyor.{% endif %}</p><a class="button full" href="{% url 'listings:offer_center' %}">Pazarlığı aç</a></div>{% else %}<details class="market-action-box" data-v123-offer-box><summary>🤝 Fiyat teklifi ver</summary><form method="post">{% csrf_token %}{{ form.as_p }}<button class="button full">Teklifi gönder</button></form></details>{% endif %}
+            <details class="market-action-box" id="message-box" data-v123-message-box{% if message_safety_pending %} open{% endif %}><summary>💬 {{ contact_target_label }} mesaj gönder</summary><form method="post" enctype="multipart/form-data" action="{% url 'listings:start_conversation' listing.slug %}" data-message-safety-form>{% csrf_token %}{% include 'listings/_message_form_fields.html' with form=message_form %}<button class="button full">Mesajı güvenle gönder</button></form></details>
           {% else %}<div class="notice warning">Bu kullanıcıyla iletişim kurulamıyor.</div>{% endif %}
         {% else %}<a class="button full" href="{% url 'login' %}?next={{ request.path }}">Mesaj ve teklif için giriş yap</a>{% endif %}
       </div>
 
+      <div class="v123-safe-buying"><b>Güvenli işlem için</b><p>Ürünü görmeden kapora gönderme; ödeme ve kişisel bilgi taleplerini platform dışında sürdürme.</p></div>
       <div class="v16-safety v118-listing-safety tone-{{ listing_safety_profile.tone }}"><b>🛡 {% if user == listing.owner or user.is_staff %}{{ listing_safety_profile.label }}{% else %}Güvenli alışveriş koruması{% endif %}</b><p>{{ listing_safety_profile.public_advice }}</p>{% if user == listing.owner or user.is_staff %}{% if listing_safety_profile.flags %}<details><summary>İnceleme işaretlerini gör</summary><ul>{% for flag in listing_safety_profile.flags %}<li>{{ flag }}</li>{% endfor %}</ul></details>{% endif %}{% endif %}</div>
       {% if user.is_authenticated and user != listing.owner %}<details class="detail-report"><summary>İlanı şikâyet et</summary><form method="post" action="{% url 'listings:report' listing.slug %}">{% csrf_token %}{{ report_form.as_p }}<button class="market-secondary-button full">Şikâyeti gönder</button></form></details>{% endif %}
     </aside>
   </section>
 
-  {% if similar_listings %}<section class="v16-feed"><div class="v16-section-heading"><div><span class="v16-feed-label">BENZER SEÇENEKLER</span><h2>Benzer ilanlar</h2><p>{{ listing.city }} ve çevresindeki alternatifler.</p></div><a href="{% url 'listings:list' %}?kind={{ listing.kind }}&city={{ listing.city|urlencode }}">Tümünü gör →</a></div><div class="market-card-grid horizontal-mobile">{% for item in similar_listings %}{% include 'listings/_card.html' with listing=item %}{% endfor %}</div></section>{% endif %}
+  {% if similar_listings %}<section class="v16-feed v123-related-feed"><div class="v16-section-heading"><div><span class="v16-feed-label">KATEGORİ VE KONUMA GÖRE</span><h2>Sana yakın benzer ilanlar</h2><p>Önce {{ listing.category.name }} kategorisi ve {{ listing.city }} konumu dikkate alındı.</p></div><a href="{% url 'listings:list' %}?category={{ listing.category_id }}&kind={{ listing.kind }}&city={{ listing.city|urlencode }}">Tümünü gör →</a></div><div class="market-card-grid horizontal-mobile">{% for item in similar_listings %}{% include 'listings/_card.html' with listing=item %}{% endfor %}</div></section>{% endif %}
   {% if seller_other_listings %}<section class="v16-feed"><div class="v16-section-heading"><div><span class="v16-feed-label">SATICI VİTRİNİ</span><h2>Bu satıcının diğer ilanları</h2><p>{{ listing.owner.display_name }} tarafından yayınlananlar.</p></div><a href="{% url 'accounts:public_profile' listing.owner.username %}">Satıcı profilini aç →</a></div><div class="market-card-grid horizontal-mobile">{% for item in seller_other_listings %}{% include 'listings/_card.html' with listing=item %}{% endfor %}</div></section>{% endif %}
 </div>
 
-{% if listing.status == 'published' and user != listing.owner %}<div class="mobile-contact-bar">{% if user.is_authenticated and not blocked_between %}<a href="#message-box" data-open-message>Mesaj gönder</a><button type="button" data-open-offer>Teklif ver</button>{% else %}<a href="{% url 'login' %}?next={{ request.path }}">Giriş yap ve iletişime geç</a>{% endif %}</div>{% endif %}
+{% if listing.status == 'published' and user != listing.owner %}
+<div class="mobile-contact-bar v123-mobile-contact-bar" data-v123-mobile-contact-bar>
+  <div class="v123-mobile-contact-price"><small>{{ listing.get_action_display }}</small><strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat yok{% endif %}</strong></div>
+  {% if user.is_authenticated %}
+    {% if blocked_between %}<span class="wide disabled">İletişim kullanılamıyor</span>
+    {% else %}<a href="#message-box" data-open-message>{{ contact_target_label }} yaz</a>{% if my_pending_offer %}<a href="{% url 'listings:offer_center' %}">Pazarlığı aç</a>{% else %}<button type="button" data-open-offer>Teklif ver</button>{% endif %}{% endif %}
+  {% else %}<a class="wide" href="{% url 'login' %}?next={{ request.path }}">Giriş yap ve iletişime geç</a>{% endif %}
+</div>
+{% endif %}
 <div class="v17-copy-toast" data-copy-toast hidden>İlan bağlantısı kopyalandı</div>
-<div class="gallery-lightbox" data-gallery-lightbox hidden><button type="button" data-gallery-close>×</button><img alt="{{ listing.title }}" data-lightbox-image></div>
+<div class="gallery-lightbox v123-gallery-lightbox" data-gallery-lightbox data-v123-lightbox hidden role="dialog" aria-modal="true" aria-label="İlan fotoğraf galerisi" tabindex="-1">
+  <button type="button" class="v123-lightbox-close" data-gallery-close aria-label="Galeriyi kapat">×</button>
+  {% if gallery_count > 1 %}<button type="button" class="v123-lightbox-arrow previous" data-v123-lightbox-prev aria-label="Önceki fotoğraf">‹</button>{% endif %}
+  <figure><img alt="{{ listing.title }}" data-lightbox-image><figcaption><b data-v123-lightbox-counter>1 / {{ gallery_count }}</b><span>{{ listing.title|truncatechars:80 }}</span></figcaption></figure>
+  {% if gallery_count > 1 %}<button type="button" class="v123-lightbox-arrow next" data-v123-lightbox-next aria-label="Sonraki fotoğraf">›</button>{% endif %}
+</div>
 {% endblock %}

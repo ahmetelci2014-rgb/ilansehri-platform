@@ -1,0 +1,54 @@
+{
+  "version": "v1.23.0",
+  "base_version": "v1.22.0",
+  "title": "İlan detay ve mobil alıcı deneyimi",
+  "created_at_utc": "2026-08-06T14:21:37+00:00",
+  "schema_change": false,
+  "migration_required": false,
+  "expected_mobile_audit_pages": 150,
+  "source_test_method_count": 139,
+  "added_files": [
+    "V1.23.0-DENETIM-RAPORU.md",
+    "V1.23.0-MANIFEST.json",
+    "V1.23.0-YUKLEME.txt",
+    "docs/DETAIL_EXPERIENCE_V123.md",
+    "static/css/v123-detail-experience.css",
+    "static/js/v123-detail-experience.js"
+  ],
+  "modified_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/tests.py",
+    "apps/core/views.py",
+    "apps/listings/views.py",
+    "scripts/check_mobile_contract.py",
+    "scripts/mobile_audit.py",
+    "static/js/app.js",
+    "static/js/v132-mobile-system.js",
+    "static/js/v16-premium.js",
+    "templates/base.html",
+    "templates/listings/detail.html"
+  ],
+  "deleted_files": [],
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_node_check": "passed",
+    "bash_syntax": "passed",
+    "json_parse": "passed",
+    "css_balance": "passed",
+    "template_balance": "passed",
+    "mobile_contract": "passed",
+    "django_tests": "pending_github_actions",
+    "playwright_mobile_audit": "pending_github_actions",
+    "update_apply_compare": "passed",
+    "full_package_compare": "passed",
+    "zip_integrity": "passed"
+  },
+  "notes": [
+    "Mevcut veriler silinmez ve migration gerekmez.",
+    "Benzer ilanlar aynı kategori ve konuma öncelik verir.",
+    "Mobil denetim ilan detayını ziyaretçi, alıcı ve ilan sahibi rollerinde kontrol eder.",
+    "Eski iki galeri dinleyicisi kaldırılmış ve galeri davranışı v123 motorunda birleştirilmiştir."
+  ]
+}

@@ -1,4 +1,12 @@
-# Değişiklik Günlüğü
+# İlan Şehri Değişiklik Günlüğü
+
+## v1.23.0 — İlan detay ve mobil alıcı deneyimi
+- Fotoğraf galerisine ileri/geri gezinme, aktif sayaç, klavye ve dokunmatik kaydırma eklendi.
+- Büyütülmüş galeri erişilebilir diyalog yapısına ve fotoğraf sayacına geçirildi.
+- Satıcı güven özeti; üyelik süresi, işlem, aktif ilan, doğrulama ve yanıt bilgileriyle güçlendirildi.
+- Mobil sabit işlem çubuğuna fiyat özeti, mesaj ve teklif eylemleri eklendi.
+- Benzer ilanlar kategori ve konum önceliğiyle sıralanıyor.
+- Açıklama, yaklaşık konum ve güvenli işlem uyarıları daha okunur hale getirildi.
 
 ## v1.22.0 — Mobil görsel düzen ve ilan kalitesi
 

@@ -46,6 +46,7 @@ PUBLIC_ROUTES = (
 
 ROLE_ROUTES = {
     "buyer": (
+        ("listing-detail", "/ilanlar/demo-telefon/"),
         ("account", "/hesap/hesabim/"),
         ("profile", "/hesap/profilim/"),
         ("settings", "/hesap/ayarlar/"),
@@ -63,6 +64,7 @@ ROLE_ROUTES = {
         ("support-create", "/yardim/talep/yeni/"),
     ),
     "seller": (
+        ("listing-detail", "/ilanlar/demo-telefon/"),
         ("account", "/hesap/hesabim/"),
         ("new-listing", "/ilanlar/yeni/"),
         ("drafts", "/ilanlar/taslaklarim/"),

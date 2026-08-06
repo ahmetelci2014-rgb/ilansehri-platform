@@ -727,15 +727,50 @@ class ListingDetailView(FormMixin, DetailView):
             .exclude(pk=self.object.pk)
             .select_related("owner", "category")
             .prefetch_related("images", "price_history")
+            .order_by("-is_featured", "-published_at", "-created_at")
         )
-        same_city = similar_base.filter(city__iexact=self.object.city)[:8]
-        context["similar_listings"] = list(same_city) or list(similar_base[:8])
+        # Önce aynı kategori ve konum, sonra aynı kategori ve aynı şehir gelir.
+        # Böylece “benzer ilan” alanı yalnız tür eşleşmesine dayanmaz.
+        similar_rows = []
+        similar_ids = set()
+        similar_buckets = (
+            similar_base.filter(category_id=self.object.category_id, city__iexact=self.object.city),
+            similar_base.filter(category_id=self.object.category_id),
+            similar_base.filter(city__iexact=self.object.city),
+            similar_base,
+        )
+        for bucket in similar_buckets:
+            for item in bucket[:12]:
+                if item.pk in similar_ids:
+                    continue
+                similar_rows.append(item)
+                similar_ids.add(item.pk)
+                if len(similar_rows) >= 8:
+                    break
+            if len(similar_rows) >= 8:
+                break
+        context["similar_listings"] = similar_rows
         context["seller_other_listings"] = (
             Listing.objects.filter(_active_listing_q(), owner=self.object.owner)
             .exclude(pk=self.object.pk)
             .select_related("owner", "category")
             .prefetch_related("images", "price_history")[:6]
         )
+        context["seller_active_listing_count"] = Listing.objects.filter(
+            _active_listing_q(), owner=self.object.owner
+        ).count()
+        context["gallery_images"] = list(self.object.images.all())
+        context["gallery_count"] = len(context["gallery_images"])
+        detail_cover = self.object.cover_image
+        context["cover_image_id"] = detail_cover.pk if detail_cover else None
+        if self.object.kind == Listing.Kind.SERVICE:
+            context["contact_target_label"] = "Hizmet verene"
+        elif self.object.kind == Listing.Kind.JOB:
+            context["contact_target_label"] = "İlan sahibine"
+        elif self.object.kind == Listing.Kind.NEED:
+            context["contact_target_label"] = "Talep sahibine"
+        else:
+            context["contact_target_label"] = "Satıcıya"
         if user.is_authenticated:
             context["favorite_ids"] = set(
                 Favorite.objects.filter(user=user).values_list("listing_id", flat=True)

@@ -89,6 +89,8 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "js/v121-discovery.js")
         self.assertContains(response, "css/v122-market-polish.css")
         self.assertContains(response, "js/v122-market-polish.js")
+        self.assertContains(response, "css/v123-detail-experience.css")
+        self.assertContains(response, "js/v123-detail-experience.js")
         self.assertContains(response, "data-v122-category-hub")
         self.assertContains(response, "aktif şehir")
         self.assertContains(response, "css/v14-matching.css")
@@ -105,6 +107,9 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "v113-mobile-price-summary")
         self.assertContains(response, "v131-mobile-facts")
         self.assertContains(response, "v131-mobile-seller-strip")
+        self.assertContains(response, "data-v123-gallery")
+        self.assertContains(response, "data-v123-summary-card")
+        self.assertContains(response, "data-v123-mobile-contact-bar")
         self.assertContains(response, "12.500 TL")
 
     def test_listing_list_contains_mobile_quick_filters_and_result_summary(self):
@@ -136,6 +141,8 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "/static/js/v121-discovery.js")
         self.assertContains(response, "/static/css/v122-market-polish.css")
         self.assertContains(response, "/static/js/v122-market-polish.js")
+        self.assertContains(response, "/static/css/v123-detail-experience.css")
+        self.assertContains(response, "/static/js/v123-detail-experience.js")
 
 
 class MobileSystemContractTests(TestCase):
