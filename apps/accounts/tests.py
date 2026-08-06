@@ -156,8 +156,10 @@ class AccountFlowTests(TestCase):
                 "in_app_offers": "on",
                 "in_app_price_drops": "on",
                 "in_app_follows": "on",
+                "in_app_matches": "on",
                 "in_app_reviews": "on",
                 "email_offers": "on",
+                "email_matches": "on",
                 "email_system": "on",
                 "digest_frequency": NotificationPreference.DigestFrequency.WEEKLY,
             },
@@ -166,6 +168,8 @@ class AccountFlowTests(TestCase):
         preference.refresh_from_db()
         self.assertFalse(preference.in_app_messages)
         self.assertTrue(preference.email_offers)
+        self.assertTrue(preference.in_app_matches)
+        self.assertTrue(preference.email_matches)
         self.assertEqual(
             preference.digest_frequency, NotificationPreference.DigestFrequency.WEEKLY
         )

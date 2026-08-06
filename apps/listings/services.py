@@ -268,6 +268,19 @@ def notify_followers_new_listing(listing: Listing) -> int:
     return created
 
 
+def notify_listing_publication(listing: Listing) -> dict:
+    """Run every non-blocking publication notification and matching hook once."""
+    follower_count = notify_followers_new_listing(listing)
+    from .matching import sync_listing_matches
+
+    match_result = sync_listing_matches(listing, notify=True)
+    return {
+        "followers": follower_count,
+        "matches_created": match_result["created"],
+        "matches_updated": match_result["updated"],
+    }
+
+
 @db_transaction.atomic
 def notify_price_drop_favorites(history: ListingPriceHistory) -> int:
     locked_history = (
@@ -471,6 +484,9 @@ def finalize_transaction(transaction: Transaction) -> None:
         status=Listing.Status.COMPLETED,
         updated_at=timezone.now(),
     )
+    from .matching import sync_listing_matches
+
+    sync_listing_matches(transaction.listing, notify=False)
     for user_id in {transaction.buyer_id, transaction.seller_id}:
         from apps.accounts.models import User
 

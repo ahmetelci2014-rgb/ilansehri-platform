@@ -26,8 +26,8 @@ def require(text: str, needle: str, source: str) -> None:
 
 def main() -> int:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if version != "v1.13.2":
-        fail(f"VERSION v1.13.2 olmalı, bulundu: {version}")
+    if version != "v1.14.0":
+        fail(f"VERSION v1.14.0 olmalı, bulundu: {version}")
 
     base = (ROOT / "templates/base.html").read_text(encoding="utf-8")
     views = (ROOT / "apps/core/views.py").read_text(encoding="utf-8")
@@ -37,11 +37,13 @@ def main() -> int:
 
     require(base, "css/v132-mobile-system.css", "templates/base.html")
     require(base, "js/v132-mobile-system.js", "templates/base.html")
-    require(base, "v1.13.2", "templates/base.html")
-    require(views, 'const CACHE = "ilansehri-v1132";', "apps/core/views.py")
+    require(base, "v1.14.0", "templates/base.html")
+    require(views, 'const CACHE = "ilansehri-v1140";', "apps/core/views.py")
     require(views, "/static/css/v132-mobile-system.css", "apps/core/views.py")
+    require(base, "css/v14-matching.css", "templates/base.html")
+    require(views, "/static/css/v14-matching.css", "apps/core/views.py")
     require(views, "/static/js/v132-mobile-system.js", "apps/core/views.py")
-    require(views, '"version": "1.13.2"', "apps/core/views.py")
+    require(views, '"version": "1.14.0"', "apps/core/views.py")
 
     required_css_groups = (
         "body.page-dashboard .v16-account-layout",
@@ -96,7 +98,7 @@ def main() -> int:
     if offenders:
         fail("Mobil taşma riski taşıyan inline genişlikler: " + ", ".join(offenders))
 
-    print("Mobil sözleşme kontrolü başarılı: v1.13.2")
+    print("Mobil sözleşme kontrolü başarılı: v1.14.0")
     return 0
 
 

@@ -46,6 +46,7 @@ from .models import (
     Listing,
     ListingDraft,
     ListingImage,
+    ListingMatch,
     ListingPriceHistory,
     ListingReport,
     Message,
@@ -63,7 +64,7 @@ from .services import (
     counter_offer,
     create_offer_event,
     create_notification,
-    notify_followers_new_listing,
+    notify_listing_publication,
     notify_price_drop_favorites,
     optimize_listing_image,
     record_price_change,
@@ -71,6 +72,7 @@ from .services import (
     refresh_user_rating,
     reject_offer,
 )
+from .matching import blocked_owner_ids, refresh_user_matches, sync_listing_matches
 
 
 def _safe_int(value):
@@ -537,6 +539,7 @@ class ListingDetailView(FormMixin, DetailView):
             if obj.status == Listing.Status.PUBLISHED and obj.expires_at and obj.expires_at <= timezone.now():
                 Listing.objects.filter(pk=obj.pk).update(status=Listing.Status.EXPIRED, updated_at=timezone.now())
                 obj.status = Listing.Status.EXPIRED
+                sync_listing_matches(obj, notify=False)
             if not self.request.user.is_authenticated or not (self.request.user == obj.owner or self.request.user.is_staff):
                 raise Http404
         session_key = f"viewed_listing_{obj.pk}"
@@ -598,6 +601,27 @@ class ListingDetailView(FormMixin, DetailView):
             )
         else:
             context["favorite_ids"] = set()
+        context["owner_match_count"] = 0
+        if user.is_authenticated and user == self.object.owner:
+            excluded_owner_ids = blocked_owner_ids(user.pk)
+            if self.object.action in {Listing.Action.WANTED, Listing.Action.SERVICE_REQUEST, Listing.Action.JOB_REQUEST} or self.object.kind == Listing.Kind.NEED:
+                context["owner_match_count"] = (
+                    self.object.wanted_matches.filter(offered_listing__status=Listing.Status.PUBLISHED)
+                    .filter(Q(offered_listing__expires_at__isnull=True) | Q(offered_listing__expires_at__gt=timezone.now()))
+                    .exclude(wanted_status=ListingMatch.Status.DISMISSED)
+                    .exclude(offered_listing__owner_id__in=excluded_owner_ids)
+                    .count()
+                )
+                context["owner_match_tab"] = "wanted"
+            else:
+                context["owner_match_count"] = (
+                    self.object.offered_matches.filter(wanted_listing__status=Listing.Status.PUBLISHED)
+                    .filter(Q(wanted_listing__expires_at__isnull=True) | Q(wanted_listing__expires_at__gt=timezone.now()))
+                    .exclude(offered_status=ListingMatch.Status.DISMISSED)
+                    .exclude(wanted_listing__owner_id__in=excluded_owner_ids)
+                    .count()
+                )
+                context["owner_match_tab"] = "offered"
         context["quality_profile"] = assess_listing_quality(self.object)
         context["canonical_url"] = self.request.build_absolute_uri(self.object.get_absolute_url())
         cover = self.object.cover_image
@@ -758,7 +782,7 @@ class ListingCreateView(LoginRequiredMixin, CreateView):
         if self.object.status == Listing.Status.REVIEW:
             messages.success(self.request, "İlanın kaydedildi ve güvenlik incelemesine gönderildi.")
         else:
-            notify_followers_new_listing(self.object)
+            notify_listing_publication(self.object)
             messages.success(self.request, "İlanın yayınlandı.")
         draft = self.get_draft()
         if draft:
@@ -811,6 +835,8 @@ class ListingUpdateView(OwnerListingMixin, UpdateView):
             form.instance.status = Listing.Status.REVIEW
             form.instance.review_note = ""
         response = super().form_valid(form)
+        if self.object.status != Listing.Status.PUBLISHED:
+            sync_listing_matches(self.object, notify=False)
         record_price_change(
             listing=self.object,
             old_price=previous_price,
@@ -855,7 +881,7 @@ def change_listing_status(request, slug, action):
         listing.expires_at = timezone.now() + timedelta(days=60)
         listing.renewal_count += 1
         listing.save(update_fields=["status", "published_at", "expires_at", "renewal_count", "updated_at"])
-        notify_followers_new_listing(listing)
+        notify_listing_publication(listing)
         messages.success(request, "İlan yeniden yayınlandı.")
         return redirect("accounts:dashboard")
     if action not in allowed:
@@ -863,6 +889,7 @@ def change_listing_status(request, slug, action):
         return redirect("accounts:dashboard")
     listing.status, message = allowed[action]
     listing.save(update_fields=["status", "updated_at"])
+    sync_listing_matches(listing, notify=False)
     messages.success(request, message)
     return redirect("accounts:dashboard")
 
@@ -1150,7 +1177,11 @@ def transaction_action(request, public_id, action):
             transaction.status = Transaction.Status.CANCELLED
             transaction.cancelled_at = timezone.now()
             transaction.save(update_fields=["status", "cancelled_at", "updated_at"])
-            Listing.objects.filter(pk=transaction.listing_id).update(status=Listing.Status.PAUSED)
+            Listing.objects.filter(pk=transaction.listing_id).update(
+                status=Listing.Status.PAUSED,
+                updated_at=timezone.now(),
+            )
+            sync_listing_matches(transaction.listing, notify=False)
             messages.success(request, "İşlem iptal edildi.")
     elif action == "dispute":
         form = TransactionDisputeForm(request.POST, instance=transaction)
@@ -1407,6 +1438,118 @@ def archive_conversation(request, pk):
     return redirect("listings:conversation_list")
 
 
+class ListingMatchCenterView(LoginRequiredMixin, TemplateView):
+    template_name = "listings/matches.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        active_tab = self.request.GET.get("tab", "wanted")
+        if active_tab not in {"wanted", "offered"}:
+            active_tab = "wanted"
+
+        now = timezone.now()
+        excluded_owner_ids = blocked_owner_ids(user.pk)
+        active_pairs = (
+            Q(wanted_listing__status=Listing.Status.PUBLISHED)
+            & Q(offered_listing__status=Listing.Status.PUBLISHED)
+            & (Q(wanted_listing__expires_at__isnull=True) | Q(wanted_listing__expires_at__gt=now))
+            & (Q(offered_listing__expires_at__isnull=True) | Q(offered_listing__expires_at__gt=now))
+        )
+        wanted_matches = (
+            ListingMatch.objects.filter(active_pairs, wanted_listing__owner=user)
+            .exclude(wanted_status=ListingMatch.Status.DISMISSED)
+            .exclude(offered_listing__owner_id__in=excluded_owner_ids)
+            .select_related(
+                "wanted_listing",
+                "offered_listing",
+                "offered_listing__owner",
+                "offered_listing__category",
+            )
+            .prefetch_related("offered_listing__images", "offered_listing__price_history")
+        )
+        offered_matches = (
+            ListingMatch.objects.filter(active_pairs, offered_listing__owner=user)
+            .exclude(offered_status=ListingMatch.Status.DISMISSED)
+            .exclude(wanted_listing__owner_id__in=excluded_owner_ids)
+            .select_related(
+                "wanted_listing",
+                "wanted_listing__owner",
+                "wanted_listing__category",
+                "offered_listing",
+            )
+            .prefetch_related("wanted_listing__images")
+        )
+        wanted_new_count = wanted_matches.filter(wanted_status=ListingMatch.Status.NEW).count()
+        offered_new_count = offered_matches.filter(offered_status=ListingMatch.Status.NEW).count()
+        if active_tab == "wanted":
+            wanted_matches.filter(wanted_status=ListingMatch.Status.NEW).update(
+                wanted_status=ListingMatch.Status.VIEWED,
+                updated_at=timezone.now(),
+            )
+        else:
+            offered_matches.filter(offered_status=ListingMatch.Status.NEW).update(
+                offered_status=ListingMatch.Status.VIEWED,
+                updated_at=timezone.now(),
+            )
+        context.update(
+            {
+                "active_tab": active_tab,
+                "wanted_matches": wanted_matches[:80],
+                "offered_matches": offered_matches[:80],
+                "wanted_match_count": wanted_matches.count(),
+                "offered_match_count": offered_matches.count(),
+                "wanted_new_count": wanted_new_count,
+                "offered_new_count": offered_new_count,
+                "highlight_match_id": self.request.GET.get("highlight", ""),
+            }
+        )
+        return context
+
+
+@login_required
+@require_POST
+def refresh_listing_matches(request):
+    if not consume_rate_limit(request, "listing-match-refresh", limit=5, period=3600):
+        messages.warning(request, "Eşleşmeleri kısa sürede çok kez yeniledin. Biraz sonra tekrar dene.")
+        return redirect("listings:matches")
+    result = refresh_user_matches(request.user, notify=False)
+    messages.success(
+        request,
+        f"{result['scanned']} ilan tarandı; {result['created']} yeni eşleşme bulundu, "
+        f"{result.get('deleted', 0)} geçersiz eşleşme temizlendi.",
+    )
+    return redirect("listings:matches")
+
+
+@login_required
+@require_POST
+def dismiss_listing_match(request, pk):
+    excluded_owner_ids = blocked_owner_ids(request.user.pk)
+    match = get_object_or_404(
+        ListingMatch.objects.select_related(
+            "wanted_listing", "wanted_listing__owner", "offered_listing", "offered_listing__owner"
+        ).exclude(
+            Q(wanted_listing__owner=request.user, offered_listing__owner_id__in=excluded_owner_ids)
+            | Q(offered_listing__owner=request.user, wanted_listing__owner_id__in=excluded_owner_ids)
+        ),
+        Q(wanted_listing__owner=request.user) | Q(offered_listing__owner=request.user),
+        pk=pk,
+    )
+    tab = "wanted"
+    update_fields = ["updated_at"]
+    if match.wanted_listing.owner_id == request.user.pk:
+        match.wanted_status = ListingMatch.Status.DISMISSED
+        update_fields.append("wanted_status")
+    elif match.offered_listing.owner_id == request.user.pk:
+        match.offered_status = ListingMatch.Status.DISMISSED
+        tab = "offered"
+        update_fields.append("offered_status")
+    match.save(update_fields=update_fields)
+    messages.info(request, "Eşleşme listenden gizlendi.")
+    return redirect(f"{reverse('listings:matches')}?tab={tab}")
+
+
 class NotificationListView(LoginRequiredMixin, ListView):
     model = Notification
     template_name = "listings/notifications.html"
@@ -1608,8 +1751,10 @@ def _apply_listing_moderation(*, listing, actor, action, note=""):
     listing.moderated_by = actor
     listing.moderated_at = timezone.now()
     listing.save()
+    if action != "approve":
+        sync_listing_matches(listing, notify=False)
     if action == "approve":
-        notify_followers_new_listing(listing)
+        notify_listing_publication(listing)
         latest_price_change = listing.price_history.filter(
             notifications_sent_at__isnull=True
         ).first()

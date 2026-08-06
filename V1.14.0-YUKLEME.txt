@@ -1,0 +1,41 @@
+İLAN ŞEHRİ v1.14.0 — ARIYORUM–SATIYORUM AKILLI EŞLEŞTİRME
+
+Bu sürüm:
+- Arıyorum, Hizmet Arıyorum ve İş Arıyorum ilanlarını uygun ilanlarla eşleştirir.
+- Kategori, ilan türü, ortak kelimeler, marka/model, şehir/ilçe,
+  bütçe ve teslim uyumundan açıklanabilir 0–100 puan üretir.
+- Arayan ve ilan sahibi için iki sekmeli Akıllı Eşleşmeler merkezi ekler.
+- Yeni eşleşmeler için uygulama içi ve isteğe bağlı e-posta bildirimi ekler.
+- Kullanıcıların sonuçları kendi tarafında gizlemesini sağlar.
+- Engellenen kullanıcıları ve aktif olmayan ilanları sonuçlardan çıkarır.
+- Açıkça farklı marka/model taşıyan yanlış eşleşmeleri engeller.
+- İlan değiştiğinde geçersiz eski eşleşmeleri otomatik temizler.
+- Mevcut ilanları tarayan rebuild_listing_matches komutunu ekler.
+- Masaüstü, mobil sistem ve Gemini ilan asistanını korur.
+
+VERİTABANI:
+Bu sürüm ListingMatch modeli ve iki bildirim tercihi eklediği için migration
+gerektirir. Mevcut start_codespace.sh komutu migration dosyasını otomatik
+üretip uygular.
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. GitHub Desktop Summary:
+   İlan Şehri v1.14.0 akıllı eşleştirme
+4. Commit to main ve Push origin.
+5. Django Kontrol workflow'unun sonucunu bekleyin.
+6. Yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Başlangıç komutu migration işlemlerini uygular ve ilk 500 yayındaki
+   ilanı sessiz biçimde eşleştirme taramasından geçirir.
+8. Hesabım veya üst menüden Akıllı Eşleşmeler sayfasını açın.
+
+Not:
+Yerel paketleme ortamında Django kurulu olmadığı için tam Django testleri
+burada çalıştırılmadı. Python derleme, JavaScript, Bash, YAML, şablon
+dengesi, mobil sözleşme, saf eşleştirme mantığı ve ZIP bütünlüğü kontrol
+edildi. Tam uygulama sonucu GitHub Actions tarafından doğrulanacaktır.

@@ -7,6 +7,7 @@ python manage.py makemigrations accounts listings managed_services partners supp
 python manage.py migrate --noinput
 python manage.py seed_categories
 python manage.py marketplace_maintenance
+python manage.py rebuild_listing_matches --limit 2000
 python manage.py collectstatic --noinput
 python manage.py check --deploy
 exec gunicorn config.wsgi:application \

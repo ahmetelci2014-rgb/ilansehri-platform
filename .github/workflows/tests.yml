@@ -35,6 +35,7 @@ jobs:
         run: |
           python manage.py seed_categories
           python manage.py marketplace_maintenance
+          python manage.py rebuild_listing_matches --limit 5
           python manage.py send_notification_digests
       - name: Sistem kontrolü
         run: python manage.py check

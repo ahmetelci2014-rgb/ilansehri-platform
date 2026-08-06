@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 
 from apps.accounts.models import User, UserFollow
+from apps.listings.matching import sync_listing_matches
 from apps.listings.models import Category, Listing, ListingPriceHistory, Notification, Offer, OfferEvent
 from apps.managed_services.models import ManagedActivity, ManagedRequest
 from apps.partners.models import PartnerProfile, Task
@@ -157,6 +158,25 @@ class Command(BaseCommand):
             )
             created_listings.append(listing)
 
+        wanted_listing, _ = Listing.objects.update_or_create(
+            slug="demo-telefon-ariyorum",
+            defaults={
+                "owner": buyer,
+                "category": categories.get("Elektronik", fallback),
+                "kind": Listing.Kind.PRODUCT,
+                "action": Listing.Action.WANTED,
+                "title": "Temiz Apple iPhone 15 arıyorum",
+                "description": "Şanlıurfa içinde kutulu veya temiz durumda iPhone 15 arıyorum. 128 GB tercih edilir.",
+                "price": Decimal("30000"),
+                "brand": "Apple",
+                "model_name": "iPhone 15",
+                "city": "Şanlıurfa",
+                "district": "Haliliye",
+                "status": Listing.Status.PUBLISHED,
+            },
+        )
+        sync_listing_matches(wanted_listing, notify=False)
+
         managed_listing = next(item for item in created_listings if item.management_mode == Listing.ManagementMode.FULL)
         managed, _ = ManagedRequest.objects.get_or_create(
             listing=managed_listing,
@@ -255,7 +275,7 @@ class Command(BaseCommand):
                     "message": "Teklif kabul edildiğinde Teklif Merkezi'nde işlem kaydı oluşur. Teslim adımlarını bu kayıt üzerinden takip edebilirsin."
                 },
             )
-        message = "Demo kullanıcılar, ilanlar, destek talepleri, tam yönetim ve görev verileri hazırlandı."
+        message = "Demo kullanıcılar, ilanlar, akıllı eşleşmeler, destek talepleri, tam yönetim ve görev verileri hazırlandı."
         if options["with_admin"]:
             message += " Demo yönetici: demo_admin / DemoAdmin1234!"
         self.stdout.write(self.style.SUCCESS(message))

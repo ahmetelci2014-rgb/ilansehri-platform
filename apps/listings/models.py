@@ -480,6 +480,61 @@ class SavedSearch(models.Model):
         return f"{self.user} · {self.name}"
 
 
+class ListingMatch(models.Model):
+    class Status(models.TextChoices):
+        NEW = "new", "Yeni"
+        VIEWED = "viewed", "Görüldü"
+        DISMISSED = "dismissed", "Gizlendi"
+
+    wanted_listing = models.ForeignKey(
+        Listing,
+        related_name="wanted_matches",
+        on_delete=models.CASCADE,
+    )
+    offered_listing = models.ForeignKey(
+        Listing,
+        related_name="offered_matches",
+        on_delete=models.CASCADE,
+    )
+    score = models.PositiveSmallIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
+    reasons = models.JSONField(default=list, blank=True)
+    wanted_status = models.CharField(
+        max_length=12,
+        choices=Status.choices,
+        default=Status.NEW,
+    )
+    offered_status = models.CharField(
+        max_length=12,
+        choices=Status.choices,
+        default=Status.NEW,
+    )
+    notified_wanted_at = models.DateTimeField(null=True, blank=True)
+    notified_offered_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-score", "-created_at")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("wanted_listing", "offered_listing"),
+                name="unique_wanted_offered_listing_match",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["wanted_listing", "wanted_status", "-score"]),
+            models.Index(fields=["offered_listing", "offered_status", "-score"]),
+        ]
+        verbose_name = "İlan Eşleşmesi"
+        verbose_name_plural = "İlan Eşleşmeleri"
+
+    def __str__(self) -> str:
+        return f"{self.wanted_listing} ↔ {self.offered_listing} · %{self.score}"
+
+
 class ListingDraft(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -564,6 +619,7 @@ class Notification(models.Model):
         VERIFICATION = "verification", "Doğrulama"
         PRICE_DROP = "price_drop", "Fiyat düşüşü"
         FOLLOW = "follow", "Satıcı takibi"
+        MATCH = "match", "Akıllı eşleşme"
         SYSTEM = "system", "Sistem"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="notifications", on_delete=models.CASCADE)

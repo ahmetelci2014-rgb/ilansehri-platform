@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Akıllı Eşleşmelerim — İlan Şehri{% endblock %}
+{% block robots_meta %}noindex,nofollow{% endblock %}
+{% block content %}
+<section class="match-hero">
+  <div class="shell match-hero-row">
+    <div><span class="section-label light-label">AKILLI EŞLEŞTİRME</span><h1>Arayanla ilanı buluştur</h1><p>İlan Şehri; kategori, başlık, marka, model, konum ve bütçe uyumuna göre uygun ilanları eşleştirir.</p></div>
+    <form method="post" action="{% url 'listings:refresh_matches' %}">{% csrf_token %}<button class="button button-light" type="submit">↻ Eşleşmeleri yenile</button></form>
+  </div>
+</section>
+
+<section class="section match-section"><div class="shell match-shell">
+  <nav class="match-tabs" aria-label="Eşleşme türleri">
+    <a href="?tab=wanted" class="{% if active_tab == 'wanted' %}active{% endif %}"><span>⌕</span><div><b>Aradıklarıma uygun ilanlar</b><small>{{ wanted_match_count }} eşleşme{% if wanted_new_count %} · {{ wanted_new_count }} yeni{% endif %}</small></div></a>
+    <a href="?tab=offered" class="{% if active_tab == 'offered' %}active{% endif %}"><span>◎</span><div><b>İlanlarımı arayanlar</b><small>{{ offered_match_count }} eşleşme{% if offered_new_count %} · {{ offered_new_count }} yeni{% endif %}</small></div></a>
+  </nav>
+
+  <div class="match-explainer"><span>✦</span><div><b>Eşleşme puanı nasıl oluşur?</b><p>Aynı kategori, ortak kelimeler, marka/model, şehir, ilçe ve bütçe yakınlığı puanı yükseltir. Son karar her zaman kullanıcıya aittir.</p></div></div>
+
+  {% if active_tab == 'wanted' %}
+    <div class="match-list">
+      {% for match in wanted_matches %}
+        <article class="match-card{% if highlight_match_id == match.pk|stringformat:'s' %} is-highlighted{% endif %}" id="match-{{ match.pk }}">
+          <div class="match-score" style="--score:{{ match.score }}"><strong>{{ match.score }}</strong><span>% uyum</span></div>
+          <div class="match-main">
+            <div class="match-context"><small>Senin aradığın</small><b>{{ match.wanted_listing.title|truncatechars:72 }}</b></div>
+            <a class="match-offer" href="{{ match.offered_listing.get_absolute_url }}">
+              <div class="match-media">{% with cover=match.offered_listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ match.offered_listing.title }}">{% else %}<span>{{ match.offered_listing.get_kind_display }}</span>{% endif %}{% endwith %}</div>
+              <div><small>{{ match.offered_listing.get_action_display }} · {{ match.offered_listing.city }}{% if match.offered_listing.district %} / {{ match.offered_listing.district }}{% endif %}</small><h2>{{ match.offered_listing.title }}</h2><strong>{% if match.offered_listing.price_on_request %}Teklif alıyor{% elif match.offered_listing.price %}{{ match.offered_listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong></div>
+            </a>
+            <div class="match-reasons">{% for reason in match.reasons %}<span>✓ {{ reason }}</span>{% endfor %}</div>
+          </div>
+          <div class="match-actions"><a class="button" href="{{ match.offered_listing.get_absolute_url }}">İlanı aç</a><form method="post" action="{% url 'listings:dismiss_match' match.pk %}">{% csrf_token %}<button class="market-secondary-button" type="submit">Gizle</button></form></div>
+        </article>
+      {% empty %}
+        <div class="market-empty match-empty"><span>⌕</span><h3>Henüz uygun ilan bulunamadı</h3><p>Aradığın ilanın başlığını, marka/model bilgisini, bütçeyi ve konumu ayrıntılı yazdıkça eşleşme kalitesi yükselir.</p><a class="button" href="{% url 'listings:create' %}">Arıyorum ilanı oluştur</a></div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="match-list">
+      {% for match in offered_matches %}
+        <article class="match-card seller-match{% if highlight_match_id == match.pk|stringformat:'s' %} is-highlighted{% endif %}" id="match-{{ match.pk }}">
+          <div class="match-score" style="--score:{{ match.score }}"><strong>{{ match.score }}</strong><span>% uyum</span></div>
+          <div class="match-main">
+            <div class="match-context"><small>Senin ilanın</small><b>{{ match.offered_listing.title|truncatechars:72 }}</b></div>
+            <a class="match-offer" href="{{ match.wanted_listing.get_absolute_url }}">
+              <div class="match-media wanted"><span>📣</span></div>
+              <div><small>{{ match.wanted_listing.city }}{% if match.wanted_listing.district %} / {{ match.wanted_listing.district }}{% endif %} · {{ match.wanted_listing.created_at|timesince }} önce</small><h2>{{ match.wanted_listing.title }}</h2><strong>{% if match.wanted_listing.price %}Bütçe: {{ match.wanted_listing.price|floatformat:"0g" }} TL{% else %}Bütçe görüşülecek{% endif %}</strong></div>
+            </a>
+            <div class="match-reasons">{% for reason in match.reasons %}<span>✓ {{ reason }}</span>{% endfor %}</div>
+          </div>
+          <div class="match-actions"><a class="button" href="{{ match.wanted_listing.get_absolute_url }}">Arayan ilanı aç</a><form method="post" action="{% url 'listings:dismiss_match' match.pk %}">{% csrf_token %}<button class="market-secondary-button" type="submit">Gizle</button></form></div>
+        </article>
+      {% empty %}
+        <div class="market-empty match-empty"><span>◎</span><h3>İlanlarını arayan kullanıcı bulunamadı</h3><p>Başlık, kategori, marka, model ve konum bilgilerini tamamlamak eşleşme ihtimalini artırır.</p><a class="button" href="{% url 'accounts:dashboard' %}">İlanlarımı düzenle</a></div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div></section>
+{% endblock %}

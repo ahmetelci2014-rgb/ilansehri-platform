@@ -9,6 +9,7 @@ from .models import (
     Listing,
     ListingDraft,
     ListingImage,
+    ListingMatch,
     ListingPriceHistory,
     ListingReport,
     Message,
@@ -19,9 +20,10 @@ from .models import (
     SavedSearch,
     Transaction,
 )
+from .matching import sync_listing_matches
 from .services import (
     create_notification,
-    notify_followers_new_listing,
+    notify_listing_publication,
     notify_price_drop_favorites,
 )
 
@@ -54,7 +56,7 @@ def approve_listings(modeladmin, request, queryset):
         listing.moderated_by = request.user
         listing.review_note = ""
         listing.save()
-        notify_followers_new_listing(listing)
+        notify_listing_publication(listing)
         latest_price_change = listing.price_history.filter(
             notifications_sent_at__isnull=True
         ).first()
@@ -78,6 +80,7 @@ def reject_listings(modeladmin, request, queryset):
         listing.moderated_at = timezone.now()
         listing.moderated_by = request.user
         listing.save()
+        sync_listing_matches(listing, notify=False)
         create_notification(
             user=listing.owner,
             actor=request.user,
@@ -120,6 +123,14 @@ class ListingReportAdmin(admin.ModelAdmin):
     list_display = ("listing", "reporter", "reason", "status", "created_at")
     list_filter = ("reason", "status")
     search_fields = ("listing__title", "reporter__username", "details")
+
+
+@admin.register(ListingMatch)
+class ListingMatchAdmin(admin.ModelAdmin):
+    list_display = ("wanted_listing", "offered_listing", "score", "wanted_status", "offered_status", "created_at")
+    list_filter = ("wanted_status", "offered_status", "score")
+    search_fields = ("wanted_listing__title", "offered_listing__title")
+    readonly_fields = ("created_at", "updated_at", "notified_wanted_at", "notified_offered_at")
 
 
 admin.site.register(Category)

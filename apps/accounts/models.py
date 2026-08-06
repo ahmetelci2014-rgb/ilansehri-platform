@@ -221,6 +221,7 @@ class NotificationPreference(models.Model):
     in_app_offers = models.BooleanField(default=True)
     in_app_price_drops = models.BooleanField(default=True)
     in_app_follows = models.BooleanField(default=True)
+    in_app_matches = models.BooleanField(default=True)
     in_app_reviews = models.BooleanField(default=True)
     email_messages = models.BooleanField(default=False)
     email_offers = models.BooleanField(default=False)
@@ -228,6 +229,7 @@ class NotificationPreference(models.Model):
     email_listing_updates = models.BooleanField(default=False)
     email_price_drops = models.BooleanField(default=False)
     email_follows = models.BooleanField(default=False)
+    email_matches = models.BooleanField(default=False)
     email_reviews = models.BooleanField(default=False)
     email_system = models.BooleanField(default=False)
     digest_frequency = models.CharField(
@@ -244,6 +246,7 @@ class NotificationPreference(models.Model):
         "offer": "in_app_offers",
         "price_drop": "in_app_price_drops",
         "follow": "in_app_follows",
+        "match": "in_app_matches",
         "review": "in_app_reviews",
     }
     EMAIL_FIELDS = {
@@ -256,6 +259,7 @@ class NotificationPreference(models.Model):
         "task": "email_listing_updates",
         "price_drop": "email_price_drops",
         "follow": "email_follows",
+        "match": "email_matches",
         "review": "email_reviews",
         "system": "email_system",
     }

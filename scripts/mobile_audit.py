@@ -51,6 +51,7 @@ ROLE_ROUTES = {
         ("messages", "/ilanlar/mesajlar/"),
         ("notifications", "/ilanlar/bildirimler/"),
         ("offers", "/ilanlar/tekliflerim/"),
+        ("matches", "/ilanlar/eslesmelerim/"),
         ("support-tickets", "/yardim/taleplerim/"),
         ("support-create", "/yardim/talep/yeni/"),
     ),
@@ -60,6 +61,7 @@ ROLE_ROUTES = {
         ("drafts", "/ilanlar/taslaklarim/"),
         ("messages", "/ilanlar/mesajlar/"),
         ("offers", "/ilanlar/tekliflerim/"),
+        ("matches", "/ilanlar/eslesmelerim/?tab=offered"),
         ("managed", "/tam-yonetim/"),
         ("edit-listing", "/ilanlar/demo-telefon/duzenle/"),
     ),
@@ -248,7 +250,7 @@ def run_audit(base_url: str, output_dir: Path) -> list[PageResult]:
 
 def write_report(output_dir: Path, results: list[PageResult]) -> None:
     payload = {
-        "version": "v1.13.2",
+        "version": "v1.14.0",
         "summary": {
             "pages": len(results),
             "critical": sum(result.critical for result in results),

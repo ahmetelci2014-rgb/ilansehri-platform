@@ -4,7 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.accounts.models import NotificationPreference, User
+from apps.accounts.models import NotificationPreference, User, UserBlock
 from apps.support_center.models import StaffActionLog
 
 from .models import (
@@ -14,6 +14,7 @@ from .models import (
     Listing,
     ListingDraft,
     ListingImage,
+    ListingMatch,
     ListingPriceHistory,
     Message,
     Notification,
@@ -23,6 +24,7 @@ from .models import (
     SavedSearch,
     Transaction,
 )
+from .matching import score_listing_pair, sync_listing_matches
 from .services import assess_listing_quality, create_notification, record_price_change
 
 
@@ -560,3 +562,197 @@ class ListingQualityTests(TestCase):
         profile = assess_listing_quality(listing)
         self.assertIn("Açıklamada telefon numarası", profile["risk_flags"])
         self.assertIn("Çok kısa açıklama", profile["risk_flags"])
+
+
+@override_settings(AUTO_PUBLISH_LISTINGS=True)
+class ListingMatchingTests(TestCase):
+    def setUp(self):
+        self.seeker = User.objects.create_user(
+            username="match-seeker", password="StrongPass_2026", phone="05550000101"
+        )
+        self.seller = User.objects.create_user(
+            username="match-seller", password="StrongPass_2026", phone="05550000102"
+        )
+        self.other = User.objects.create_user(
+            username="match-other", password="StrongPass_2026", phone="05550000103"
+        )
+        self.root = Category.objects.create(name="Ürün & Eşya", slug="match-urun-root")
+        self.phone = Category.objects.create(name="Telefon", slug="match-telefon", parent=self.root)
+        self.vehicle_root = Category.objects.create(name="Araç", slug="match-arac-root")
+        self.vehicle = Category.objects.create(name="Otomobil", slug="match-otomobil", parent=self.vehicle_root)
+
+    def create_wanted(self, **overrides):
+        data = {
+            "owner": self.seeker,
+            "category": self.phone,
+            "kind": Listing.Kind.PRODUCT,
+            "action": Listing.Action.WANTED,
+            "title": "Apple iPhone 15 128 GB arıyorum",
+            "description": "Kutulu veya temiz durumda iPhone 15 arıyorum. Siyah renk tercih edilir.",
+            "price": Decimal("40000"),
+            "brand": "Apple",
+            "model_name": "iPhone 15",
+            "city": "Şanlıurfa",
+            "district": "Karaköprü",
+            "status": Listing.Status.PUBLISHED,
+        }
+        data.update(overrides)
+        return Listing.objects.create(**data)
+
+    def create_offer(self, **overrides):
+        data = {
+            "owner": self.seller,
+            "category": self.phone,
+            "kind": Listing.Kind.PRODUCT,
+            "action": Listing.Action.SELL,
+            "title": "Kutulu Apple iPhone 15 128 GB siyah",
+            "description": "Temiz kullanılmış, kutulu iPhone 15. Elden teslim edilebilir.",
+            "price": Decimal("38500"),
+            "brand": "Apple",
+            "model_name": "iPhone 15",
+            "condition": "Az kullanılmış",
+            "city": "Şanlıurfa",
+            "district": "Karaköprü",
+            "status": Listing.Status.PUBLISHED,
+        }
+        data.update(overrides)
+        return Listing.objects.create(**data)
+
+    def test_matching_scores_category_brand_model_location_and_budget(self):
+        wanted = self.create_wanted()
+        offered = self.create_offer()
+        result = score_listing_pair(wanted, offered)
+        self.assertIsNotNone(result)
+        self.assertGreaterEqual(result.score, 80)
+        self.assertIn("Aynı kategori", result.reasons)
+        self.assertIn("Marka eşleşiyor", result.reasons)
+        self.assertIn("Model eşleşiyor", result.reasons)
+        self.assertIn("Aynı şehir", result.reasons)
+        self.assertIn("Bütçeye uygun", result.reasons)
+
+    def test_sync_creates_one_match_and_notifies_both_sides_once(self):
+        wanted = self.create_wanted()
+        offered = self.create_offer()
+        first = sync_listing_matches(offered, notify=True)
+        second = sync_listing_matches(offered, notify=True)
+        self.assertEqual(first["created"], 1)
+        self.assertEqual(second["created"], 0)
+        match = ListingMatch.objects.get(wanted_listing=wanted, offered_listing=offered)
+        self.assertGreaterEqual(match.score, 80)
+        self.assertEqual(
+            Notification.objects.filter(user=self.seeker, notification_type=Notification.Type.MATCH).count(),
+            1,
+        )
+        self.assertEqual(
+            Notification.objects.filter(user=self.seller, notification_type=Notification.Type.MATCH).count(),
+            1,
+        )
+
+    def test_muted_match_preference_keeps_match_but_suppresses_notification(self):
+        wanted = self.create_wanted()
+        offered = self.create_offer()
+        preference = NotificationPreference.objects.get(user=self.seeker)
+        preference.in_app_matches = False
+        preference.save(update_fields=["in_app_matches", "updated_at"])
+        sync_listing_matches(offered, notify=True)
+        self.assertTrue(ListingMatch.objects.filter(wanted_listing=wanted, offered_listing=offered).exists())
+        self.assertFalse(
+            Notification.objects.filter(user=self.seeker, notification_type=Notification.Type.MATCH).exists()
+        )
+
+    def test_match_center_is_private_and_dismissal_is_side_specific(self):
+        wanted = self.create_wanted()
+        offered = self.create_offer()
+        sync_listing_matches(offered, notify=False)
+        match = ListingMatch.objects.get(wanted_listing=wanted, offered_listing=offered)
+        anonymous = self.client.get(reverse("listings:matches"))
+        self.assertEqual(anonymous.status_code, 302)
+        self.client.force_login(self.seeker)
+        page = self.client.get(reverse("listings:matches"))
+        self.assertContains(page, offered.title)
+        response = self.client.post(reverse("listings:dismiss_match", kwargs={"pk": match.pk}))
+        self.assertRedirects(response, f"{reverse('listings:matches')}?tab=wanted")
+        match.refresh_from_db()
+        self.assertEqual(match.wanted_status, ListingMatch.Status.DISMISSED)
+        self.assertNotEqual(match.offered_status, ListingMatch.Status.DISMISSED)
+
+    def test_different_listing_kind_does_not_match(self):
+        wanted = self.create_wanted()
+        vehicle_offer = self.create_offer(
+            category=self.vehicle,
+            kind=Listing.Kind.VEHICLE,
+            title="2022 model Toyota Corolla",
+            brand="Toyota",
+            model_name="Corolla",
+        )
+        self.assertIsNone(score_listing_pair(wanted, vehicle_offer))
+
+    def test_publishing_offer_through_form_creates_match(self):
+        wanted = self.create_wanted()
+        self.client.force_login(self.seller)
+        response = self.client.post(
+            reverse("listings:create"),
+            {
+                "kind": Listing.Kind.PRODUCT,
+                "action": Listing.Action.SELL,
+                "management_mode": Listing.ManagementMode.SELF,
+                "category": self.phone.pk,
+                "title": "Apple iPhone 15 128 GB temiz telefon",
+                "description": "Kutulu ve temiz iPhone 15, Karaköprü elden teslim.",
+                "price": "39000",
+                "brand": "Apple",
+                "model_name": "iPhone 15",
+                "condition": "Az kullanılmış",
+                "delivery_type": Listing.DeliveryType.HANDOVER,
+                "city": "Şanlıurfa",
+                "district": "Karaköprü",
+            },
+        )
+        offered = Listing.objects.get(title="Apple iPhone 15 128 GB temiz telefon")
+        self.assertRedirects(response, offered.get_absolute_url())
+        self.assertTrue(ListingMatch.objects.filter(wanted_listing=wanted, offered_listing=offered).exists())
+
+    def test_same_category_without_semantic_overlap_does_not_match(self):
+        wanted = self.create_wanted(
+            brand="Apple",
+            model_name="iPhone 15",
+            title="Apple iPhone 15 arıyorum",
+            description="iPhone 15 telefon arıyorum.",
+        )
+        unrelated = self.create_offer(
+            brand="Samsung",
+            model_name="Galaxy S24",
+            title="Samsung Galaxy S24 Ultra",
+            description="Samsung Android telefon satılıktır.",
+        )
+        self.assertIsNone(score_listing_pair(wanted, unrelated))
+
+    def test_sync_removes_stale_match_after_listing_changes(self):
+        wanted = self.create_wanted()
+        offered = self.create_offer()
+        sync_listing_matches(offered, notify=False)
+        self.assertTrue(ListingMatch.objects.filter(wanted_listing=wanted, offered_listing=offered).exists())
+
+        offered.title = "Samsung Galaxy S24 Ultra"
+        offered.description = "Samsung Android telefon satılıktır."
+        offered.brand = "Samsung"
+        offered.model_name = "Galaxy S24"
+        offered.save()
+        result = sync_listing_matches(offered, notify=False)
+
+        self.assertGreaterEqual(result["deleted"], 1)
+        self.assertFalse(ListingMatch.objects.filter(wanted_listing=wanted, offered_listing=offered).exists())
+
+    def test_blocked_users_do_not_see_existing_match(self):
+        wanted = self.create_wanted()
+        offered = self.create_offer()
+        sync_listing_matches(offered, notify=False)
+        UserBlock.objects.create(blocker=self.seeker, blocked=self.seller)
+
+        self.client.force_login(self.seeker)
+        response = self.client.get(reverse("listings:matches"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, offered.title)
+        self.assertEqual(response.context["wanted_match_count"], 0)
+

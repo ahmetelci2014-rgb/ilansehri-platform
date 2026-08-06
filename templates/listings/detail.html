@@ -43,6 +43,12 @@
     {% endif %}
   </div>
 
+  {% if user == listing.owner and listing.status == 'published' %}
+  <a class="v114-owner-match-card" href="{% url 'listings:matches' %}?tab={{ owner_match_tab|default:'wanted' }}">
+    <div><span>◎</span><div><b>{% if owner_match_tab == 'wanted' %}Bu arama için {{ owner_match_count }} uygun ilan{% else %}Bu ilanı arayan {{ owner_match_count }} kullanıcı ilanı{% endif %}</b><small>Akıllı eşleşme sonuçlarını incele</small></div></div><strong>Sonuçları aç →</strong>
+  </a>
+  {% endif %}
+
   <section class="v16-detail-grid">
     <div>
       <div class="v16-gallery-shell">

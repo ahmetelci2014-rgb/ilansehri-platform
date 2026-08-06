@@ -23,6 +23,7 @@ from apps.listings.models import (
     Conversation,
     Favorite,
     Listing,
+    ListingMatch,
     Notification,
     Offer,
     Review,
@@ -99,6 +100,44 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["saved_searches"] = SavedSearch.objects.filter(user=user)[:10]
         context["favorite_count"] = Favorite.objects.filter(user=user, listing__status="published").filter(Q(listing__expires_at__isnull=True) | Q(listing__expires_at__gt=timezone.now())).count()
         context["unread_message_count"] = sum(item.unread_count for item in context["conversations"])
+        active_match_pairs = (
+            Q(wanted_listing__status=Listing.Status.PUBLISHED)
+            & Q(offered_listing__status=Listing.Status.PUBLISHED)
+            & (Q(wanted_listing__expires_at__isnull=True) | Q(wanted_listing__expires_at__gt=timezone.now()))
+            & (Q(offered_listing__expires_at__isnull=True) | Q(offered_listing__expires_at__gt=timezone.now()))
+        )
+        blocked_ids = set(
+            UserBlock.objects.filter(blocker=user).values_list("blocked_id", flat=True)
+        )
+        blocked_ids.update(
+            UserBlock.objects.filter(blocked=user).values_list("blocker_id", flat=True)
+        )
+        wanted_visible = (
+            ListingMatch.objects.filter(active_match_pairs, wanted_listing__owner=user)
+            .exclude(wanted_status=ListingMatch.Status.DISMISSED)
+            .exclude(offered_listing__owner_id__in=blocked_ids)
+        )
+        offered_visible = (
+            ListingMatch.objects.filter(active_match_pairs, offered_listing__owner=user)
+            .exclude(offered_status=ListingMatch.Status.DISMISSED)
+            .exclude(wanted_listing__owner_id__in=blocked_ids)
+        )
+        recent_wanted = list(
+            wanted_visible.select_related("wanted_listing", "offered_listing").order_by("-created_at")[:6]
+        )
+        recent_offered = list(
+            offered_visible.select_related("wanted_listing", "offered_listing").order_by("-created_at")[:6]
+        )
+        context["recent_matches"] = sorted(
+            recent_wanted + recent_offered,
+            key=lambda item: item.created_at,
+            reverse=True,
+        )[:6]
+        context["match_count"] = wanted_visible.count() + offered_visible.count()
+        context["new_match_count"] = (
+            wanted_visible.filter(wanted_status=ListingMatch.Status.NEW).count()
+            + offered_visible.filter(offered_status=ListingMatch.Status.NEW).count()
+        )
         context["recent_notifications"] = Notification.objects.filter(user=user)[:8]
         context["unread_notification_count"] = Notification.objects.filter(user=user, is_read=False).count()
         context["listing_drafts"] = user.listing_drafts.select_related("source_listing")[:5]
@@ -219,6 +258,7 @@ def export_account_data(request):
             "in_app_offers": notification_preferences.in_app_offers,
             "in_app_price_drops": notification_preferences.in_app_price_drops,
             "in_app_follows": notification_preferences.in_app_follows,
+            "in_app_matches": notification_preferences.in_app_matches,
             "in_app_reviews": notification_preferences.in_app_reviews,
             "email_messages": notification_preferences.email_messages,
             "email_offers": notification_preferences.email_offers,
@@ -226,6 +266,7 @@ def export_account_data(request):
             "email_listing_updates": notification_preferences.email_listing_updates,
             "email_price_drops": notification_preferences.email_price_drops,
             "email_follows": notification_preferences.email_follows,
+            "email_matches": notification_preferences.email_matches,
             "email_reviews": notification_preferences.email_reviews,
             "email_system": notification_preferences.email_system,
             "digest_frequency": notification_preferences.digest_frequency,
@@ -275,6 +316,17 @@ def export_account_data(request):
         ),
         "saved_searches": list(
             SavedSearch.objects.filter(user=user).values("name", "query_params", "alert_enabled", "created_at")
+        ),
+        "listing_matches": list(
+            ListingMatch.objects.filter(Q(wanted_listing__owner=user) | Q(offered_listing__owner=user)).values(
+                "wanted_listing__title",
+                "offered_listing__title",
+                "score",
+                "reasons",
+                "wanted_status",
+                "offered_status",
+                "created_at",
+            )
         ),
         "conversations": conversations,
     }

@@ -1,6 +1,6 @@
 # İlan Şehri Mobil Görsel Denetim
 
-v1.13.2, mobil sorunları kullanıcıdan tek tek istemek yerine gerçek tarayıcıda düzenli olarak ölçmek için iki katmanlı kontrol kullanır.
+v1.14.0 sürümünde de kullanılan mobil denetim altyapısı, mobil sorunları kullanıcıdan tek tek istemek yerine gerçek tarayıcıda düzenli olarak ölçmek için iki katmanlı kontrol kullanır.
 
 ## 1. Mobil sözleşme kontrolü
 
@@ -60,3 +60,8 @@ python scripts/mobile_audit.py --strict
 ```
 
 Sayfayı elle incelerken URL'ye `?mobile_audit=1` eklendiğinde taşan öğeler kırmızı kesik çizgiyle işaretlenir ve rapor tarayıcı konsoluna yazılır.
+
+
+## v1.14 kapsamı
+
+Akıllı Eşleşmeler sayfası alıcı ve satıcı rol rotalarına eklenmiştir. Mobil denetim 360, 390 ve 430 piksel genişliklerde eşleşme kartlarını, sekmeleri ve işlem düğmelerini de görüntüler.

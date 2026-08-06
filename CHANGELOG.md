@@ -1,5 +1,19 @@
 # Değişiklik Günlüğü
 
+## v1.14.0 — Arıyorum–Satıyorum akıllı eşleştirme
+
+- Arıyorum, hizmet arıyorum ve iş arıyorum ilanları için açıklanabilir 0–100 eşleşme puanı eklendi.
+- Kategori, ilan türü, ortak kelimeler, marka/model, şehir/ilçe, bütçe ve teslim uyumu birlikte değerlendirilir.
+- Arayan kullanıcılar ve ilan sahipleri için iki sekmeli Akıllı Eşleşmeler merkezi eklendi.
+- Yeni eşleşmeler iki tarafa da uygulama içi bildirim gönderebilir; bildirim tercihleri ayrı ayrı yönetilebilir.
+- Kullanıcıların eşleşmeleri kendi tarafında gizleyebilmesi sağlandı.
+- Engellenen kullanıcılar, süresi dolmuş ve yayında olmayan ilanlar eşleşme dışında bırakıldı.
+- Açıkça farklı marka/model taşıyan yanlış sonuçlar elendi; ilan değişince geçersiz eski eşleşmeler otomatik temizlenir.
+- Mevcut ilanları tarayan `rebuild_listing_matches` bakım komutu eklendi.
+- Demo verilerine çalışan telefon arama/satış eşleşmesi eklendi.
+- Eşleşme merkezi mobil denetim rotalarına, PWA varlıklarına ve GitHub Actions doğrulamasına dahil edildi.
+- `ListingMatch` modeli ve eşleşme bildirim tercihleri nedeniyle migration oluşur.
+
 ## v1.13.2 — Site geneli mobil sistem ve otomatik denetim
 
 - Mobil iyileştirme yalnız ilan sayfalarından çıkarılarak hesap, giriş, profil, mesaj, teklif, bildirim, destek, işlem, Tam Yönetim, Kazanç Ağı ve personel ekranlarına yayıldı.

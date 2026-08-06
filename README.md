@@ -1,12 +1,13 @@
 # İlan Şehri
 
-> Güncel sürüm: **v1.13.2** — site genelindeki hesap, ilan, mesaj, teklif, destek, operasyon ve yönetim ekranları için ortak mobil sistem ve otomatik görsel denetim eklendi.
+> Güncel sürüm: **v1.14.0** — Arıyorum ilanları ile satış, kiralama, takas, hizmet ve iş ilanlarını açıklanabilir puanla buluşturan akıllı eşleştirme sistemi eklendi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
 ## Çalışan ana modüller
 
 - Konum ve kategori odaklı fotoğraflı marketplace akışı
+- Arıyorum–Satıyorum akıllı eşleştirme, iki taraflı eşleşme merkezi ve bildirimler
 - Site genelinde ortak mobil ekran sistemi, kompakt ilan akışı, alttan açılan filtreler ve sabit tek el navigasyonu
 - Fotoğrafla başlayan yapay zekâ ilan hazırlama, güvenli görsel analiz ve kullanıcı onayı
 - Kategoriye özel gelişmiş arama, filtreleme, sıralama ve ilan karşılaştırma
@@ -21,6 +22,16 @@
 - Tam Yönetim operasyonları ve İlan Şehri Kazanç Ağı görev sistemi
 - PWA, Docker, PostgreSQL, WhiteNoise ve Gunicorn canlı sunucu hazırlığı
 - GitHub Actions migration, güvenlik, statik dosya, mobil sözleşme ve Playwright ekran görüntüsü kontrolleri
+
+
+## v1.14 Arıyorum–Satıyorum akıllı eşleştirme
+
+- `Arıyorum`, `Hizmet Arıyorum` ve `İş Arıyorum` ilanları uygun ilanlarla otomatik eşleştirilir.
+- Kategori, ortak kelime, marka/model, konum, bütçe ve teslim uyumundan 0–100 puan üretilir.
+- Arayan kullanıcı “Aradıklarıma uygun ilanlar”, ilan sahibi “İlanlarımı arayanlar” sekmesini görür.
+- Yeni eşleşmeler uygulama içi ve isteğe bağlı e-posta bildirimi oluşturur.
+- Engellenen kullanıcılar ve yayında olmayan ilanlar sonuçlara alınmaz.
+- Mevcut ilanlar `python manage.py rebuild_listing_matches` komutuyla yeniden taranır.
 
 ## Codespaces ile çalıştırma
 
