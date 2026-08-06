@@ -25,6 +25,7 @@ from .models import (
     Transaction,
 )
 from .matching import score_listing_pair, sync_listing_matches
+from .message_safety import analyze_message, safe_notification_preview
 from .pricing import build_price_guide
 from .services import assess_listing_quality, create_notification, record_price_change
 
@@ -947,3 +948,90 @@ class ListingPriceGuideTests(TestCase):
         detail = self.client.get(listing.get_absolute_url())
         self.assertContains(detail, "AKILLI FİYAT REHBERİ")
         self.assertContains(detail, "Piyasanın üzerinde")
+
+
+@override_settings(AUTO_PUBLISH_LISTINGS=True)
+class MessageSafetyTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="safety-owner", password="StrongPass_2026", phone="05551110001"
+        )
+        self.buyer = User.objects.create_user(
+            username="safety-buyer", password="StrongPass_2026", phone="05551110002"
+        )
+        self.category = Category.objects.create(name="Güvenlik telefonu", slug="safety-phone")
+        self.listing = Listing.objects.create(
+            owner=self.owner, category=self.category, kind=Listing.Kind.PRODUCT,
+            action=Listing.Action.SELL, title="Güvenli mesaj test telefonu",
+            description="Mesaj güvenliği için yayınlanan ilan.", price=Decimal("25000"),
+            city="Şanlıurfa", district="Karaköprü", status=Listing.Status.PUBLISHED,
+        )
+
+    def test_analyzer_distinguishes_safe_and_critical_messages(self):
+        safe = analyze_message("Ürün hâlâ satılık mı, yarın görebilir miyim?")
+        critical = analyze_message("AnyDesk kur, SMS doğrulama kodunu hemen gönder.")
+        self.assertEqual(safe.level, "safe")
+        self.assertEqual(critical.level, "critical")
+        self.assertTrue(critical.requires_confirmation)
+        self.assertIn("credential", critical.flags)
+        self.assertIn("remote_access", critical.flags)
+
+    def test_safe_message_is_sent_without_confirmation(self):
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse("listings:start_conversation", kwargs={"slug": self.listing.slug}),
+            {"body": "Ürün hâlâ satılık mı?"},
+        )
+        conversation = Conversation.objects.get(listing=self.listing, buyer=self.buyer)
+        self.assertRedirects(response, reverse("listings:conversation_detail", kwargs={"pk": conversation.pk}))
+        self.assertEqual(conversation.messages.count(), 1)
+
+    def test_high_risk_message_requires_confirmation_and_keeps_text(self):
+        self.client.force_login(self.buyer)
+        url = reverse("listings:start_conversation", kwargs={"slug": self.listing.slug})
+        risky_body = "Kapora için ödeme linkini aç ve SMS doğrulama kodunu gönder."
+        response = self.client.post(url, {"body": risky_body})
+        self.assertRedirects(response, f"{self.listing.get_absolute_url()}#message-box", fetch_redirect_response=False)
+        self.assertFalse(Conversation.objects.filter(listing=self.listing, buyer=self.buyer).exists())
+
+        detail = self.client.get(self.listing.get_absolute_url())
+        self.assertContains(detail, risky_body)
+        self.assertContains(detail, "data-message-safety-confirm")
+        self.assertContains(detail, "open")
+
+        sent = self.client.post(url, {"body": risky_body, "safety_confirmed": "on"})
+        conversation = Conversation.objects.get(listing=self.listing, buyer=self.buyer)
+        self.assertRedirects(sent, reverse("listings:conversation_detail", kwargs={"pk": conversation.pk}))
+        self.assertEqual(conversation.messages.count(), 1)
+        notification = Notification.objects.get(user=self.owner, notification_type=Notification.Type.MESSAGE)
+        self.assertIn("Güvenlik uyarısı", notification.body)
+        self.assertNotIn("doğrulama kodunu", notification.body.lower())
+
+    def test_conversation_reply_shows_server_warning_and_receiver_banner(self):
+        conversation = Conversation.objects.create(
+            listing=self.listing, buyer=self.buyer, seller=self.owner
+        )
+        Message.objects.create(
+            conversation=conversation, sender=self.owner, body="Merhaba, ilan güncel."
+        )
+        self.client.force_login(self.buyer)
+        url = reverse("listings:conversation_detail", kwargs={"pk": conversation.pk})
+        risky_body = "AnyDesk kurup ekranını paylaş, sonra kaporayı havale yap."
+        blocked = self.client.post(url, {"body": risky_body})
+        self.assertEqual(blocked.status_code, 200)
+        self.assertContains(blocked, "yüksek riskli ifade")
+        self.assertEqual(conversation.messages.count(), 1)
+
+        sent = self.client.post(url, {"body": risky_body, "safety_confirmed": "on"})
+        self.assertRedirects(sent, url)
+        self.assertEqual(conversation.messages.count(), 2)
+        detail = self.client.get(url)
+        self.assertContains(detail, "Kritik güvenlik uyarısı")
+        self.assertContains(detail, "Cihaza uzaktan erişim")
+
+    def test_high_risk_notification_preview_does_not_repeat_message(self):
+        preview = safe_notification_preview(
+            "Ahmet", "SMS doğrulama kodunu ve kart şifreni gönder."
+        )
+        self.assertIn("Güvenlik uyarısı", preview)
+        self.assertNotIn("kart şifreni", preview)

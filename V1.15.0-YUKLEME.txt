@@ -1,0 +1,37 @@
+İLAN ŞEHRİ v1.15.0 — GÜVENLİ MESAJLAŞMA VE DOLANDIRICILIK UYARISI
+
+Bu sürüm:
+- Mesaj metnini tarayıcıda anlık, sunucuda bağımsız olarak analiz eder.
+- Şifre/SMS doğrulama kodu, kimlik-kart görüntüsü, uzaktan erişim,
+  ön ödeme-kapora, acele baskısı, kısaltılmış bağlantı, alternatif ödeme
+  ve platform dışı iletişim sinyallerini açıklar.
+- Yüksek ve kritik riskli mesajları ikinci onay olmadan göndermez.
+- İlan detayında engellenen mesaj metnini koruyarak yeniden gösterir.
+- Alıcı tarafında risk seviyesi, gerekçeler ve güvenli davranış önerisi gösterir.
+- Yüksek riskli mesajın şüpheli metnini bildirim önizlemesinde tekrar etmez.
+- Analiz kural tabanlı ve uygulama içindedir; mesaj içeriği bu özellik için
+  harici yapay zekâ servisine gönderilmez.
+- Akıllı eşleştirme, fiyat rehberi, mobil sistem ve Gemini akışı korunur.
+- Yeni migration içermez.
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. GitHub Desktop Summary:
+   İlan Şehri v1.15.0 güvenli mesajlaşma
+4. Commit to main ve Push origin.
+5. Django Kontrol workflow'unun yeşil olmasını bekleyin.
+6. Yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Bir ilan detayından veya mevcut konuşmadan normal mesaj gönderin.
+8. Deneme için "AnyDesk kur, SMS doğrulama kodunu gönder" yazıldığında
+   kritik uyarı ve onay kutusu görünmelidir.
+
+Not:
+Python derleme, JavaScript, Bash, YAML, mobil sözleşme, saf mesaj güvenliği
+mantığı, 390 piksel Chromium bileşen görünümü ve ZIP bütünlüğü kontrol edildi.
+Yerel ortamda Django kurulu olmadığı için tam Django testleri burada
+çalıştırılmadı; GitHub Actions üzerinde doğrulanacaktır.

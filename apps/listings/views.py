@@ -73,6 +73,7 @@ from .services import (
     reject_offer,
 )
 from .matching import blocked_owner_ids, refresh_user_matches, sync_listing_matches
+from .message_safety import safe_notification_preview
 from .pricing import build_price_guide
 
 
@@ -605,7 +606,12 @@ class ListingDetailView(FormMixin, DetailView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context["is_favorite"] = user.is_authenticated and Favorite.objects.filter(user=user, listing=self.object).exists()
-        context["message_form"] = MessageForm()
+        pending_key = f"pending_message_{self.object.pk}"
+        pending_message = self.request.session.pop(pending_key, None)
+        context["message_form"] = MessageForm(
+            initial={"body": pending_message.get("body", "")}
+        ) if pending_message else MessageForm()
+        context["message_safety_pending"] = bool(pending_message)
         context["report_form"] = ListingReportForm()
         context["owner_reviews"] = self.object.owner.received_reviews.filter(is_visible=True).select_related("reviewer")[:6]
         context["blocked_between"] = user.is_authenticated and _blocked_between(user, self.object.owner)
@@ -1349,8 +1355,18 @@ def start_conversation(request, slug):
         return redirect(listing.get_absolute_url())
     form = MessageForm(request.POST, request.FILES)
     if not form.is_valid():
-        messages.error(request, "Mesajını kontrol edip yeniden gönder.")
-        return redirect(listing.get_absolute_url())
+        request.session[f"pending_message_{listing.pk}"] = {
+            "body": (request.POST.get("body") or "")[:1600],
+        }
+        safety_result = getattr(form, "safety_result", None)
+        if safety_result and safety_result.requires_confirmation:
+            messages.warning(
+                request,
+                "Mesajın güvenlik uyarısı içeriyor. Metni kontrol edip onay kutusunu işaretleyerek yeniden gönder.",
+            )
+        else:
+            messages.error(request, "Mesajını kontrol edip yeniden gönder.")
+        return redirect(f"{listing.get_absolute_url()}#message-box")
     conversation, _ = Conversation.objects.get_or_create(
         listing=listing,
         buyer=request.user,
@@ -1370,7 +1386,7 @@ def start_conversation(request, slug):
         listing=listing,
         notification_type=Notification.Type.MESSAGE,
         title="İlanın hakkında yeni mesaj",
-        body=f"{request.user.display_name}: {message.body[:100]}",
+        body=safe_notification_preview(request.user.display_name, message.body),
         link=reverse("listings:conversation_detail", kwargs={"pk": conversation.pk}),
     )
     messages.success(request, "Mesajın ilan sahibine gönderildi.")
@@ -1467,7 +1483,7 @@ class ConversationDetailView(LoginRequiredMixin, FormMixin, DetailView):
                 listing=self.object.listing,
                 notification_type=Notification.Type.MESSAGE,
                 title="Yeni mesajın var",
-                body=f"{request.user.display_name}: {message.body[:100]}",
+                body=safe_notification_preview(request.user.display_name, message.body),
                 link=self.get_success_url(),
             )
             return redirect(self.get_success_url())

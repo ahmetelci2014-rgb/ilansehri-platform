@@ -603,6 +603,12 @@ class Message(models.Model):
         super().save(*args, **kwargs)
         Conversation.objects.filter(pk=self.conversation_id).update(updated_at=timezone.now())
 
+    @property
+    def safety_analysis(self):
+        from .message_safety import analyze_message
+
+        return analyze_message(self.body)
+
     def __str__(self) -> str:
         return f"{self.sender}: {self.body[:40]}"
 

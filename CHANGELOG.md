@@ -1,5 +1,16 @@
 # Değişiklik Günlüğü
 
+## v1.15.0 — Güvenli mesajlaşma ve dolandırıcılık uyarısı
+
+- Mesajlara yerel ve açıklanabilir risk analizi eklendi.
+- Şifre/doğrulama kodu, kimlik-kart görüntüsü, uzaktan erişim, ön ödeme, acele baskısı, kısaltılmış bağlantı, alternatif ödeme ve platform dışı iletişim sinyalleri taranır.
+- Yüksek/kritik riskli mesajlarda ikinci onay zorunlu hale getirildi; metin ilan detayında korunarak yeniden gösterilir.
+- Mesaj alıcısı risk seviyesini, gerekçeleri ve güvenli davranış önerisini konuşma içinde görür.
+- Riskli mesaj bildirimlerinde şüpheli içerik bildirim gövdesinde tekrar edilmez.
+- Güvenlik ön izlemesi, karakter sayacı, mobil tasarım ve destek bağlantısı eklendi.
+- Güvenli mesaj, riskli mesaj, onaylı gönderim ve bildirim önizlemesi için regresyon testleri eklendi.
+- Veritabanı migration gerektirmez; akıllı eşleştirme, fiyat rehberi ve Gemini akışı korunur.
+
 ## v1.14.1.1 — Emlak fiyat rehberi hata düzeltmesi
 
 - Alt kategorideki emlak ilanı için yakın kategori fiyatlarını ararken oluşan `FieldError` düzeltildi.

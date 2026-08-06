@@ -249,7 +249,7 @@ class StaticPageView(TemplateView):
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.14.1.1"})
+    return JsonResponse({"status": "ok", "service": "ilansehri", "version": "1.15.0"})
 
 
 def robots_txt(request):
@@ -305,8 +305,8 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "ilansehri-v11411";
-const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/css/v111-operations.css", "/static/css/v112-ai.css", "/static/css/v113-mobile-market.css", "/static/css/v132-mobile-system.css", "/static/css/v14-matching.css", "/static/css/v141-price-guide.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/js/v111-operations.js", "/static/js/v112-ai.js", "/static/js/v113-mobile-market.js", "/static/js/v132-mobile-system.js", "/static/js/v141-price-guide.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
+const CACHE = "ilansehri-v1150";
+const CORE = ["/ilanlar/", "/offline/", "/static/css/app.css", "/static/css/v14-polish.css", "/static/css/v15-experience.css", "/static/css/v16-premium.css", "/static/css/v17-launch.css", "/static/css/v18-vibrant.css", "/static/css/v19-flow.css", "/static/css/v110-support.css", "/static/css/v111-operations.css", "/static/css/v112-ai.css", "/static/css/v113-mobile-market.css", "/static/css/v132-mobile-system.css", "/static/css/v14-matching.css", "/static/css/v141-price-guide.css", "/static/css/v15-message-safety.css", "/static/js/app.js", "/static/js/v16-premium.js", "/static/js/v17-launch.js", "/static/js/v18-ux.js", "/static/js/v111-operations.js", "/static/js/v112-ai.js", "/static/js/v113-mobile-market.js", "/static/js/v132-mobile-system.js", "/static/js/v141-price-guide.js", "/static/js/v15-message-safety.js", "/static/img/icon-192.svg", "/static/img/icon-512.svg"];
 const PRIVATE_PREFIXES = ["/hesap/", "/yardim/talep/", "/yardim/taleplerim/", "/yardim/ekip/", "/ilanlar/taslaklarim/", "/ilanlar/yapay-zeka/", "/ilanlar/fiyat-rehberi/", "/ilanlar/mesajlar/", "/ilanlar/bildirimler/", "/ilanlar/eslesmelerim/", "/ilanlar/islem/", "/tam-yonetim/", "/kazanc-agi/panelim/", "/admin/", "/yonetim/"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));

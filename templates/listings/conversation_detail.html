@@ -5,13 +5,24 @@
   <div class="chat-head"><a href="{% url 'listings:conversation_list' %}">← Mesajlar</a><div><h1>{{ conversation.listing.title }}</h1><p><a href="{% url 'accounts:public_profile' other_user.username %}">{{ other_user.display_name }}</a> ile güvenli görüşme</p></div><div class="chat-head-actions"><a class="market-secondary-button" href="{% url 'listings:offer_center' %}">🤝 Teklifler</a><form method="post" action="{% url 'listings:archive_conversation' conversation.pk %}">{% csrf_token %}<button class="market-secondary-button">Arşivle</button></form></div></div>
   <div class="chat-layout v13-chat-layout">
     <div class="chat-thread" data-chat-thread>
-      <div class="chat-safety-line"><span>🛡</span><p>Ödeme ve doğrulama kodlarını mesaj yoluyla paylaşma.</p></div>
-      {% for message in conversation.messages.all %}<article class="chat-bubble {% if message.sender == user %}mine{% endif %}"><strong>{{ message.sender.display_name }}</strong><p>{{ message.body|linebreaksbr }}</p>{% if message.attachment %}<a href="{{ message.attachment.url }}" target="_blank" rel="noopener"><img src="{{ message.attachment.url }}" alt="Mesaj görseli"></a>{% endif %}<small>{{ message.created_at|date:"d.m.Y H:i" }}{% if message.sender == user and message.is_read %} · Okundu{% endif %}</small></article>{% empty %}<div class="empty">Henüz mesaj yok.</div>{% endfor %}
+      <div class="chat-safety-line"><span>🛡</span><p>Şifre, SMS doğrulama kodu, kart bilgisi ve kimlik fotoğrafını mesaj yoluyla paylaşma.</p></div>
+      {% for message in conversation.messages.all %}
+        {% with safety=message.safety_analysis %}
+        <article class="chat-bubble {% if message.sender == user %}mine{% endif %}{% if safety.is_risky %} safety-{{ safety.level }}{% endif %}">
+          <strong>{{ message.sender.display_name }}</strong>
+          {% if safety.is_risky %}<div class="v15-received-safety tone-{{ safety.level }}"><b>🛡 {{ safety.label }}</b><p>{{ safety.advice }}</p>{% if safety.reasons %}<ul>{% for reason in safety.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>{% endif %}</div>{% endif %}
+          <p>{{ message.body|linebreaksbr }}</p>
+          {% if message.attachment %}<a href="{{ message.attachment.url }}" target="_blank" rel="noopener"><img src="{{ message.attachment.url }}" alt="Mesaj görseli"></a>{% endif %}
+          <small>{{ message.created_at|date:"d.m.Y H:i" }}{% if message.sender == user and message.is_read %} · Okundu{% endif %}</small>
+        </article>
+        {% endwith %}
+      {% empty %}<div class="empty">Henüz mesaj yok.</div>{% endfor %}
     </div>
     <aside class="chat-side-panel">
       <a class="chat-listing-mini" href="{{ conversation.listing.get_absolute_url }}">{% with cover=conversation.listing.cover_image %}{% if cover %}<img src="{{ cover.image.url }}" alt="{{ conversation.listing.title }}">{% endif %}{% endwith %}<div><b>{{ conversation.listing.title }}</b><span>{% if conversation.listing.price %}{{ conversation.listing.price|floatformat:"0g" }} TL{% else %}Teklif alıyor{% endif %}</span><small>İlanı aç →</small></div></a>
       <div class="chat-user-mini"><span>{{ other_user.display_name|first|upper }}</span><div><b>{{ other_user.display_name }}</b><small>★ {{ other_user.average_rating }} · Güven {{ other_user.trust_score }}/100</small></div></div>
-      {% if blocked_between %}<div class="notice warning">Bu kullanıcıyla mesajlaşma engellendi.</div>{% else %}<form method="post" enctype="multipart/form-data" class="chat-form">{% csrf_token %}{{ form.as_p }}<button class="button full">Mesajı gönder</button></form>{% endif %}
+      {% if blocked_between %}<div class="notice warning">Bu kullanıcıyla mesajlaşma engellendi.</div>{% else %}<form method="post" enctype="multipart/form-data" class="chat-form" data-message-safety-form>{% csrf_token %}{% include 'listings/_message_form_fields.html' with form=form %}<button class="button full">Mesajı güvenle gönder</button></form>{% endif %}
+      <div class="v15-safety-help"><b>Şüpheli bir mesaj mı aldın?</b><p>Ödeme yapma, bağlantı açma ve doğrulama kodu paylaşma. Kullanıcıyı engelleyerek destek ekibine bildirebilirsin.</p><a href="{% url 'support_center:ticket_create' %}">Destek talebi oluştur →</a></div>
       <form method="post" action="{% url 'accounts:toggle_block' other_user.pk %}">{% csrf_token %}<button class="market-secondary-button full">{% if blocked_between %}Engeli kaldır{% else %}Kullanıcıyı engelle{% endif %}</button></form>
     </aside>
   </div>

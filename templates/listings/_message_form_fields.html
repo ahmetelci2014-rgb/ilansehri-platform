@@ -1,0 +1,21 @@
+{% if form.non_field_errors %}<div class="v15-message-form-errors">{{ form.non_field_errors }}</div>{% endif %}
+<div class="v15-message-field">
+  <label for="{{ form.body.id_for_label }}">{{ form.body.label }}</label>
+  {{ form.body }}
+  {% if form.body.errors %}<div class="v15-message-form-errors">{{ form.body.errors }}</div>{% endif %}
+  <small><span data-message-character-count>0</span>/1600 karakter</small>
+</div>
+<div class="v15-safety-preview" data-message-safety-preview hidden aria-live="polite">
+  <div><span data-message-safety-icon>🛡</span><div><b data-message-safety-title>Mesaj güvenlik kontrolü</b><p data-message-safety-advice></p></div></div>
+  <ul data-message-safety-reasons></ul>
+</div>
+<div class="v15-safety-confirm" data-message-safety-confirm {% if not form.safety_confirmed.errors %}hidden{% endif %}>
+  <label for="{{ form.safety_confirmed.id_for_label }}">{{ form.safety_confirmed }}<span>{{ form.safety_confirmed.label }}</span></label>
+  {% if form.safety_confirmed.errors %}<div class="v15-message-form-errors">{{ form.safety_confirmed.errors }}</div>{% endif %}
+</div>
+<div class="v15-message-field">
+  <label for="{{ form.attachment.id_for_label }}">{{ form.attachment.label }}</label>
+  {{ form.attachment }}
+  {% if form.attachment.errors %}<div class="v15-message-form-errors">{{ form.attachment.errors }}</div>{% endif %}
+  <small>Yalnızca gerekli bir ürün veya teslimat görseli ekle. Kimlik ve kart fotoğrafı gönderme.</small>
+</div>

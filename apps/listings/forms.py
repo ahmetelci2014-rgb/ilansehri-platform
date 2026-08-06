@@ -4,6 +4,7 @@ from django import forms
 from django.utils import timezone
 
 from .locations import CITY_CHOICES
+from .message_safety import analyze_message
 from .models import (
     Listing,
     ListingReport,
@@ -336,6 +337,12 @@ class CounterOfferForm(forms.Form):
 
 
 class MessageForm(forms.ModelForm):
+    safety_confirmed = forms.BooleanField(
+        required=False,
+        label="Uyarıyı okudum; şifre, doğrulama kodu veya kart bilgisi paylaşmadığımı onaylıyorum.",
+        widget=forms.CheckboxInput(attrs={"data-safety-confirm-checkbox": "true"}),
+    )
+
     class Meta:
         model = Message
         fields = ("body", "attachment")
@@ -346,6 +353,7 @@ class MessageForm(forms.ModelForm):
                     "rows": 4,
                     "placeholder": "İlan hakkında merak ettiğini yaz...",
                     "maxlength": "1600",
+                    "data-message-safety-input": "true",
                 }
             ),
             "attachment": forms.ClearableFileInput(attrs={"accept": "image/*"}),
@@ -364,6 +372,17 @@ class MessageForm(forms.ModelForm):
         if attachment and not getattr(attachment, "content_type", "").startswith("image/"):
             raise forms.ValidationError("Mesaja yalnızca görsel dosyası eklenebilir.")
         return attachment
+
+    def clean(self):
+        cleaned = super().clean()
+        body = cleaned.get("body") or ""
+        self.safety_result = analyze_message(body)
+        if self.safety_result.requires_confirmation and not cleaned.get("safety_confirmed"):
+            self.add_error(
+                "safety_confirmed",
+                "Bu mesaj yüksek riskli ifade içeriyor. Güvenlik uyarısını okuyup onay kutusunu işaretle.",
+            )
+        return cleaned
 
 
 class ListingReportForm(forms.ModelForm):

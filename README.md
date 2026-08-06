@@ -1,6 +1,16 @@
+
+## v1.15 Güvenli mesajlaşma
+
+- Mesaj metni tarayıcıda anlık, sunucuda kesin olarak güvenlik analizinden geçirilir.
+- Şifre/doğrulama kodu, kimlik-kart görüntüsü, uzaktan erişim, ön ödeme, kısaltılmış bağlantı ve platform dışı iletişim sinyalleri açıklanır.
+- Yüksek riskli mesajlar, kullanıcı açıkça güvenlik onayı vermeden gönderilmez.
+- Alıcı, riskli mesajın üzerinde seviye, gerekçe ve güvenli işlem önerisini görür.
+- Bildirim önizlemesi yüksek riskli metni tekrar göstermek yerine güvenlik uyarısı kullanır.
+- Analiz yerel ve kural tabanlıdır; mesaj içeriği harici yapay zekâ servisine gönderilmez.
+
 # İlan Şehri
 
-> Güncel sürüm: **v1.14.1.1** — emlak ilan detayındaki akıllı fiyat rehberi kategori kök filtresi düzeltildi.
+> Güncel sürüm: **v1.15.0** — mesajlarda şüpheli ödeme, doğrulama kodu, kimlik paylaşımı, uzaktan erişim ve sahte bağlantı risklerini uyaran güvenli mesajlaşma katmanı eklendi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
