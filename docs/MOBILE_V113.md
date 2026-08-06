@@ -41,3 +41,13 @@ Bu sürüm masaüstü tasarımını değiştirmeden, `780px` ve altındaki ekran
 - PWA cache adı: `ilansehri-v1130`
 - Model ve migration değişikliği yoktur.
 - Masaüstü kuralları korunur; yeni tasarım yalnız mobil medya sorgularında devreye girer.
+
+
+## v1.13.1 ek geliştirmeleri
+
+- Hızlı ilan filtreleri ve mobil sonuç özeti
+- İlan türüne duyarlı filtre alanları
+- Mobil kart kategori rozeti ve yerel fiyat gruplaması
+- Detay sayfasında temel özellikler ve satıcı özeti
+- Mobil arama temizleme düğmesi ve alt menü sayaçları
+- PWA cache: `ilansehri-v1131`

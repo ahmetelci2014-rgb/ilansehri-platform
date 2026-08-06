@@ -30,6 +30,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
+  // Mobil aramada tek dokunuşla temizleme.
+  document.querySelectorAll("[data-mobile-search-form]").forEach((form) => {
+    const input = form.querySelector("[data-mobile-search-input]");
+    const clearButton = form.querySelector("[data-mobile-search-clear]");
+    if (!input || !clearButton) return;
+    const sync = () => { clearButton.hidden = !String(input.value || "").trim(); };
+    sync();
+    input.addEventListener("input", sync);
+    clearButton.addEventListener("click", () => {
+      input.value = "";
+      sync();
+      input.focus();
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  });
+
+  // Seçilen ilan türüne göre yalnız ilgili ayrıntılı filtreleri göster.
+  document.querySelectorAll("[data-filter-panel]").forEach((panel) => {
+    const kindSelect = panel.querySelector("[data-kind-filter]");
+    const sections = Array.from(panel.querySelectorAll("[data-kind-section]"));
+    if (!kindSelect || !sections.length) return;
+    const syncKindSections = () => {
+      const selected = String(kindSelect.value || "");
+      sections.forEach((section) => {
+        const visible = section.dataset.kindSection === selected;
+        section.hidden = !visible;
+        section.querySelectorAll("input,select,textarea").forEach((field) => {
+          field.disabled = !visible;
+        });
+      });
+    };
+    syncKindSections();
+    kindSelect.addEventListener("change", syncKindSections);
+  });
+
+  // Aktif hızlı filtreyi mobilde görünür alana getir.
+  document.querySelectorAll(".v131-mobile-quick-filters").forEach((nav) => {
+    const active = nav.querySelector("a.active");
+    if (active && mobileQuery.matches) {
+      window.requestAnimationFrame(() => active.scrollIntoView({ block: "nearest", inline: "center" }));
+    }
+  });
+
   document.querySelectorAll(".market-card").forEach((card) => {
     card.addEventListener("touchstart", () => card.classList.add("is-touching"), { passive: true });
     ["touchend", "touchcancel"].forEach((name) => card.addEventListener(name, () => {

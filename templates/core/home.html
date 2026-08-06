@@ -30,7 +30,7 @@
             <div class="v16-spotlight-body">
               <small>{% if spotlight.district %}{{ spotlight.district }} · {% endif %}{{ spotlight.get_kind_display }}</small>
               <h3>{{ spotlight.title|truncatechars:62 }}</h3>
-              <div class="v16-spotlight-price"><strong>{% if spotlight.price_on_request %}Teklif alıyor{% elif spotlight.price %}{{ spotlight.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><span>{{ spotlight.created_at|timesince }} önce</span></div>
+              <div class="v16-spotlight-price"><strong>{% if spotlight.price_on_request %}Teklif alıyor{% elif spotlight.price %}{{ spotlight.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><span>{{ spotlight.created_at|timesince }} önce</span></div>
             </div>
           </a>
         {% else %}

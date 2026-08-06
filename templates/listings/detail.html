@@ -26,6 +26,23 @@
     {% if listing.is_negotiable %}<span>Pazarlık var</span>{% elif listing.management_mode == 'full' %}<span>Güvenceli</span>{% else %}<span>{{ listing.get_action_display }}</span>{% endif %}
   </div>
 
+  <div class="v131-mobile-facts" aria-label="Öne çıkan ilan özellikleri">
+    {% if listing.kind == 'vehicle' %}
+      {% if listing.model_year %}<span><small>Model yılı</small><b>{{ listing.model_year }}</b></span>{% endif %}
+      {% if listing.mileage %}<span><small>Kilometre</small><b>{{ listing.mileage|floatformat:"0g" }} km</b></span>{% endif %}
+      {% if listing.transmission %}<span><small>Vites</small><b>{{ listing.get_transmission_display }}</b></span>{% endif %}
+    {% elif listing.kind == 'real_estate' %}
+      {% if listing.room_count %}<span><small>Oda</small><b>{{ listing.room_count }}</b></span>{% endif %}
+      {% if listing.area_m2 %}<span><small>Alan</small><b>{{ listing.area_m2|floatformat:"0g" }} m²</b></span>{% endif %}
+      {% if listing.floor_location %}<span><small>Kat</small><b>{{ listing.floor_location }}</b></span>{% endif %}
+    {% else %}
+      {% if listing.brand %}<span><small>Marka</small><b>{{ listing.brand|truncatechars:18 }}</b></span>{% endif %}
+      {% if listing.model_name %}<span><small>Model</small><b>{{ listing.model_name|truncatechars:18 }}</b></span>{% endif %}
+      {% if listing.condition %}<span><small>Durum</small><b>{{ listing.condition|truncatechars:18 }}</b></span>{% endif %}
+      {% if listing.delivery_type %}<span><small>Teslimat</small><b>{{ listing.get_delivery_type_display }}</b></span>{% endif %}
+    {% endif %}
+  </div>
+
   <section class="v16-detail-grid">
     <div>
       <div class="v16-gallery-shell">
@@ -35,9 +52,15 @@
 
       <nav class="v16-detail-nav" aria-label="İlan ayrıntıları"><a href="#aciklama">Açıklama</a>{% if listing.detail_items or listing.technical_features %}<a href="#ozellikler">Özellikler</a>{% endif %}{% if price_history %}<a href="#fiyat-gecmisi">Fiyat geçmişi</a>{% endif %}<a href="#konum">Konum</a>{% if owner_reviews %}<a href="#degerlendirmeler">Değerlendirmeler</a>{% endif %}</nav>
 
+      <a class="v131-mobile-seller-strip" href="{% url 'accounts:public_profile' listing.owner.username %}" aria-label="Satıcı profilini aç">
+        <span class="v131-mobile-seller-avatar">{% if listing.owner.avatar %}<img src="{{ listing.owner.avatar.url }}" alt="{{ listing.owner.display_name }}">{% else %}{{ listing.owner.display_name|first|upper }}{% endif %}</span>
+        <div><b>{{ listing.owner.display_name }}</b><small>{% if listing.owner.is_phone_verified %}✓ Telefon doğrulandı{% else %}Temel hesap{% endif %} · ★ {{ listing.owner.average_rating }} · Güven {{ listing.owner.trust_score }}/100</small></div>
+        <i>›</i>
+      </a>
+
       <div class="v16-detail-panels">
         <article class="v16-detail-panel" id="aciklama"><h2>İlan açıklaması</h2><p>{{ listing.description|linebreaksbr }}</p></article>
-        <article class="v16-detail-panel v17-quality-panel" id="ilan-kalitesi"><div class="v17-quality-head"><div><span class="section-label">İLAN BİLGİ KALİTESİ</span><h2>{{ quality_profile.level }} · {{ quality_profile.score }}/100</h2><p>{{ quality_profile.passed_count }}/{{ quality_profile.total_count }} kalite ölçütü tamamlandı.</p></div><div class="v17-quality-ring tone-{{ quality_profile.tone }}" style="--quality:{{ quality_profile.score }}%"><strong>{{ quality_profile.score }}</strong></div></div><div class="v17-quality-checks">{% for check in quality_profile.checks %}<span class="{% if check.passed %}passed{% else %}missing{% endif %}">{% if check.passed %}✓{% else %}○{% endif %} {{ check.label }}</span>{% endfor %}</div>{% if user == listing.owner or user.is_staff %}{% if quality_profile.suggestions %}<div class="v17-quality-suggestions"><b>İlanı güçlendirmek için</b>{% for suggestion in quality_profile.suggestions|slice:':3' %}<p>• {{ suggestion }}</p>{% endfor %}</div>{% endif %}{% endif %}</article>
+        <article class="v16-detail-panel v17-quality-panel {% if user == listing.owner or user.is_staff %}v131-quality-owner{% else %}v131-quality-public{% endif %}" id="ilan-kalitesi"><div class="v17-quality-head"><div><span class="section-label">İLAN BİLGİ KALİTESİ</span><h2>{{ quality_profile.level }} · {{ quality_profile.score }}/100</h2><p>{{ quality_profile.passed_count }}/{{ quality_profile.total_count }} kalite ölçütü tamamlandı.</p></div><div class="v17-quality-ring tone-{{ quality_profile.tone }}" style="--quality:{{ quality_profile.score }}%"><strong>{{ quality_profile.score }}</strong></div></div><div class="v17-quality-checks">{% for check in quality_profile.checks %}<span class="{% if check.passed %}passed{% else %}missing{% endif %}">{% if check.passed %}✓{% else %}○{% endif %} {{ check.label }}</span>{% endfor %}</div>{% if user == listing.owner or user.is_staff %}{% if quality_profile.suggestions %}<div class="v17-quality-suggestions"><b>İlanı güçlendirmek için</b>{% for suggestion in quality_profile.suggestions|slice:':3' %}<p>• {{ suggestion }}</p>{% endfor %}</div>{% endif %}{% endif %}</article>
         {% if listing.detail_items or listing.technical_features %}<article class="v16-detail-panel" id="ozellikler"><h2>İlan özellikleri</h2>{% if listing.detail_items %}<dl class="market-spec-grid">{% for label,value in listing.detail_items %}<div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}</dl>{% endif %}{% if listing.technical_features %}<div class="ai-detail-feature-list"><h3>Ek teknik bilgiler</h3><ul>{% for feature in listing.technical_features %}<li>✓ {{ feature }}</li>{% endfor %}</ul></div>{% endif %}{% if listing.search_tags %}<div class="ai-detail-tags">{% for tag in listing.search_tags %}<span>#{{ tag }}</span>{% endfor %}</div>{% endif %}</article>{% endif %}
         {% if price_history %}<article class="v16-detail-panel price-history-panel" id="fiyat-gecmisi"><div class="market-panel-head"><h2>Fiyat geçmişi</h2><span>Son {{ price_history|length }} değişiklik</span></div><div class="price-history-list">{% for change in price_history %}<div class="{% if change.is_drop %}drop{% else %}rise{% endif %}"><span>{% if change.is_drop %}↓{% else %}↑{% endif %}</span><b>{{ change.old_price|floatformat:"0g" }} TL</b><em>→</em><strong>{{ change.new_price|floatformat:"0g" }} TL</strong><small>{{ change.created_at|date:'d.m.Y H:i' }}</small></div>{% endfor %}</div></article>{% endif %}
         <article class="v16-detail-panel" id="konum"><h2>Yaklaşık konum</h2><div class="detail-location-box"><span>⌖</span><div><b>{{ listing.location_text }}</b><p>Güvenlik için açık adres gösterilmez. Buluşma noktasını satıcıyla mesajlaşarak belirleyebilirsin.</p></div></div></article>

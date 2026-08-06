@@ -89,11 +89,20 @@ class MobileMarketplaceExperienceTests(TestCase):
         response = self.client.get(self.listing.get_absolute_url())
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "v113-mobile-price-summary")
+        self.assertContains(response, "v131-mobile-facts")
+        self.assertContains(response, "v131-mobile-seller-strip")
         self.assertContains(response, "12.500 TL")
+
+    def test_listing_list_contains_mobile_quick_filters_and_result_summary(self):
+        response = self.client.get(reverse("listings:list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "v131-mobile-quick-filters")
+        self.assertContains(response, "v131-mobile-result-summary")
+        self.assertContains(response, "data-kind-filter")
 
     def test_service_worker_uses_mobile_release_cache(self):
         response = self.client.get(reverse("core:service_worker"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'const CACHE = "ilansehri-v1130";')
+        self.assertContains(response, 'const CACHE = "ilansehri-v1131";')
         self.assertContains(response, "/static/css/v113-mobile-market.css")
         self.assertContains(response, "/static/js/v113-mobile-market.js")

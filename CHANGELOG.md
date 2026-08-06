@@ -1,4 +1,14 @@
-# Değişiklik Günlüğü
+# Changelog
+
+## v1.13.1 — Mobil Keşif ve İlan Bilgi Akışı
+
+- Mobil ilan listesine yatay hızlı filtreler eklendi: en yeni, fiyatı düşen, doğrulanmış, güvenceli ve kullanıcının şehri.
+- Mobil filtre paneli seçilen ilan türüne göre araç ve emlak alanlarını otomatik gösteriyor.
+- İlan kartlarında yerel fiyat biçimi, kategori rozeti ve daha temiz kompakt bilgi düzeni kullanılıyor.
+- İlan detayına öne çıkan özellik kartları ve yukarı taşınmış satıcı özeti eklendi.
+- Ziyaretçilerde teknik ilan kalite paneli mobilde gizlenerek içerik ve iletişim önceliklendirildi.
+- Mobil aramaya tek dokunuşla temizleme, alt menüye mesaj/bildirim sayaçları eklendi.
+- PWA cache sürümü `ilansehri-v1131` olarak yenilendi.
 
 ## v1.13.0.1 — Mobil fiyat biçimlendirme düzeltmesi
 

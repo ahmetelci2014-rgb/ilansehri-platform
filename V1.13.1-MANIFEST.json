@@ -1,0 +1,43 @@
+{
+  "version": "v1.13.1",
+  "name": "Mobil Keşif ve İlan Bilgi Akışı",
+  "base_version": "v1.13.0.1",
+  "changed_file_count": 14,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "apps/core/tests.py",
+    "apps/core/views.py",
+    "docs/MOBILE_V113.md",
+    "scripts/start_codespace.sh",
+    "static/css/v113-mobile-market.css",
+    "static/js/v113-mobile-market.js",
+    "templates/base.html",
+    "templates/core/home.html",
+    "templates/listings/_card.html",
+    "templates/listings/detail.html",
+    "templates/listings/list.html"
+  ],
+  "features": [
+    "Mobil hızlı ilan filtreleri",
+    "İlan türüne duyarlı filtre alanları",
+    "Mobil sonuç özeti",
+    "Yerel fiyat biçimlendirmeli ilan kartları",
+    "Kart ilan türü rozeti",
+    "İlan detay temel özellik kartları",
+    "Mobil satıcı özeti",
+    "Mobil arama temizleme",
+    "Alt menü bildirim sayaçları",
+    "Mobil ana sayfa 2x2 hızlı keşif düzeni"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "template_delimiter_balance": "passed",
+    "critical_release_files": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload"
+  }
+}

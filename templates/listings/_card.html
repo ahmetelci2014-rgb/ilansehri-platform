@@ -1,5 +1,5 @@
 {% with price_change=listing.latest_price_change %}
-<article class="market-card{% if listing.is_featured %} is-featured{% endif %}{% if price_change and price_change.is_drop %} has-price-drop{% endif %}">
+<article data-listing-kind="{{ listing.kind }}" class="market-card{% if listing.is_featured %} is-featured{% endif %}{% if price_change and price_change.is_drop %} has-price-drop{% endif %}">
   <a class="market-card-link" href="{{ listing.get_absolute_url }}" aria-label="{{ listing.title }}">
     <div class="market-card-media">
       {% with cover=listing.cover_image %}
@@ -12,12 +12,13 @@
         {% if listing.is_featured %}<span class="market-card-featured">Öne çıkan</span>{% endif %}
         {% if listing.management_mode == 'full' %}<span class="market-card-managed">✓ Güvenceli</span>{% endif %}
       </div>
+      <span class="v131-card-kind">{{ listing.get_kind_display }}</span>
       {% if listing.images.count %}<span class="market-card-photo">▣ {{ listing.images.count }}</span>{% endif %}
     </div>
     <div class="market-card-body">
       <div class="market-price-line">
-        <strong class="market-card-price">{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:0 }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>
-        {% if price_change and price_change.is_drop %}<del>{{ price_change.old_price|floatformat:0 }} TL</del>{% endif %}
+        <strong class="market-card-price">{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong>
+        {% if price_change and price_change.is_drop %}<del>{{ price_change.old_price|floatformat:"0g" }} TL</del>{% endif %}
       </div>
       <h3>{{ listing.title }}</h3>
       <div class="market-card-specs">

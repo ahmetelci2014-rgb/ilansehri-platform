@@ -1,0 +1,30 @@
+İLAN ŞEHRİ v1.13.1 — MOBİL KEŞİF VE İLAN BİLGİ AKIŞI
+
+Bu sürümde:
+- Mobil ilan listesine hızlı filtreler eklendi.
+- Filtre paneli seçilen ilan türüne göre sadeleşir.
+- Kart fiyatları Türkçe binlik ayırıcıyla gösterilir.
+- Kartlarda ilan türü daha görünür hâle getirildi.
+- İlan detayında temel özellikler fotoğrafın yanında öne çıkarıldı.
+- Satıcı özeti mobilde yukarı taşındı.
+- Ziyaretçiye gereksiz teknik kalite paneli mobilde gizlendi.
+- Mobil aramaya temizleme düğmesi eklendi.
+- Alt menüye mesaj, bildirim ve karşılaştırma sayaçları eklendi.
+- Ana sayfadaki hızlı keşif kutuları mobilde 2x2 düzenlendi.
+- Masaüstü görünümü ve Gemini sistemi değiştirilmedi.
+- Yeni migration yoktur.
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. GitHub Desktop Summary:
+   İlan Şehri v1.13.1 mobil keşif geliştirmesi
+4. Commit to main ve Push origin.
+5. GitHub Actions sonucunu bekleyin.
+6. Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Mobil tarayıcıda sayfayı yenileyin. Eski görünüm kalırsa
+   Service Worker kaydını kaldırıp site verilerini temizleyin.
