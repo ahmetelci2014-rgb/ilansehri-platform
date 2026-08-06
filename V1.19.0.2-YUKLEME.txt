@@ -1,0 +1,10 @@
+İLAN ŞEHRİ v1.19.0.2 — MOBİL DENETİM GİRİŞ DÜZELTMESİ
+
+1. Bu klasörün içindeki apps, scripts ve templates klasörlerini proje ana dizinine kopyalayın.
+2. Mevcut dosyaların değiştirilmesini onaylayın.
+3. GitHub Desktop özeti:
+   İlan Şehri v1.19.0.2 mobil denetim giriş düzeltmesi
+4. Commit to main ve Push origin yapın.
+5. Django Kontrol ve Mobil Görsel Denetim sonuçlarını bekleyin.
+
+Migration gerekmez. Codespaces komutlarını iki denetim de yeşil olduktan sonra çalıştırın.

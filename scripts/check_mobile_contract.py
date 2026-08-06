@@ -26,8 +26,10 @@ def require(text: str, needle: str, source: str) -> None:
 
 def main() -> int:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if version != "v1.19.0":
-        fail(f"VERSION v1.19.0 olmalı, bulundu: {version}")
+    if not re.fullmatch(r"v\d+\.\d+\.\d+(?:\.\d+)?", version):
+        fail(f"VERSION biçimi geçersiz: {version}")
+    release_number = version.removeprefix("v")
+    cache_version = "".join(character for character in release_number if character.isdigit())
 
     base = (ROOT / "templates/base.html").read_text(encoding="utf-8")
     views = (ROOT / "apps/core/views.py").read_text(encoding="utf-8")
@@ -42,16 +44,17 @@ def main() -> int:
     location_js = (ROOT / "static/js/v116-location-discovery.js").read_text(encoding="utf-8")
     maintenance_script = (ROOT / "scripts/run_daily_maintenance.sh").read_text(encoding="utf-8")
     transaction_template = (ROOT / "templates/listings/transaction_detail.html").read_text(encoding="utf-8")
+    login_template = (ROOT / "templates/registration/login.html").read_text(encoding="utf-8")
     transaction_services = (ROOT / "apps/listings/services.py").read_text(encoding="utf-8")
     transaction_css = (ROOT / "static/css/v119-transactions.css").read_text(encoding="utf-8")
     mobile_workflow = (ROOT / ".github/workflows/mobile-audit.yml").read_text(encoding="utf-8")
 
     require(base, "css/v132-mobile-system.css", "templates/base.html")
     require(base, "js/v132-mobile-system.js", "templates/base.html")
-    require(base, "v1.19.0", "templates/base.html")
+    require(base, version, "templates/base.html")
     require(base, "v118-trust-safety.css", "templates/base.html")
     require(base, "v119-transactions.css", "templates/base.html")
-    require(views, 'const CACHE = "ilansehri-v1190";', "apps/core/views.py")
+    require(views, f'const CACHE = "ilansehri-v{cache_version}";', "apps/core/views.py")
     require(views, "/static/css/v132-mobile-system.css", "apps/core/views.py")
     require(base, "css/v14-matching.css", "templates/base.html")
     require(base, "css/v141-price-guide.css", "templates/base.html")
@@ -70,7 +73,7 @@ def main() -> int:
     require(views, "/static/css/v119-transactions.css", "apps/core/views.py")
     require(views, "/static/js/v116-location-discovery.js", "apps/core/views.py")
     require(views, "/static/js/v132-mobile-system.js", "apps/core/views.py")
-    require(views, '"version": "1.19.0"', "apps/core/views.py")
+    require(views, f'"version": "{release_number}"', "apps/core/views.py")
     require(listing_form, "data-price-guide-assistant", "templates/listings/form.html")
     require(listing_form, "data-listing-location-capture", "templates/listings/form.html")
     require(location_js, "data-listing-latitude", "static/js/v116-location-discovery.js")
@@ -130,6 +133,11 @@ def main() -> int:
     require(js, "data-mobile-overflow", "static/js/v132-mobile-system.js")
     require(audit, "VIEWPORTS", "scripts/mobile_audit.py")
     require(audit, "ROLE_ROUTES", "scripts/mobile_audit.py")
+    require(login_template, "data-mobile-audit-login", "templates/registration/login.html")
+    require(audit, 'page.locator("form[data-mobile-audit-login]")', "scripts/mobile_audit.py")
+    require(audit, "expected_result_count", "scripts/mobile_audit.py")
+    if "page.locator('button[type=\"submit\"], input[type=\"submit\"]').first.click()" in audit:
+        fail("Mobil denetim giriş formu dışındaki gizli submit düğmesine tıklamamalı")
 
     # Kullanıcıya gösterilen HTML sayfalarının çoğu ortak mobil kabuğu kullanmalı.
     excluded = {
@@ -162,7 +170,7 @@ def main() -> int:
     if offenders:
         fail("Mobil taşma riski taşıyan inline genişlikler: " + ", ".join(offenders))
 
-    print("Mobil sözleşme kontrolü başarılı: v1.19.0")
+    print(f"Mobil sözleşme kontrolü başarılı: {version}")
     return 0
 
 
