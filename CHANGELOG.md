@@ -1,3 +1,13 @@
+# Değişiklik Günlüğü
+
+## v1.13.0.1 — Mobil fiyat biçimlendirme düzeltmesi
+
+- Mobil ilan detayındaki fiyat özeti Türkçe binlik ayırıcıyla gösterilir.
+- `12500 TL` yerine `12.500 TL` biçimi kullanılır.
+- İlan detayındaki ana fiyat, eski fiyat, fiyat geçmişi ve bekleyen teklif tutarları aynı biçime getirildi.
+- Mobil deneyim ve Gemini ilan asistanı değiştirilmedi.
+- Yeni migration yoktur.
+
 # v1.13.0 — Mobil İlan Odaklı Deneyim
 
 - Masaüstü görünümü korunurken 780 piksel ve altında ayrı mobil tasarım katmanı eklendi.

@@ -1,0 +1,25 @@
+{
+  "version": "v1.13.0.1",
+  "name": "Mobil Fiyat Biçimlendirme Düzeltmesi",
+  "base_version": "v1.13.0",
+  "root_cause": "Mobil ilan detayındaki fiyat floatformat:0 ile binlik ayraçsız gösterildiği için regresyon testi 12.500 TL metnini bulamadı.",
+  "changed_file_count": 6,
+  "changed_files": [
+    "CHANGELOG.md",
+    "README.md",
+    "VERSION",
+    "scripts/start_codespace.sh",
+    "templates/base.html",
+    "templates/listings/detail.html"
+  ],
+  "checks": {
+    "python_compileall": "passed",
+    "javascript_syntax": "passed",
+    "bash_syntax": "passed",
+    "template_balance": "passed",
+    "localized_price_filter_present": "passed",
+    "regression_expectation_preserved": "passed",
+    "zip_integrity": "passed during packaging",
+    "django_runtime_tests": "GitHub Actions after upload"
+  }
+}

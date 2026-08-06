@@ -1,0 +1,26 @@
+İLAN ŞEHRİ v1.13.0.1 — MOBİL FİYAT BİÇİMLENDİRME DÜZELTMESİ
+
+Kök neden:
+Mobil ilan detay testi `12.500 TL` bekliyordu; şablon `12500 TL` üretiyordu.
+Bu nedenle GitHub Actions 74 testten 1 tanesinde kırmızı oldu.
+
+Düzeltme:
+- Mobil fiyat özeti Türkçe binlik ayırıcıyla gösterilir.
+- İlan detayındaki ana fiyat, eski fiyat, fiyat geçmişi ve bekleyen teklif
+  tutarları aynı yerel biçime getirildi.
+- Mobil tasarımın geri kalanı ve Gemini sistemi değiştirilmedi.
+- Yeni migration yoktur.
+
+Yükleme:
+1. ZIP dosyasını ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. Summary:
+   İlan Şehri v1.13.0.1 mobil fiyat düzeltmesi
+4. Commit to main ve Push origin.
+5. GitHub Actions sonucunu bekleyin.
+6. Actions yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. Mobil sayfayı yenileyin.

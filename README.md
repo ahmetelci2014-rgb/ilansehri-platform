@@ -1,6 +1,9 @@
 # İlan Şehri
 
-> Güncel sürüm: **v1.13.0** — masaüstü korunarak mobil arayüz ilan odaklı, daha okunaklı ve tek elle kullanılabilir hâle getirildi.
+> **v1.13.0.1 düzeltmesi:** Mobil ilan detayındaki fiyatlar Türkçe binlik ayırıcıyla (`12.500 TL`) gösterilir.
+
+
+> Güncel sürüm: **v1.13.0.1** — masaüstü korunarak mobil arayüz ilan odaklı, daha okunaklı ve tek elle kullanılabilir hâle getirildi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
