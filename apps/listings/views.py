@@ -74,6 +74,7 @@ from .services import (
 )
 from .matching import blocked_owner_ids, refresh_user_matches, sync_listing_matches
 from .message_safety import safe_notification_preview
+from .nearby import ALLOWED_RADII_KM, attach_distance, bounding_box, parse_origin, sort_nearby_listings
 from .pricing import build_price_guide
 
 
@@ -358,6 +359,26 @@ def search_suggestions(request):
     return JsonResponse({"results": results[:10]})
 
 
+@require_POST
+def set_nearby_location(request):
+    if not consume_rate_limit(request, "nearby_location", limit=30, period=300):
+        return JsonResponse({"ok": False, "message": "Çok sık konum isteği yapıldı. Birkaç dakika sonra tekrar dene."}, status=429)
+
+    origin = parse_origin(request.POST.get("latitude"), request.POST.get("longitude"), request.POST.get("radius"))
+    if origin is None:
+        return JsonResponse({"ok": False, "message": "Geçerli bir konum alınamadı."}, status=400)
+
+    request.session["nearby_origin"] = {
+        "latitude": round(origin.latitude, 4),
+        "longitude": round(origin.longitude, 4),
+        "radius_km": origin.radius_km,
+        "area_city": request.POST.get("area_city", "").strip()[:80],
+        "area_district": request.POST.get("area_district", "").strip()[:80],
+    }
+    request.session.modified = True
+    return JsonResponse({"ok": True, "radius_km": origin.radius_km})
+
+
 @login_required
 @require_GET
 def price_guide(request):
@@ -412,6 +433,16 @@ class ListingListView(ListView):
     paginate_by = 24
 
     def get_queryset(self):
+        self.nearby_state = {
+            "requested": False,
+            "active": False,
+            "invalid": False,
+            "radius_km": None,
+            "exact_count": 0,
+            "fallback_count": 0,
+            "area_city": "",
+            "area_district": "",
+        }
         latest_price_history = ListingPriceHistory.objects.filter(
             listing_id=OuterRef("pk")
         ).order_by("-created_at")
@@ -441,7 +472,8 @@ class ListingListView(ListView):
         transmission = params.get("transmission", "").strip()
         fee_type = params.get("fee_type", "").strip()
         job_type = params.get("job_type", "").strip()
-        sort = params.get("sort", "newest")
+        nearby_requested = params.get("nearby") == "1"
+        sort = params.get("sort", "").strip() or ("distance" if nearby_requested else "newest")
 
         if q:
             qs = qs.filter(
@@ -512,6 +544,74 @@ class ListingListView(ListView):
         if max_area:
             qs = qs.filter(area_m2__lte=max_area)
 
+        if nearby_requested:
+            self.nearby_state["requested"] = True
+            stored_origin = self.request.session.get("nearby_origin", {})
+            origin = parse_origin(
+                params.get("lat") or stored_origin.get("latitude"),
+                params.get("lon") or stored_origin.get("longitude"),
+                params.get("radius") or stored_origin.get("radius_km"),
+            )
+            if origin is None:
+                self.nearby_state["invalid"] = True
+            else:
+                area_city = (
+                    params.get("area_city", "").strip()
+                    or str(stored_origin.get("area_city", "")).strip()
+                    or city
+                )
+                area_district = (
+                    params.get("area_district", "").strip()
+                    or str(stored_origin.get("area_district", "")).strip()
+                    or district
+                )
+                if self.request.user.is_authenticated:
+                    area_city = area_city or self.request.user.city.strip()
+                    area_district = area_district or self.request.user.district.strip()
+
+                min_lat, max_lat, min_lon, max_lon = bounding_box(origin)
+                exact_candidates = list(
+                    qs.order_by()
+                    .filter(
+                        latitude__isnull=False,
+                        longitude__isnull=False,
+                        latitude__gte=min_lat,
+                        latitude__lte=max_lat,
+                        longitude__gte=min_lon,
+                        longitude__lte=max_lon,
+                    )[:600]
+                )
+                exact_items = []
+                for listing in exact_candidates:
+                    distance = attach_distance(listing, origin)
+                    if distance is not None and distance <= origin.radius_km:
+                        exact_items.append(listing)
+
+                fallback_items = []
+                if area_city:
+                    fallback_qs = qs.order_by().filter(
+                        Q(latitude__isnull=True) | Q(longitude__isnull=True),
+                        city__iexact=area_city,
+                    )
+                    if area_district:
+                        fallback_qs = fallback_qs.filter(district__iexact=area_district)
+                    for listing in fallback_qs[:120]:
+                        attach_distance(listing, origin)
+                        fallback_items.append(listing)
+
+                nearby_items = sort_nearby_listings([*exact_items, *fallback_items], sort)
+                self.nearby_state.update(
+                    {
+                        "active": True,
+                        "radius_km": origin.radius_km,
+                        "exact_count": len(exact_items),
+                        "fallback_count": len(fallback_items),
+                        "area_city": area_city,
+                        "area_district": area_district,
+                    }
+                )
+                return nearby_items
+
         ordering = {
             "newest": ("-is_featured", "-published_at", "-created_at"),
             "price_asc": ("price", "-is_featured"),
@@ -544,6 +644,14 @@ class ListingListView(ListView):
             value = self.request.GET.get(key, "").strip()
             if value:
                 active_labels.append({"key": key, "label": label, "value": value})
+        if self.nearby_state.get("active"):
+            active_labels.append(
+                {
+                    "key": "nearby",
+                    "label": "Yakınlık",
+                    "value": f"{self.nearby_state['radius_km']} km çevre",
+                }
+            )
         context.update(
             {
                 "kind_choices": Listing.Kind.choices,
@@ -558,6 +666,8 @@ class ListingListView(ListView):
                 "active_filters": self.request.GET,
                 "active_filter_labels": active_labels,
                 "favorite_ids": favorite_ids,
+                "nearby_state": self.nearby_state,
+                "nearby_radius_choices": ALLOWED_RADII_KM,
                 "compare_ids": set(_compare_ids(self.request)),
                 "saved_search_form": SavedSearchForm(),
             }
@@ -1682,7 +1792,10 @@ def save_search(request):
         saved.query_params = {
             key: value
             for key, value in request.POST.items()
-            if key not in {"csrfmiddlewaretoken", "name", "alert_enabled", "next", "page", "sort"} and value
+            if key not in {
+                "csrfmiddlewaretoken", "name", "alert_enabled", "next", "page", "sort",
+                "nearby", "lat", "lon", "radius", "area_city", "area_district",
+            } and value
         }
         saved.save()
         messages.success(request, "Araman kaydedildi.")

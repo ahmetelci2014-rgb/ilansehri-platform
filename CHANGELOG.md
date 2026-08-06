@@ -1,5 +1,17 @@
 # Değişiklik Günlüğü
 
+## v1.16.0 — Yakındaki ilanlar ve konum tabanlı keşif
+
+- Kullanıcı izniyle çalışan `Konumumu kullan` keşif paneli eklendi.
+- 5–200 km arasında seçilebilir arama yarıçapı ve yaklaşık mesafe etiketi eklendi.
+- Koordinatlı ilanlar Haversine hesabıyla mesafeye göre sıralanır.
+- Koordinatı olmayan ilanlar aynı şehir/ilçeden ikincil sonuç olarak gösterilir.
+- Geçici arama koordinatları URL yerine oturumda tutuldu ve kayıtlı aramalara yazılması engellendi.
+- İlan formuna isteğe bağlı `Konumumu işaretle` alanı eklendi; tam koordinatlar halka açık sayfada gösterilmez.
+- Demo ilanlara yakınlık akışını gösterecek örnek koordinatlar eklendi.
+- Mobil/PWA varlıkları, otomatik testler ve mobil denetim rotaları güncellendi.
+- Yeni migration yoktur; mevcut `latitude` ve `longitude` alanları kullanılır.
+
 ## v1.15.0 — Güvenli mesajlaşma ve dolandırıcılık uyarısı
 
 - Mesajlara yerel ve açıklanabilir risk analizi eklendi.

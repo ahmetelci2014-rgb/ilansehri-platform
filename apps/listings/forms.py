@@ -121,6 +121,8 @@ class ListingForm(forms.ModelForm):
             "city",
             "district",
             "neighborhood",
+            "latitude",
+            "longitude",
         ]
         labels = {
             "kind": "İlan türü",
@@ -171,6 +173,8 @@ class ListingForm(forms.ModelForm):
             "heating_type": forms.TextInput(attrs={"placeholder": "Örn. Doğalgaz kombi"}),
             "service_area": forms.TextInput(attrs={"placeholder": "Örn. Karaköprü ve Haliliye"}),
             "experience_level": forms.TextInput(attrs={"placeholder": "Örn. En az 2 yıl"}),
+            "latitude": forms.HiddenInput(attrs={"data-listing-latitude": "true"}),
+            "longitude": forms.HiddenInput(attrs={"data-listing-longitude": "true"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -241,6 +245,16 @@ class ListingForm(forms.ModelForm):
         }
         if kind and action and action not in allowed_actions.get(kind, set()):
             self.add_error("action", "Seçilen ilan türü için uygun bir işlem seç.")
+
+        latitude = cleaned.get("latitude")
+        longitude = cleaned.get("longitude")
+        if (latitude is None) != (longitude is None):
+            self.add_error("latitude", "Konum kaydı için enlem ve boylam birlikte gerekli.")
+            self.add_error("longitude", "Konum kaydı için enlem ve boylam birlikte gerekli.")
+        if latitude is not None and not (-90 <= latitude <= 90):
+            self.add_error("latitude", "Geçerli bir enlem değeri kullan.")
+        if longitude is not None and not (-180 <= longitude <= 180):
+            self.add_error("longitude", "Geçerli bir boylam değeri kullan.")
 
         price_optional_actions = {
             Listing.Action.WANTED,

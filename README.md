@@ -10,12 +10,13 @@
 
 # İlan Şehri
 
-> Güncel sürüm: **v1.15.0** — mesajlarda şüpheli ödeme, doğrulama kodu, kimlik paylaşımı, uzaktan erişim ve sahte bağlantı risklerini uyaran güvenli mesajlaşma katmanı eklendi.
+> Güncel sürüm: **v1.16.0** — kullanıcı izniyle yaklaşık mesafe hesaplayan Yakındaki İlanlar keşfi ve ilan formunda isteğe bağlı konum işaretleme eklendi.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
 ## Çalışan ana modüller
 
+- Yakındaki ilanlar: 5–200 km yarıçap, mesafe sıralaması ve şehir/ilçe yedeği
 - Konum ve kategori odaklı fotoğraflı marketplace akışı
 - Arıyorum–Satıyorum akıllı eşleştirme, iki taraflı eşleşme merkezi ve bildirimler
 - Site genelinde ortak mobil ekran sistemi, kompakt ilan akışı, alttan açılan filtreler ve sabit tek el navigasyonu
@@ -42,6 +43,15 @@
 - Yeni eşleşmeler uygulama içi ve isteğe bağlı e-posta bildirimi oluşturur.
 - Engellenen kullanıcılar ve yayında olmayan ilanlar sonuçlara alınmaz.
 - Mevcut ilanlar `python manage.py rebuild_listing_matches` komutuyla yeniden taranır.
+
+## v1.16 Yakındaki ilanlar
+
+- Kullanıcı konum iznini yalnız kendi isteğiyle verir.
+- Koordinatı olan ilanlar yaklaşık kilometreye göre sıralanır.
+- Koordinatsız ilanlar aynı şehir veya ilçede ise ikincil sonuç olarak sunulur.
+- İlan sahibi konumunu işaretleyebilir; tam koordinatlar ilan sayfasında gösterilmez.
+- Geçici arama koordinatları URL yerine oturumda tutulur ve kayıtlı aramalara kaydedilmez.
+- Büyük ölçek için ileride PostGIS coğrafi indeksine geçiş planlanmıştır.
 
 ## Codespaces ile çalıştırma
 

@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="{% static 'css/v14-matching.css' %}?v=1140">
   <link rel="stylesheet" href="{% static 'css/v141-price-guide.css' %}?v=1141">
   <link rel="stylesheet" href="{% static 'css/v15-message-safety.css' %}?v=1150">
+  <link rel="stylesheet" href="{% static 'css/v116-nearby.css' %}?v=1160">
   <script defer src="{% static 'js/app.js' %}"></script>
   <script defer src="{% static 'js/v16-premium.js' %}"></script>
   <script defer src="{% static 'js/v17-launch.js' %}"></script>
@@ -44,6 +45,7 @@
   <script defer src="{% static 'js/v132-mobile-system.js' %}?v=1141"></script>
   <script defer src="{% static 'js/v141-price-guide.js' %}?v=1141"></script>
   <script defer src="{% static 'js/v15-message-safety.js' %}?v=1150"></script>
+  <script defer src="{% static 'js/v116-nearby.js' %}?v=1160"></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body class="marketplace-body v18-theme app-{{ request.resolver_match.namespace|default:'core' }} page-{{ request.resolver_match.url_name|default:'page' }}">
@@ -56,7 +58,7 @@
       <span>⌕</span><input name="q" placeholder="Ne arıyorsun? Telefon, araç, ev, usta..." autocomplete="off" data-search-input><button>Ara</button><div class="search-suggestion-panel header-suggestion-panel" data-search-results hidden></div>
     </form>
     <nav class="market-header-actions">
-      <a class="market-location" href="{% url 'listings:list' %}">⌖ {% if user.is_authenticated and user.city %}{{ user.city }}{% else %}Konum seç{% endif %}</a>
+      <a class="market-location" href="{% url 'listings:list' %}#nearby-discovery">⌖ {% if user.is_authenticated and user.city %}{{ user.city }} çevresi{% else %}Yakınımda{% endif %}</a>
       <a class="market-icon-link has-count" href="{% url 'listings:compare' %}" title="Karşılaştır">⇄{% if compare_count %}<i>{{ compare_count }}</i>{% endif %}</a>
       {% if user.is_authenticated %}
         <a class="market-icon-link has-count" href="{% url 'listings:favorites' %}" title="Favoriler">♡{% if header_favorite_count %}<i>{{ header_favorite_count }}</i>{% endif %}</a>
@@ -88,7 +90,7 @@
   </div></div>
 </header>
 <main id="main-content">{% if messages %}<div class="message-stack" aria-live="polite">{% for message in messages %}<div class="message {{ message.tags }}" data-flash-message><span>{{ message }}</span><button type="button" aria-label="Bildirimi kapat" data-flash-close>×</button></div>{% endfor %}</div>{% endif %}{% block content %}{% endblock %}</main>
-<footer class="market-footer"><div class="shell market-footer-row"><a class="market-brand footer-logo" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a><div><a href="{% url 'core:trust' %}">Güven</a><a href="{% url 'core:terms' %}">Koşullar</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:about' %}">Hakkımızda</a><a href="{% url 'support_center:help_center' %}">Yardım Merkezi</a><a href="{% url 'managed_services:list' %}">Tam Yönetim</a></div><small>© {% now "Y" %} İlan Şehri · v1.15.0</small></div></footer>
+<footer class="market-footer"><div class="shell market-footer-row"><a class="market-brand footer-logo" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a><div><a href="{% url 'core:trust' %}">Güven</a><a href="{% url 'core:terms' %}">Koşullar</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:about' %}">Hakkımızda</a><a href="{% url 'support_center:help_center' %}">Yardım Merkezi</a><a href="{% url 'managed_services:list' %}">Tam Yönetim</a></div><small>© {% now "Y" %} İlan Şehri · v1.16.0</small></div></footer>
 <nav class="market-mobile-nav" aria-label="Mobil ana menü"><a href="{% url 'core:home' %}"><span>⌂</span><small>Ana sayfa</small></a><a href="{% url 'listings:list' %}"><span>⌕</span><small>Keşfet</small></a><a class="mobile-post" href="{% url 'listings:create' %}"><span>＋</span><small>İlan ver</small></a>{% if user.is_authenticated %}<a href="{% url 'listings:conversation_list' %}"><span>💬{% if unread_message_count %}<i class="mobile-nav-badge">{{ unread_message_count }}</i>{% endif %}</span><small>Mesaj</small></a><a href="{% url 'accounts:dashboard' %}"><span>●{% if unread_notification_count %}<i class="mobile-nav-badge">{{ unread_notification_count }}</i>{% endif %}</span><small>Hesabım</small></a>{% else %}<a href="{% url 'listings:compare' %}"><span>⇄{% if compare_count %}<i class="mobile-nav-badge">{{ compare_count }}</i>{% endif %}</span><small>Karşılaştır</small></a><a href="{% url 'login' %}"><span>●</span><small>Giriş</small></a>{% endif %}</nav>
 <button class="v18-scroll-top" type="button" aria-label="Sayfanın başına dön" data-scroll-top>↑</button>
 {% if compare_count %}<a class="compare-floating" href="{% url 'listings:compare' %}"><span>⇄</span><b>{{ compare_count }} ilanı karşılaştır</b></a>{% endif %}

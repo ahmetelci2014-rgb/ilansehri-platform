@@ -13,7 +13,7 @@
         <div class="v16-search-field location"><span>⌖</span><input name="city" value="{{ preferred_city }}" placeholder="Şehir"></div>
         <button type="submit">İlan ara</button>
       </form>
-      <div class="v16-hero-chips"><span>Popüler aramalar</span><a href="{% url 'listings:list' %}?q=telefon">Telefon</a><a href="{% url 'listings:list' %}?kind=vehicle">Otomobil</a><a href="{% url 'listings:list' %}?kind=real_estate&action=rent">Kiralık ev</a><a href="{% url 'listings:list' %}?kind=service">Usta</a><a href="{% url 'listings:list' %}?price_drop=1">Fiyatı düşenler</a></div>
+      <div class="v16-hero-chips"><span>Popüler aramalar</span><a href="{% url 'listings:list' %}?q=telefon">Telefon</a><a href="{% url 'listings:list' %}?kind=vehicle">Otomobil</a><a href="{% url 'listings:list' %}?kind=real_estate&action=rent">Kiralık ev</a><a href="{% url 'listings:list' %}?kind=service">Usta</a><a href="{% url 'listings:list' %}?price_drop=1">Fiyatı düşenler</a><a href="{% url 'listings:list' %}#nearby-discovery">Yakınımda</a></div>
       <div class="v16-hero-benefits"><span><b>✓</b> Ücretsiz ilan ver</span><span><b>✓</b> Doğrudan mesajlaş</span><span><b>✓</b> Teklif ve pazarlık</span></div>
     </div>
 
@@ -42,7 +42,7 @@
 </section>
 
 <section class="v18-market-shortcuts shell" aria-label="Hızlı keşif bağlantıları">
-  <a href="{% url 'listings:list' %}?sort=newest"><span class="blue">⚡</span><div><b>Yeni ilanlar</b><small>Az önce eklenen fırsatlar</small></div><i>›</i></a>
+  <a href="{% url 'listings:list' %}#nearby-discovery"><span class="blue">⌖</span><div><b>Yakınımdaki ilanlar</b><small>Konumuna göre mesafeli keşif</small></div><i>›</i></a>
   <a href="{% url 'listings:list' %}?price_drop=1&sort=price_drop"><span class="orange">↓</span><div><b>Fiyatı düşenler</b><small>Yeni fiyatıyla avantajlı</small></div><i>›</i></a>
   <a href="{% url 'listings:list' %}?verified=1"><span class="green">✓</span><div><b>Doğrulanmış satıcı</b><small>Güven seviyesi yüksek hesaplar</small></div><i>›</i></a>
   <a href="{% url 'listings:list' %}?action=swap"><span class="violet">⇄</span><div><b>Takas ilanları</b><small>Para yerine değişim seçenekleri</small></div><i>›</i></a>

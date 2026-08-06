@@ -93,6 +93,8 @@ class Command(BaseCommand):
                 "city": "Şanlıurfa",
                 "district": "Karaköprü",
                 "neighborhood": "Atakent",
+                "latitude": Decimal("37.196400"),
+                "longitude": Decimal("38.802300"),
             },
             {
                 "key": "demo-arac",
@@ -112,6 +114,8 @@ class Command(BaseCommand):
                 "city": "Şanlıurfa",
                 "district": "Haliliye",
                 "neighborhood": "Sırrın",
+                "latitude": Decimal("37.145900"),
+                "longitude": Decimal("38.806700"),
             },
             {
                 "key": "demo-emlak",
@@ -130,6 +134,8 @@ class Command(BaseCommand):
                 "city": "Şanlıurfa",
                 "district": "Karaköprü",
                 "neighborhood": "Akpıyar",
+                "latitude": Decimal("37.184900"),
+                "longitude": Decimal("38.788600"),
             },
             {
                 "key": "demo-hizmet",
@@ -143,6 +149,8 @@ class Command(BaseCommand):
                 "fee_type": Listing.FeeType.NEGOTIABLE,
                 "city": "Şanlıurfa",
                 "district": "Karaköprü",
+                "latitude": Decimal("37.174200"),
+                "longitude": Decimal("38.795900"),
             },
         ]
         created_listings = []
@@ -190,6 +198,8 @@ class Command(BaseCommand):
                     "model_name": "iPhone 15",
                     "city": "Şanlıurfa",
                     "district": "Karaköprü" if index % 2 else "Haliliye",
+                    "latitude": Decimal("37.190000") + Decimal(index) / Decimal("1000"),
+                    "longitude": (Decimal("38.790000") + Decimal(index) / Decimal("1200")).quantize(Decimal("0.000001")),
                     "status": Listing.Status.PUBLISHED,
                 },
             )
@@ -208,6 +218,8 @@ class Command(BaseCommand):
                 "model_name": "iPhone 15",
                 "city": "Şanlıurfa",
                 "district": "Haliliye",
+                "latitude": Decimal("37.166500"),
+                "longitude": Decimal("38.795200"),
                 "status": Listing.Status.PUBLISHED,
             },
         )

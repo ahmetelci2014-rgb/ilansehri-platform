@@ -1,0 +1,44 @@
+İLAN ŞEHRİ v1.16.0 — YAKINDAKİ İLANLAR VE KONUM TABANLI KEŞİF
+
+Bu sürüm:
+- Kullanıcı açıkça “Konumumu kullan” düğmesine bastığında tarayıcı konum izni ister.
+- 5, 10, 25, 50, 100 ve 200 km arama yarıçapı sunar.
+- Koordinatı olan ilanları Haversine mesafesine göre sıralar.
+- Koordinatı olmayan ilanları aynı şehir/ilçe eşleşmesiyle sonuçların sonuna ekler.
+- İlan kartlarında “Yaklaşık 2,4 km” veya “Aynı bölgede” etiketi gösterir.
+- İlan verme/düzenleme ekranına isteğe bağlı “Konumumu işaretle” seçeneği ekler.
+- Kullanıcının geçici arama koordinatlarını URL’ye yazmaz; Django oturumunda tutar.
+- Tam koordinatlar halka açık ilan sayfalarında gösterilmez.
+- Kaydedilen aramalara geçici koordinatlar eklenmez.
+- Konum izni vermeyen kullanıcıların mevcut şehir, ilçe ve kategori filtreleri aynen çalışır.
+- Akıllı eşleştirme, fiyat rehberi, güvenli mesajlaşma ve Gemini sistemi korunur.
+- Yeni migration içermez.
+
+Yükleme:
+1. ZIP'i ayıklayın.
+2. İçindeki bütün dosyaları GitHub Desktop'taki ilansehri-platform
+   klasörüne kopyalayın ve mevcut dosyaları değiştirin.
+3. GitHub Desktop Summary:
+   İlan Şehri v1.16.0 yakındaki ilanlar
+4. Commit to main ve Push origin.
+5. Django Kontrol workflow'unun yeşil olmasını bekleyin.
+6. Yeşil olduktan sonra Codespaces terminalinde:
+   git pull origin main
+   pkill -f "manage.py runserver" || true
+   bash scripts/start_codespace.sh
+7. /ilanlar/ sayfasını açıp “Konumumu kullan” düğmesine basın.
+8. Tarayıcı konum iznini onaylayın ve arama yarıçapını seçin.
+9. Yeni ilan verirken Konum adımındaki “Konumumu işaretle” düğmesi isteğe bağlıdır.
+
+Demo notu:
+Mevcut demo ilanlarına örnek koordinatlar eklemek için isteğe bağlı olarak:
+   python manage.py seed_demo --with-admin
+Bu komut sistemin çalışması için zorunlu değildir.
+
+Kontrol notu:
+Python derleme, JavaScript, Bash, YAML, şablon dengesi, CSS dengesi,
+mobil sözleşme ve saf mesafe/sıralama mantığı kontrol edildi.
+Yerel ortamda Django kurulu olmadığı için tam Django testleri burada
+çalıştırılmadı; GitHub Actions üzerinde doğrulanacaktır.
+Tarayıcı ekran görüntüsü denemesi çalışma ortamı yöneticisi tarafından
+engellendiği için yerel görsel test tamamlanamadı.

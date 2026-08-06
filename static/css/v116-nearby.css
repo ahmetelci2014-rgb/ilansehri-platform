@@ -1,0 +1,143 @@
+/* İlan Şehri v1.16.0 — yakındaki ilanlar */
+.v116-nearby-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0 18px;
+  padding: 18px 20px;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 56%, #ecfeff 100%);
+  box-shadow: 0 12px 34px rgba(37, 99, 235, .09);
+}
+.v116-nearby-panel.is-active { border-color: #60a5fa; box-shadow: 0 14px 38px rgba(37, 99, 235, .14); }
+.v116-nearby-panel.has-error { border-color: #fca5a5; background: #fff7f7; }
+.v116-nearby-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 16px;
+  background: #2563eb;
+  color: white;
+  font-size: 25px;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, .24);
+}
+.v116-nearby-copy small { color: #2563eb; font-weight: 800; letter-spacing: .08em; }
+.v116-nearby-copy h2 { margin: 3px 0 4px; font-size: 20px; line-height: 1.2; color: #0f172a; }
+.v116-nearby-copy p { margin: 0; color: #475569; font-size: 13px; line-height: 1.5; }
+.v116-radius-label { display: grid; gap: 5px; color: #475569; font-size: 12px; font-weight: 700; }
+.v116-radius-label select {
+  min-width: 102px;
+  height: 42px;
+  padding: 0 34px 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: white;
+  color: #0f172a;
+  font-weight: 700;
+}
+.v116-nearby-actions { display: grid; gap: 7px; justify-items: stretch; }
+.v116-nearby-actions button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 13px;
+  background: #2563eb;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+.v116-nearby-actions button:disabled { opacity: .65; cursor: wait; }
+.v116-nearby-actions a { color: #475569; font-size: 12px; text-align: center; text-decoration: underline; }
+.v116-nearby-status { grid-column: 2 / -1; min-height: 0; color: #b91c1c; font-size: 12px; font-weight: 700; }
+.v116-nearby-status:empty { display: none; }
+.v116-distance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.v116-distance-badge.is-area { background: #f1f5f9; color: #475569; }
+.market-card-meta:has(.v116-distance-badge) { flex-wrap: wrap; gap: 6px; }
+.market-card-meta:has(.v116-distance-badge) time { margin-left: auto; }
+.v116-listing-location {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px dashed #93c5fd;
+  border-radius: 18px;
+  background: #f8fbff;
+}
+.v116-listing-location.is-set { border-style: solid; border-color: #34d399; background: #f0fdf4; }
+.v116-listing-location.has-error { border-color: #f87171; background: #fff7f7; }
+.v116-listing-location-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 14px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 22px;
+}
+.v116-listing-location.is-set .v116-listing-location-icon { background: #d1fae5; color: #047857; }
+.v116-listing-location b { display: block; margin-bottom: 3px; color: #0f172a; }
+.v116-listing-location p { margin: 0 0 5px; color: #475569; font-size: 13px; line-height: 1.45; }
+.v116-listing-location small { color: #475569; line-height: 1.4; }
+.v116-listing-location-actions { display: grid; gap: 7px; }
+.v116-listing-location-actions button {
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid #2563eb;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  font-weight: 750;
+  cursor: pointer;
+}
+.v116-listing-location-actions button:last-child { background: white; color: #475569; border-color: #cbd5e1; }
+.v116-listing-location-actions button[hidden] { display: none; }
+
+@media (max-width: 780px) {
+  .v116-nearby-panel {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 11px;
+    margin: 12px 0 14px;
+    padding: 14px;
+    border-radius: 17px;
+  }
+  .v116-nearby-icon { width: 42px; height: 42px; border-radius: 14px; }
+  .v116-nearby-copy h2 { font-size: 17px; }
+  .v116-radius-label { grid-column: 1 / 2; }
+  .v116-radius-label select { min-width: 94px; width: 100%; }
+  .v116-nearby-actions { grid-column: 2 / 3; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .v116-nearby-actions a { padding: 8px 2px; }
+  .v116-nearby-status { grid-column: 1 / -1; }
+  .v116-listing-location { grid-template-columns: auto minmax(0, 1fr); padding: 14px; }
+  .v116-listing-location-actions { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .v116-listing-location-actions button { width: 100%; }
+  .market-card-meta:has(.v116-distance-badge) time { margin-left: 0; }
+}
+
+@media (max-width: 390px) {
+  .v116-nearby-panel { grid-template-columns: 1fr; }
+  .v116-nearby-icon { display: none; }
+  .v116-radius-label, .v116-nearby-actions, .v116-nearby-status { grid-column: 1; }
+  .v116-nearby-actions { grid-template-columns: 1fr; }
+  .v116-listing-location { grid-template-columns: 1fr; }
+  .v116-listing-location-icon { display: none; }
+  .v116-listing-location-actions { grid-column: 1; grid-template-columns: 1fr; }
+}

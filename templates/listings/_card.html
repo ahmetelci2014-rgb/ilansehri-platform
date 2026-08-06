@@ -27,7 +27,7 @@
         {% else %}{% if listing.brand %}<span>{{ listing.brand }}</span>{% endif %}{% if listing.condition %}<span>{{ listing.condition }}</span>{% endif %}{% if listing.delivery_type %}<span>{{ listing.get_delivery_type_display }}</span>{% endif %}{% endif %}
       </div>
       <div class="market-card-seller"><span>{% if listing.owner.is_phone_verified %}✓{% else %}●{% endif %}</span><small>{{ listing.owner.display_name|truncatechars:24 }}</small>{% if listing.owner.rating_count %}<em>★ {{ listing.owner.average_rating }}</em>{% endif %}</div>
-      <div class="market-card-meta"><span>{{ listing.city }}{% if listing.district %}, {{ listing.district }}{% endif %}</span><time>{{ listing.created_at|timesince }} önce</time></div>
+      <div class="market-card-meta"><span>{{ listing.city }}{% if listing.district %}, {{ listing.district }}{% endif %}</span>{% if listing.distance_label %}<em class="v116-distance-badge{% if listing.nearby_fallback %} is-area{% endif %}">⌖ {{ listing.distance_label }}</em>{% endif %}<time>{{ listing.created_at|timesince }} önce</time></div>
     </div>
   </a>
   <div class="market-card-tools">
