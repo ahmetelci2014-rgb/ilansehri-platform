@@ -2314,3 +2314,6 @@ body.page-update [data-listing-form] [data-kind-field][hidden]{
     min-width:104px;
   }
 }
+
+/* v1.25.2 mobil detay yoğunluk denemesi */
+@media(max-width:780px){body.page-detail .v123-detail-page{padding-bottom:16px!important}body.page-detail .v123-related-feed,body.page-detail .v123-detail-page>.v16-feed{margin-top:14px!important}body.page-detail .v16-detail-panels{gap:8px!important}body.page-detail .v16-detail-panel{padding:13px!important}}
