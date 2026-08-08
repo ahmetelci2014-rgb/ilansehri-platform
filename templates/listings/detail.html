@@ -103,6 +103,11 @@
       {% if user.is_authenticated and user != listing.owner %}<form class="detail-follow-form" method="post" action="{% url 'accounts:toggle_follow' listing.owner.pk %}">{% csrf_token %}<button class="market-secondary-button full{% if is_following %} active{% endif %}">{% if is_following %}✓ Satıcı takip ediliyor{% else %}＋ Satıcıyı takip et{% endif %}</button></form>{% endif %}
 
       <div class="v16-contact-stack v123-contact-stack">
+        {% if user.is_authenticated and user != listing.owner and listing.status == 'published' and not blocked_between and listing.owner.allow_phone_calls and listing.owner.is_phone_verified and listing.owner.phone_call_uri %}
+        <a class="market-secondary-button full v1252-desktop-call-button"
+           href="tel:{{ listing.owner.phone_call_uri }}"
+           aria-label="{{ listing.owner.display_name }} adlı satıcıyı ara">📞 Satıcıyı ara</a>
+        {% endif %}
         {% if user == listing.owner %}<a class="button full" href="{% url 'listings:update' listing.slug %}">İlanı düzenle</a><a class="market-secondary-button full" href="{% url 'listings:offer_center' %}">Teklif Merkezini aç</a>
         {% elif listing.status != 'published' %}<div class="notice warning">Bu ilan henüz yayında değil.</div>
         {% elif user.is_authenticated %}
@@ -128,7 +133,7 @@
   <div class="v123-mobile-contact-price"><small>{{ listing.get_action_display }}</small><strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat yok{% endif %}</strong></div>
   {% if user.is_authenticated %}
     {% if blocked_between %}<span class="wide disabled">İletişim kullanılamıyor</span>
-    {% else %}<a href="#message-box" data-open-message>{{ contact_target_label }} yaz</a>{% if my_pending_offer %}<a href="{% url 'listings:offer_center' %}">Pazarlığı aç</a>{% else %}<button type="button" data-open-offer>Teklif ver</button>{% endif %}{% endif %}
+    {% else %}{% if listing.owner.allow_phone_calls and listing.owner.is_phone_verified and listing.owner.phone_call_uri %}<a class="v1252-call-button" href="tel:{{ listing.owner.phone_call_uri }}" aria-label="{{ listing.owner.display_name }} adlı satıcıyı ara">📞 Ara</a>{% endif %}<a href="#message-box" data-open-message>{{ contact_target_label }} yaz</a>{% if my_pending_offer %}<a href="{% url 'listings:offer_center' %}">Pazarlığı aç</a>{% else %}<button type="button" data-open-offer>Teklif ver</button>{% endif %}{% endif %}
   {% else %}<a class="wide" href="{% url 'login' %}?next={{ request.path }}">Giriş yap ve iletişime geç</a>{% endif %}
 </div>
 {% endif %}

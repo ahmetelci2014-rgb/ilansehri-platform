@@ -67,6 +67,7 @@ class ProfileForm(forms.ModelForm):
             "last_name",
             "email",
             "phone",
+            "allow_phone_calls",
             "user_type",
             "city",
             "district",
@@ -79,6 +80,7 @@ class ProfileForm(forms.ModelForm):
             "bio": "Kendini veya işletmeni tanıt",
             "avatar": "Profil fotoğrafı",
             "accepts_marketing": "Kampanya ve yenilik bildirimlerini almak istiyorum",
+            "allow_phone_calls": "İlanlarımda telefonla aranmak istiyorum",
         }
         widgets = {
             "bio": forms.Textarea(attrs={"rows": 5, "placeholder": "Kısa ve güven veren bir tanıtım yaz..."}),
@@ -86,12 +88,33 @@ class ProfileForm(forms.ModelForm):
             "district": forms.TextInput(attrs={"placeholder": "İlçe"}),
             "neighborhood": forms.TextInput(attrs={"placeholder": "Mahalle"}),
         }
+        help_texts = {
+            "allow_phone_calls": (
+                "Açtığında yalnız doğrulanmış telefon numaran için ilanlarında Ara butonu görünür."
+            ),
+        }
 
     def clean_email(self):
         email = self.cleaned_data.get("email", "").strip().lower()
         if email and User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("Bu e-posta adresi başka bir hesapta kullanılıyor.")
         return email
+
+    def save(self, commit=True):
+        phone_changed = "phone" in self.changed_data
+        user = super().save(commit=False)
+
+        # Doğrulanmış numara değiştirildiğinde eski doğrulama ve
+        # telefonla aranma izni yeni numaraya taşınamaz.
+        if phone_changed:
+            user.is_phone_verified = False
+            user.allow_phone_calls = False
+
+        if commit:
+            user.save()
+            self._save_m2m()
+
+        return user
 
 
 class VerificationStartForm(forms.Form):

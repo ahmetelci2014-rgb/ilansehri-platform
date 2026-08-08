@@ -45,10 +45,22 @@ class User(AbstractUser):
     terms_accepted_at = models.DateTimeField(null=True, blank=True)
     last_seen_at = models.DateTimeField(null=True, blank=True)
     accepts_marketing = models.BooleanField(default=False)
+    allow_phone_calls = models.BooleanField(
+        default=False,
+        verbose_name="İlanlarımda telefonla aranmak istiyorum",
+    )
 
     @property
     def display_name(self) -> str:
         return self.get_full_name().strip() or self.username
+
+    @property
+    def phone_call_uri(self) -> str:
+        raw = (self.phone or "").strip()
+        digits = "".join(character for character in raw if character.isdigit())
+        if not digits:
+            return ""
+        return f"+{digits}" if raw.startswith("+") else digits
 
     @property
     def account_age_days(self) -> int:

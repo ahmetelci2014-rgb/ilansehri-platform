@@ -303,6 +303,7 @@ def export_account_data(request):
             "last_name": user.last_name,
             "email": user.email,
             "phone": user.phone,
+            "allow_phone_calls": user.allow_phone_calls,
             "user_type": user.user_type,
             "city": user.city,
             "district": user.district,
