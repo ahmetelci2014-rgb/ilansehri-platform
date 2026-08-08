@@ -56,25 +56,64 @@
     cityField?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  function openNearby(button, position) {
+  async function openNearby(button, position) {
     const url = targetUrl(button);
+
     url.searchParams.delete("city");
     url.searchParams.delete("district");
     url.searchParams.delete("neighborhood");
-    url.searchParams.set("lat", position.coords.latitude.toFixed(3));
-    url.searchParams.set("lng", position.coords.longitude.toFixed(3));
+
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    url.searchParams.set("lat", lat.toFixed(3));
+    url.searchParams.set("lng", lng.toFixed(3));
     url.searchParams.set("radius", button.dataset.radius || "25");
     url.searchParams.set("sort", "nearby");
 
-    const fallbackCity = (button.dataset.fallbackCity || "").trim();
-    const fallbackDistrict = (button.dataset.fallbackDistrict || "").trim();
+    let city = "";
+    let district = "";
 
-    if (fallbackCity) {
-      url.searchParams.set("city", fallbackCity);
+    const reverseUrl = button.dataset.reverseUrl || "";
+
+    if (reverseUrl) {
+      try {
+        const lookup = new URL(reverseUrl, window.location.origin);
+        lookup.searchParams.set("lat", lat.toFixed(5));
+        lookup.searchParams.set("lng", lng.toFixed(5));
+
+        const response = await fetch(lookup.toString(), {
+          credentials: "same-origin",
+          headers: {
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          city = (data.city || "").trim();
+          district = (data.district || "").trim();
+        }
+      } catch (_error) {
+        // Aşağıdaki profil konumu yedek olarak kullanılacak.
+      }
     }
 
-    if (fallbackDistrict) {
-      url.searchParams.set("district", fallbackDistrict);
+    if (!city) {
+      city = (button.dataset.fallbackCity || "").trim();
+    }
+
+    if (!district) {
+      district = (button.dataset.fallbackDistrict || "").trim();
+    }
+
+    if (city) {
+      url.searchParams.set("city", city);
+    }
+
+    if (district) {
+      url.searchParams.set("district", district);
     }
 
     window.location.assign(url.toString());
@@ -98,7 +137,7 @@
           button.innerHTML = original;
           fallback(button);
         },
-        { enableHighAccuracy: false, timeout: 9000, maximumAge: 300000 },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
       );
     });
   });

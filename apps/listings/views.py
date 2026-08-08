@@ -129,7 +129,6 @@ def _safe_decimal(value):
 
 
 
-@login_required
 @require_GET
 def reverse_location(request):
     """Cihaz koordinatını yalnız il / ilçe / mahalle seviyesine çevir."""

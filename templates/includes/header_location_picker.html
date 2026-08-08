@@ -18,6 +18,7 @@
             data-nearby-search
             data-radius="{{ header_location_radius }}"
             data-url="{{ request.path }}"
+            data-reverse-url="{% url 'listings:reverse_location' %}"
             data-fallback-city="{% if user.is_authenticated %}{{ user.city }}{% endif %}"
             data-fallback-district="{% if user.is_authenticated %}{{ user.district }}{% endif %}">
       <span>◎</span>
