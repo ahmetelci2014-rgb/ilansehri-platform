@@ -4,6 +4,11 @@
 alanlarını destekler; katalogda olmayan konumlar da yazılabilir.
 """
 
+from functools import lru_cache
+from pathlib import Path
+import json
+
+
 TURKEY_CITIES = (
     "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara",
     "Antalya", "Artvin", "Aydın", "Balıkesir", "Bilecik", "Bingöl",
@@ -103,11 +108,39 @@ NEIGHBORHOODS_BY_DISTRICT = {
 }
 
 
+@lru_cache(maxsize=1)
+def _full_location_dataset() -> dict:
+    path = Path(__file__).resolve().parent / "data" / "turkey_locations_2025.json"
+    if not path.exists():
+        return {}
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+    return payload if isinstance(payload, dict) else {}
+
+
 def get_districts(city: str) -> tuple[str, ...]:
+    dataset = _full_location_dataset()
+    values = dataset.get("districts_by_city", {}).get(city)
+
+    if values:
+        return tuple(values)
+
     return DISTRICTS_BY_CITY.get(city, ())
 
 
 def get_neighborhoods(city: str, district: str) -> tuple[str, ...]:
+    dataset = _full_location_dataset()
+    values = dataset.get("neighborhoods_by_district", {}).get(
+        f"{city}|{district}"
+    )
+
+    if values:
+        return tuple(values)
+
     return NEIGHBORHOODS_BY_DISTRICT.get(f"{city}|{district}", ())
 
 
