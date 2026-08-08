@@ -5312,3 +5312,16 @@ body.page-list .v121-location-group select{
   pointer-events:auto!important;
   opacity:1!important;
 }
+
+
+/* v1.25.2 — Satıcı takipçi sayısı */
+
+.v1252-follow-count{
+  display:block;
+  margin-top:5px;
+  color:#64748b;
+  font-size:10px;
+  font-weight:700;
+  text-align:center;
+  line-height:1.2;
+}

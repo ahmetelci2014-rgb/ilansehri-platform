@@ -26,10 +26,23 @@
   document.addEventListener("DOMContentLoaded", () => {
     const form = document.querySelector("[data-profile-follow]");
     const button = form?.querySelector(".v1252-follow-button");
+    const followerCount = form?.querySelector("[data-profile-follower-count]");
 
     if (!form || !button) return;
 
     let locked = false;
+
+    const setFollowerCount = (value) => {
+      if (!followerCount) return;
+
+      const count = Math.max(
+        0,
+        Number.parseInt(value, 10) || 0,
+      );
+
+      followerCount.dataset.count = String(count);
+      followerCount.textContent = `${count} takipçi`;
+    };
 
     const clearLoading = () => {
       button.disabled = false;
@@ -75,10 +88,24 @@
 
       const next = !previous;
 
+      const previousFollowerCount = Math.max(
+        0,
+        Number.parseInt(
+          followerCount?.dataset.count || "0",
+          10,
+        ) || 0,
+      );
+
       /*
-       * Görsel durum anında değişir.
+       * Görsel durum ve takipçi sayısı anında değişir.
        */
       render(next);
+
+      setFollowerCount(
+        next
+          ? previousFollowerCount + 1
+          : previousFollowerCount - 1,
+      );
 
       showToast(
         next
@@ -107,12 +134,14 @@
           const data = await response.json();
 
           render(Boolean(data.following));
+          setFollowerCount(data.follower_count);
         })
         .catch(() => {
           /*
            * Sunucuya hiç ulaşılamadıysa eski duruma dön.
            */
           render(previous);
+          setFollowerCount(previousFollowerCount);
 
           showToast(
             "İşlem tamamlanamadı, tekrar dene.",
