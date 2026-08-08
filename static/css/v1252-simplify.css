@@ -648,3 +648,392 @@
   }
 }
 
+/* v1.25.2 mobil ilan detay sadeleştirme */
+
+@media(max-width:780px){
+
+  /* =======================================================
+     İLK EKRAN: FOTOĞRAF + FİYAT + TEMEL BİLGİ
+     ======================================================= */
+
+  body.page-detail .v123-detail-page{
+    padding-top:8px;
+  }
+
+  /* Telefonda uzun breadcrumb alanı gerekli değil */
+  body.page-detail .market-breadcrumb{
+    display:none!important;
+  }
+
+  body.page-detail .v123-detail-heading{
+    position:relative;
+    margin-top:0;
+    margin-bottom:7px;
+    padding-right:0;
+  }
+
+  body.page-detail .v123-detail-heading h1{
+    max-width:none;
+    margin:5px 0 7px;
+    padding-right:76px;
+    font-size:21px;
+    line-height:1.18;
+    letter-spacing:-.55px;
+  }
+
+  /* Masaüstü rozet kalabalığını mobilde azalt */
+  body.page-detail .v16-detail-kickers{
+    display:none!important;
+  }
+
+  /* Konum dışında ikincil istatistikleri ilk ekrandan kaldır */
+  body.page-detail .v16-detail-meta{
+    display:flex;
+    margin-top:0;
+  }
+
+  body.page-detail .v16-detail-meta>span{
+    display:none!important;
+  }
+
+  body.page-detail .v16-detail-meta>span:first-child{
+    display:inline-flex!important;
+    max-width:100%;
+    color:#64748b;
+    font-size:10px;
+  }
+
+  /* Paylaş + favori mobilde yeterli.
+     Kopyala ve karşılaştır ikincil menülerden erişilebilir. */
+  body.page-detail
+  .v16-detail-heading-actions
+  button[title="Bağlantıyı kopyala"]{
+    display:none!important;
+  }
+
+  body.page-detail
+  .v16-detail-heading-actions
+  form:has(button[title="Karşılaştır"]){
+    display:none!important;
+  }
+
+  body.page-detail .v16-detail-heading-actions{
+    position:absolute;
+    top:0;
+    right:0;
+    gap:5px;
+  }
+
+  body.page-detail .v16-circle-action{
+    width:36px;
+    height:36px;
+    min-height:36px;
+    border-radius:11px;
+    font-size:15px;
+  }
+
+
+  /* =======================================================
+     FİYAT ÖZETİ
+     ======================================================= */
+
+  body.page-detail .v123-mobile-price-summary{
+    display:flex!important;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:4px;
+    margin-bottom:8px;
+    padding:11px 12px;
+    border:1px solid #dce5ee;
+    border-radius:15px;
+    background:#fff;
+    box-shadow:0 5px 15px rgba(15,23,42,.04);
+  }
+
+  body.page-detail .v123-mobile-price-summary strong{
+    font-size:20px;
+    line-height:1.1;
+    letter-spacing:-.45px;
+  }
+
+  body.page-detail .v123-mobile-price-summary small{
+    margin-top:3px;
+    font-size:9px;
+    color:#718096;
+  }
+
+  body.page-detail .v123-mobile-price-summary>span{
+    flex:0 0 auto;
+    padding:6px 8px;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:9px;
+    font-weight:900;
+  }
+
+
+  /* =======================================================
+     TEMEL ÖZELLİKLER
+     ======================================================= */
+
+  body.page-detail .v131-mobile-facts{
+    margin-top:0;
+    margin-bottom:7px;
+    gap:6px;
+  }
+
+  body.page-detail .v131-mobile-facts>span{
+    min-width:112px;
+    padding:9px 10px;
+    border-radius:12px;
+  }
+
+  body.page-detail .v131-mobile-facts small{
+    font-size:8px;
+  }
+
+  body.page-detail .v131-mobile-facts b{
+    font-size:10px;
+  }
+
+
+  /* =======================================================
+     GALERİ
+     ======================================================= */
+
+  body.page-detail .v123-gallery-main{
+    height:min(88vw,430px);
+    background:#f1f5f9;
+  }
+
+  body.page-detail .v123-gallery-main img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+  }
+
+  body.page-detail .v123-gallery-thumbs{
+    gap:6px;
+    padding-top:7px;
+    padding-bottom:7px;
+  }
+
+
+  /* =======================================================
+     TEKRAR EDEN MOBİL BİLGİLER
+     ======================================================= */
+
+  /* Aynı bilgiler satıcı şeridi ve fiyat özetinde zaten var */
+  body.page-detail .v123-buyer-assurance{
+    display:none!important;
+  }
+
+  /* Mobilde uzun anchor menüsü yerine doğal kaydırma */
+  body.page-detail .v16-detail-nav{
+    display:none!important;
+  }
+
+  body.page-detail .v123-mobile-seller-strip{
+    margin-top:10px;
+    margin-bottom:8px;
+    padding:11px 12px;
+    border-radius:15px;
+  }
+
+  body.page-detail .v123-mobile-seller-strip>div{
+    min-width:0;
+  }
+
+  body.page-detail .v123-mobile-seller-strip b{
+    font-size:12px;
+  }
+
+  body.page-detail .v123-mobile-seller-strip small{
+    font-size:9px;
+    line-height:1.35;
+  }
+
+
+  /* =======================================================
+     AÇIKLAMA VE AYRINTILAR
+     ======================================================= */
+
+  body.page-detail .v16-detail-panels{
+    display:grid;
+    gap:9px;
+  }
+
+  body.page-detail .v16-detail-panel{
+    margin:0;
+    padding:14px;
+    border-radius:16px;
+  }
+
+  body.page-detail .v123-panel-title{
+    padding-bottom:10px;
+  }
+
+  body.page-detail .v123-panel-title span{
+    font-size:8px;
+  }
+
+  body.page-detail .v123-panel-title h2,
+  body.page-detail .v16-detail-panel>h2{
+    font-size:17px;
+  }
+
+  body.page-detail .v123-panel-title>small{
+    display:none;
+  }
+
+  body.page-detail .v123-description-copy{
+    padding-top:12px;
+    font-size:13px;
+    line-height:1.62;
+  }
+
+  /*
+    İlan kalite puanı satıcı/personel için önemli;
+    normal alıcı mobilinde ise karar vermeyi gereksiz kalabalıklaştırıyor.
+  */
+  body.page-detail .v17-quality-panel.v131-quality-public{
+    display:none!important;
+  }
+
+
+  /* =======================================================
+     SAĞ ÖZET KARTI MOBİLDE SADE İŞLEM ALANI
+     ======================================================= */
+
+  body.page-detail .v123-summary-card{
+    margin:9px 12px 14px;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+
+  /* Fiyat yukarıda zaten gösteriliyor */
+  body.page-detail .v123-summary-card>.v123-summary-price{
+    display:none!important;
+  }
+
+  /* Mobil fiyat rehberi yukarıda zaten mevcut */
+  body.page-detail .v123-summary-card>.v141-price-guide-aside{
+    display:none!important;
+  }
+
+  /*
+    Satıcı güven özeti mobil satıcı şeridinde özetlenmiş durumda.
+    Ayrıntı satıcı profilinden açılabilir.
+  */
+  body.page-detail .v123-summary-card>.v123-trust-card{
+    display:none!important;
+  }
+
+  body.page-detail .detail-follow-form{
+    margin:7px 0;
+  }
+
+  body.page-detail .v123-contact-stack{
+    margin-top:7px;
+  }
+
+  body.page-detail .v123-contact-stack .market-action-box{
+    margin:7px 0;
+    border-radius:14px;
+    background:#fff;
+  }
+
+  body.page-detail .v123-contact-stack .market-action-box>summary{
+    padding:10px 12px;
+    font-size:12px;
+  }
+
+  /* Aynı güven mesajını iki ayrı kartla tekrarlama */
+  body.page-detail .v123-safe-buying{
+    display:none!important;
+  }
+
+  body.page-detail .v118-listing-safety{
+    margin:8px 0;
+    padding:12px;
+    border-radius:14px;
+  }
+
+  body.page-detail .v118-listing-safety p{
+    margin:4px 0 0;
+    font-size:10px;
+    line-height:1.45;
+  }
+
+  body.page-detail .detail-report{
+    margin-top:6px;
+  }
+
+
+  /* =======================================================
+     SABİT MOBİL İLETİŞİM BARI
+     En önemli alan: büyük ve net iki işlem.
+     ======================================================= */
+
+  body.page-detail .v123-mobile-contact-bar{
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    padding:8px 10px
+      calc(8px + env(safe-area-inset-bottom));
+  }
+
+  /* Fiyat zaten ekranda üstte; alt barda tekrar etme */
+  body.page-detail .v123-mobile-contact-price{
+    display:none!important;
+  }
+
+  body.page-detail .v123-mobile-contact-bar>a,
+  body.page-detail .v123-mobile-contact-bar>button,
+  body.page-detail .v123-mobile-contact-bar>span{
+    min-height:48px;
+    border-radius:13px;
+    font-size:12px;
+  }
+
+  body.page-detail .v123-mobile-contact-bar>a{
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+  }
+
+  body.page-detail .v123-mobile-contact-bar>button{
+    background:#2563eb;
+    color:#fff;
+  }
+
+  body.page-detail .v123-mobile-contact-bar>.wide{
+    grid-column:1/-1;
+  }
+}
+
+
+@media(max-width:390px){
+
+  body.page-detail .v123-detail-heading h1{
+    font-size:19px;
+  }
+
+  body.page-detail .v123-mobile-price-summary strong{
+    font-size:18px;
+  }
+
+  body.page-detail .v123-gallery-main{
+    height:91vw;
+  }
+
+  body.page-detail .v123-mobile-contact-bar>a,
+  body.page-detail .v123-mobile-contact-bar>button{
+    font-size:11px;
+  }
+}
+
