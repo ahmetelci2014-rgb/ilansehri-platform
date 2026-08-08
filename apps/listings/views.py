@@ -42,6 +42,11 @@ from .forms import (
     SavedSearchForm,
     TransactionDisputeForm,
 )
+from .geocoding import (
+    ReverseGeocodingBusy,
+    ReverseGeocodingError,
+    reverse_geocode,
+)
 from .locations import CITY_CHOICES, get_districts, get_neighborhoods
 from .models import (
     Appointment,
@@ -118,6 +123,71 @@ def _safe_decimal(value):
         return candidate if candidate.is_finite() else None
     except (TypeError, ValueError, InvalidOperation):
         return None
+
+
+
+@login_required
+@require_GET
+def reverse_location(request):
+    """Cihaz koordinatını yalnız il / ilçe / mahalle seviyesine çevir."""
+
+    latitude = _safe_decimal(request.GET.get("lat", ""))
+    longitude = _safe_decimal(request.GET.get("lng", ""))
+
+    if (
+        latitude is None
+        or longitude is None
+        or not (-90 <= latitude <= 90)
+        or not (-180 <= longitude <= 180)
+    ):
+        return JsonResponse(
+            {"error": "Geçerli konum koordinatı gönderilmedi."},
+            status=400,
+        )
+
+    if not consume_rate_limit(
+        request,
+        "reverse_location",
+        limit=8,
+        period=60,
+    ):
+        return JsonResponse(
+            {
+                "error": (
+                    "Konum servisi kısa sürede çok kez kullanıldı. "
+                    "Biraz sonra tekrar dene."
+                )
+            },
+            status=429,
+        )
+
+    try:
+        result = reverse_geocode(
+            float(latitude),
+            float(longitude),
+        )
+    except ReverseGeocodingBusy as exc:
+        return JsonResponse(
+            {"error": str(exc)},
+            status=429,
+        )
+    except ReverseGeocodingError as exc:
+        return JsonResponse(
+            {"error": str(exc)},
+            status=503,
+        )
+
+    return JsonResponse(
+        {
+            "city": result.get("city", ""),
+            "district": result.get("district", ""),
+            "neighborhood": result.get("neighborhood", ""),
+            "attribution": result.get(
+                "attribution",
+                "© OpenStreetMap contributors",
+            ),
+        }
+    )
 
 
 def _safe_next_url(request, fallback):

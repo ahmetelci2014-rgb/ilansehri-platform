@@ -14,7 +14,11 @@ from .catalog import (
     category_path,
     category_required_fields,
 )
-from .locations import CITY_CHOICES, get_districts, get_neighborhoods
+from .locations import (
+    CITY_CHOICES,
+    canonicalize_district,
+    canonicalize_neighborhood,
+)
 from .message_safety import analyze_message
 from .models import (
     Appointment,
@@ -310,8 +314,15 @@ class ListingForm(forms.ModelForm):
 
         category = cleaned.get("category")
         city = (cleaned.get("city") or "").strip()
-        district = " ".join((cleaned.get("district") or "").split())
-        neighborhood = " ".join((cleaned.get("neighborhood") or "").split())
+        district = canonicalize_district(
+            city,
+            cleaned.get("district") or "",
+        )
+        neighborhood = canonicalize_neighborhood(
+            city,
+            district,
+            cleaned.get("neighborhood") or "",
+        )
         cleaned["city"] = city
         cleaned["district"] = district
         cleaned["neighborhood"] = neighborhood
@@ -321,13 +332,6 @@ class ListingForm(forms.ModelForm):
                 self.add_error("category", "Seçilen kategori ilan türüyle uyuşmuyor.")
             if category.children.filter(is_active=True).exists():
                 self.add_error("category", "Daha doğru sonuçlar için bir alt kategori seç.")
-
-        known_districts = get_districts(city)
-        if known_districts and district and district.casefold() not in {item.casefold() for item in known_districts}:
-            self.add_error("district", "Bu şehir için listeden geçerli bir ilçe seç veya yazımı kontrol et.")
-        known_neighborhoods = get_neighborhoods(city, district)
-        if known_neighborhoods and neighborhood and neighborhood.casefold() not in {item.casefold() for item in known_neighborhoods}:
-            self.add_error("neighborhood", "Bu ilçe için listeden geçerli bir mahalle seç veya yazımı kontrol et.")
 
         allowed_actions = {
             Listing.Kind.PRODUCT: {Listing.Action.SELL, Listing.Action.RENT, Listing.Action.SWAP, Listing.Action.WANTED},

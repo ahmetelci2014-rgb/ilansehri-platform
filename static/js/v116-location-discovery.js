@@ -91,7 +91,12 @@
   if (captureButton) {
     const latitudeField = document.querySelector("[data-listing-latitude]");
     const longitudeField = document.querySelector("[data-listing-longitude]");
+    const cityField = document.querySelector("[data-location-city]");
+    const districtField = document.querySelector("[data-location-district]");
+    const neighborhoodField = document.querySelector("[data-location-neighborhood]");
     const status = document.querySelector("[data-listing-location-status]");
+    const attribution = document.querySelector("[data-listing-location-attribution]");
+    const reverseUrl = captureButton.dataset.reverseUrl || "";
     const original = captureButton.innerHTML;
 
     const restore = () => {
@@ -100,41 +105,197 @@
       captureButton.innerHTML = original;
     };
 
+    const setCapturedButton = (withAddress) => {
+      captureButton.disabled = false;
+      captureButton.classList.remove("is-locating");
+      captureButton.classList.add("is-captured");
+      captureButton.innerHTML = withAddress
+        ? "✓ Konum ve adres eklendi"
+        : "✓ Yaklaşık konum eklendi";
+    };
+
+    const fillAddress = (data) => {
+      if (data.city && cityField) {
+        cityField.value = data.city;
+
+        // Mevcut ilçe öneri sistemi yeni şehri görsün.
+        // Bu event ilçe alanını senkron olarak temizlediği için
+        // ilçe ve mahalle değerlerini bundan sonra yazıyoruz.
+        cityField.dispatchEvent(
+          new Event("change", { bubbles: true }),
+        );
+      }
+
+      if (data.district && districtField) {
+        districtField.value = data.district;
+        districtField.dispatchEvent(
+          new Event("change", { bubbles: true }),
+        );
+      }
+
+      if (data.neighborhood && neighborhoodField) {
+        neighborhoodField.value = data.neighborhood;
+        neighborhoodField.dispatchEvent(
+          new Event("change", { bubbles: true }),
+        );
+      }
+    };
+
+    const reverseAddress = async (position) => {
+      if (!reverseUrl) {
+        throw new Error("Adres çözümleme bağlantısı bulunamadı.");
+      }
+
+      const url = new URL(reverseUrl, window.location.origin);
+
+      // Adres çözümü için kısa süreli daha hassas koordinat kullanılır.
+      // İlanın kendisine aşağıda yalnız yaklaşık koordinat kaydedilir.
+      url.searchParams.set(
+        "lat",
+        position.coords.latitude.toFixed(5),
+      );
+      url.searchParams.set(
+        "lng",
+        position.coords.longitude.toFixed(5),
+      );
+
+      const response = await fetch(url.toString(), {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Accept": "application/json",
+        },
+        credentials: "same-origin",
+      });
+
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (_error) {
+        // Aşağıdaki ortak hata mesajı kullanılacak.
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Adres otomatik bulunamadı.",
+        );
+      }
+
+      return data;
+    };
+
     captureButton.addEventListener("click", () => {
       if (!latitudeField || !longitudeField) {
-        announce("Konum alanları yüklenemedi. Sayfayı yenileyip yeniden dene.", "warning");
+        announce(
+          "Konum alanları yüklenemedi. Sayfayı yenileyip yeniden dene.",
+          "warning",
+        );
         return;
       }
+
       if (!navigator.geolocation) {
-        if (status) status.textContent = "Bu tarayıcı konum özelliğini desteklemiyor";
-        announce("Tarayıcın konum paylaşımını desteklemiyor.", "warning");
+        if (status) {
+          status.textContent =
+            "Bu tarayıcı konum özelliğini desteklemiyor";
+        }
+        announce(
+          "Tarayıcın konum paylaşımını desteklemiyor.",
+          "warning",
+        );
         return;
       }
 
       captureButton.disabled = true;
       captureButton.classList.add("is-locating");
-      captureButton.innerHTML = '<span class="v116-location-spinner" aria-hidden="true"></span><span>Konum alınıyor…</span>';
-      if (status) status.textContent = "Konum izni bekleniyor…";
+      captureButton.innerHTML =
+        '<span class="v116-location-spinner" aria-hidden="true"></span>'
+        + "<span>Konum bulunuyor…</span>";
+
+      if (status) {
+        status.textContent =
+          "Konum izni bekleniyor…";
+      }
 
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          latitudeField.value = position.coords.latitude.toFixed(3);
-          longitudeField.value = position.coords.longitude.toFixed(3);
-          latitudeField.dispatchEvent(new Event("change", { bubbles: true }));
-          longitudeField.dispatchEvent(new Event("change", { bubbles: true }));
-          if (status) status.textContent = "Yaklaşık konum eklendi";
-          captureButton.innerHTML = "✓ Yaklaşık konum eklendi";
-          captureButton.classList.remove("is-locating");
-          captureButton.classList.add("is-captured");
-          captureButton.disabled = false;
-          announce("Yaklaşık konum ilana eklendi. Açık adres paylaşılmayacak.");
+        async (position) => {
+          // Veritabanına yaklaşık konum: ~100 metre ölçeğinde.
+          latitudeField.value =
+            position.coords.latitude.toFixed(3);
+          longitudeField.value =
+            position.coords.longitude.toFixed(3);
+
+          latitudeField.dispatchEvent(
+            new Event("change", { bubbles: true }),
+          );
+          longitudeField.dispatchEvent(
+            new Event("change", { bubbles: true }),
+          );
+
+          if (status) {
+            status.textContent =
+              "Konum bulundu, il / ilçe / mahalle belirleniyor…";
+          }
+
+          try {
+            const data = await reverseAddress(position);
+            fillAddress(data);
+
+            const parts = [
+              data.city,
+              data.district,
+              data.neighborhood,
+            ].filter(Boolean);
+
+            if (status) {
+              status.textContent = parts.length
+                ? `${parts.join(" / ")} otomatik seçildi`
+                : "Yaklaşık konum eklendi";
+            }
+
+            if (attribution && data.attribution) {
+              attribution.textContent =
+                `Adres eşleştirme: ${data.attribution}`;
+            }
+
+            setCapturedButton(true);
+
+            announce(
+              parts.length
+                ? `Konum bulundu: ${parts.join(" / ")}. Bilgileri kontrol edebilirsin.`
+                : "Yaklaşık konum ilana eklendi.",
+            );
+          } catch (error) {
+            setCapturedButton(false);
+
+            if (status) {
+              status.textContent =
+                "Konum bulundu; adres alanlarını kontrol ederek tamamla";
+            }
+
+            announce(
+              error?.message
+                || "Konum bulundu ancak adres otomatik doldurulamadı.",
+              "warning",
+            );
+          }
         },
         () => {
           restore();
-          if (status) status.textContent = "Konum izni alınamadı; şehir ve ilçe yeterlidir";
-          announce("Konum eklenemedi. Şehir ve ilçe bilgileriyle devam edebilirsin.", "warning");
+
+          if (status) {
+            status.textContent =
+              "Konum izni alınamadı; il ve ilçe bilgilerini elle seçebilirsin";
+          }
+
+          announce(
+            "Konum izni alınamadı. İl, ilçe ve mahalleyi elle seçebilirsin.",
+            "warning",
+          );
         },
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
+        {
+          enableHighAccuracy: true,
+          timeout: 12000,
+          maximumAge: 60000,
+        },
       );
     });
   }

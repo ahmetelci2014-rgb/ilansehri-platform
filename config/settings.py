@@ -18,6 +18,18 @@ VERIFICATION_DEBUG_CODE = os.getenv("VERIFICATION_DEBUG_CODE", str(DEBUG)).lower
 SMS_WEBHOOK_URL = os.getenv("SMS_WEBHOOK_URL", "").strip()
 SMS_WEBHOOK_TOKEN = os.getenv("SMS_WEBHOOK_TOKEN", "").strip()
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").strip().rstrip("/")
+REVERSE_GEOCODING_ENABLED = os.getenv("REVERSE_GEOCODING_ENABLED", "False").lower() == "true"
+REVERSE_GEOCODING_URL = os.getenv(
+    "REVERSE_GEOCODING_URL",
+    "https://nominatim.openstreetmap.org/reverse",
+).strip()
+REVERSE_GEOCODING_USER_AGENT = os.getenv(
+    "REVERSE_GEOCODING_USER_AGENT",
+    "IlanSehri/1.25.2",
+).strip()
+REVERSE_GEOCODING_TIMEOUT = float(
+    os.getenv("REVERSE_GEOCODING_TIMEOUT", "6")
+)
 AI_LISTING_API_URL = os.getenv("AI_LISTING_API_URL", "").strip()
 AI_LISTING_API_KEY = os.getenv("AI_LISTING_API_KEY", "").strip()
 AI_LISTING_MODEL = os.getenv("AI_LISTING_MODEL", "vision-model").strip()

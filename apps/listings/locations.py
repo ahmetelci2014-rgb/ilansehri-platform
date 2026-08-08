@@ -109,3 +109,66 @@ def get_districts(city: str) -> tuple[str, ...]:
 
 def get_neighborhoods(city: str, district: str) -> tuple[str, ...]:
     return NEIGHBORHOODS_BY_DISTRICT.get(f"{city}|{district}", ())
+
+
+
+# v1.25.2 — konum yazımı ve dış adres servislerinden gelen isimleri
+# İlan Şehri'nin Türkiye konum sözleşmesine uyarlama yardımcıları.
+def _location_key(value: str) -> str:
+    return " ".join(
+        str(value or "")
+        .replace("İ", "i")
+        .replace("I", "ı")
+        .split()
+    ).casefold()
+
+
+def _strip_location_suffix(value: str, suffixes: tuple[str, ...]) -> str:
+    cleaned = " ".join(str(value or "").split()).strip(" ,-")
+    for suffix in suffixes:
+        if _location_key(cleaned).endswith(_location_key(suffix)):
+            cleaned = cleaned[: -len(suffix)].strip(" ,-")
+            break
+    return cleaned
+
+
+def canonicalize_city(value: str) -> str:
+    key = _location_key(value)
+    if not key:
+        return ""
+    for city in TURKEY_CITIES:
+        if _location_key(city) == key:
+            return city
+    return ""
+
+
+def canonicalize_district(city: str, value: str) -> str:
+    cleaned = _strip_location_suffix(
+        value,
+        (" İlçesi", " ilçesi"),
+    )
+    key = _location_key(cleaned)
+    if not key:
+        return ""
+    for district in get_districts(city):
+        if _location_key(district) == key:
+            return district
+    return cleaned
+
+
+def canonicalize_neighborhood(
+    city: str,
+    district: str,
+    value: str,
+) -> str:
+    cleaned = _strip_location_suffix(
+        value,
+        (" Mahallesi", " mahallesi", " Mah.", " mah."),
+    )
+    key = _location_key(cleaned)
+    if not key:
+        return ""
+    for neighborhood in get_neighborhoods(city, district):
+        if _location_key(neighborhood) == key:
+            return neighborhood
+    return cleaned
