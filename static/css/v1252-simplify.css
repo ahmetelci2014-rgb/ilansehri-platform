@@ -303,3 +303,348 @@
   }
 }
 
+/* v1.25.2 mobil menü ve hesap sadeleştirme */
+
+.v1252-mobile-account-tools{
+  display:none;
+}
+
+
+/* TABLET + MOBİL HAMBURGER MENÜ */
+@media(max-width:1100px){
+
+  body.marketplace-body .v1252-mobile-menu-inner{
+    gap:10px;
+    padding:13px 16px 20px;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-quick{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:8px;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-quick>a{
+    position:relative;
+    min-width:0;
+    min-height:70px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    padding:9px 5px;
+    border:1px solid #e0e7ef;
+    border-radius:14px;
+    background:#fff;
+    text-align:center;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-quick>a>span{
+    font-size:20px;
+    line-height:1;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-quick>a>b{
+    max-width:100%;
+    font-size:10px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-quick>a>i{
+    position:absolute;
+    right:7px;
+    top:7px;
+    min-width:18px;
+    height:18px;
+    display:grid;
+    place-items:center;
+    padding:0 4px;
+    border-radius:999px;
+    background:#f97316;
+    color:#fff;
+    font-size:9px;
+    font-style:normal;
+    font-weight:900;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group{
+    border:1px solid #e1e7ed;
+    border-radius:14px;
+    background:#fff;
+    overflow:hidden;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>summary{
+    min-height:57px;
+    display:grid;
+    grid-template-columns:32px minmax(0,1fr) auto;
+    grid-template-rows:auto auto;
+    column-gap:9px;
+    align-items:center;
+    padding:9px 11px;
+    list-style:none;
+    cursor:pointer;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>summary::-webkit-details-marker{
+    display:none;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>summary>span{
+    grid-row:1/3;
+    width:32px;
+    height:32px;
+    display:grid;
+    place-items:center;
+    border-radius:10px;
+    background:#eff6ff;
+    color:#1d4ed8;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>summary>b{
+    align-self:end;
+    font-size:12px;
+    line-height:1.1;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>summary>small{
+    align-self:start;
+    color:#7a8795;
+    font-size:9px;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>summary::after{
+    content:"＋";
+    grid-column:3;
+    grid-row:1/3;
+    color:#768391;
+    font-size:17px;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group[open]>summary::after{
+    content:"−";
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>div{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:0 8px;
+    padding:5px 10px 10px;
+    border-top:1px solid #edf1f4;
+    background:#fafcfd;
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>div>a{
+    min-width:0;
+    min-height:42px;
+    display:flex;
+    align-items:center;
+    padding:8px;
+    border:0;
+    border-bottom:1px solid #edf1f4;
+    font-size:11px;
+    line-height:1.25;
+  }
+
+  body.marketplace-body .v1252-mobile-public-links{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  body.marketplace-body .v1252-mobile-public-links>a{
+    min-height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #e1e7ed;
+    border-radius:12px;
+    background:#fff;
+    font-size:11px;
+  }
+
+  body.marketplace-body .v1252-mobile-logout-form{
+    margin:0;
+  }
+
+  body.marketplace-body .v1252-mobile-logout-form .mobile-logout{
+    min-height:44px;
+    padding:9px 12px;
+    border:1px solid #fee2e2;
+    border-radius:12px;
+    background:#fff7f7;
+    color:#b42318;
+    text-align:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:900;
+  }
+}
+
+
+/* TELEFON ÖNCELİKLİ HESABIM */
+@media(max-width:780px){
+
+  /* 17 bağlantılık yatay eski menüyü telefonda kaldır */
+  body.page-dashboard .v16-account-sidebar{
+    display:none!important;
+  }
+
+  body.page-dashboard .v1252-mobile-account-tools{
+    display:block;
+    margin:0 0 12px;
+  }
+
+  body.page-dashboard .v1252-account-quick-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:7px;
+    margin-bottom:8px;
+  }
+
+  body.page-dashboard .v1252-account-quick-grid>a{
+    position:relative;
+    min-width:0;
+    min-height:77px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding:8px 4px;
+    border:1px solid #dfe6ee;
+    border-radius:14px;
+    background:#fff;
+    box-shadow:0 5px 14px rgba(15,23,42,.04);
+    text-align:center;
+  }
+
+  body.page-dashboard .v1252-account-quick-grid>a>span{
+    font-size:21px;
+    line-height:1;
+  }
+
+  body.page-dashboard .v1252-account-quick-grid>a>b{
+    max-width:100%;
+    font-size:10px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  body.page-dashboard .v1252-account-quick-grid>a>small{
+    color:#7b8794;
+    font-size:8px;
+  }
+
+  body.page-dashboard .v1252-account-quick-grid>a>i{
+    position:absolute;
+    top:6px;
+    right:6px;
+    min-width:18px;
+    height:18px;
+    display:grid;
+    place-items:center;
+    padding:0 4px;
+    border-radius:999px;
+    background:#f97316;
+    color:#fff;
+    font-size:9px;
+    font-style:normal;
+    font-weight:900;
+  }
+
+  body.page-dashboard .v1252-account-all-tools{
+    border:1px solid #dde5ed;
+    border-radius:15px;
+    background:#fff;
+    overflow:hidden;
+  }
+
+  body.page-dashboard .v1252-account-all-tools>summary{
+    min-height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 13px;
+    list-style:none;
+  }
+
+  body.page-dashboard .v1252-account-all-tools>summary::-webkit-details-marker{
+    display:none;
+  }
+
+  body.page-dashboard .v1252-account-all-tools>summary div{
+    min-width:0;
+  }
+
+  body.page-dashboard .v1252-account-all-tools>summary b,
+  body.page-dashboard .v1252-account-all-tools>summary small{
+    display:block;
+  }
+
+  body.page-dashboard .v1252-account-all-tools>summary b{
+    font-size:12px;
+  }
+
+  body.page-dashboard .v1252-account-all-tools>summary small{
+    margin-top:2px;
+    color:#7b8794;
+    font-size:9px;
+  }
+
+  body.page-dashboard .v1252-account-all-tools>summary>span{
+    width:30px;
+    height:30px;
+    display:grid;
+    place-items:center;
+    border-radius:9px;
+    background:#eff6ff;
+    color:#2563eb;
+  }
+
+  body.page-dashboard .v1252-account-tool-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0 7px;
+    padding:5px 10px 10px;
+    border-top:1px solid #edf1f5;
+    background:#fafcfd;
+  }
+
+  body.page-dashboard .v1252-account-tool-list>a{
+    min-height:43px;
+    display:flex;
+    align-items:center;
+    padding:8px;
+    border-bottom:1px solid #edf1f5;
+    font-size:10px;
+    font-weight:750;
+    line-height:1.25;
+  }
+
+  /* Yeni hızlı kontrol alanı aynı işleri yaptığı için
+     dokuz büyük işlem kartını telefonda tekrarlama. */
+  body.page-dashboard .v16-dashboard-actions{
+    display:none!important;
+  }
+}
+
+
+@media(max-width:390px){
+
+  body.marketplace-body .v1252-mobile-menu-quick,
+  body.page-dashboard .v1252-account-quick-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  body.marketplace-body .v1252-mobile-menu-group>div,
+  body.page-dashboard .v1252-account-tool-list{
+    grid-template-columns:1fr;
+  }
+}
+

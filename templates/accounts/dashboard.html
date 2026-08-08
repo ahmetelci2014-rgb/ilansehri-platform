@@ -16,6 +16,75 @@
     <a class="active" href="{% url 'accounts:dashboard' %}"><span>⌂</span> Genel bakış</a><a href="{% url 'listings:my_listings' %}"><span>▤</span> İlanlarım</a><a href="{% url 'listings:create' %}"><span>＋</span> Yeni ilan ver</a><a href="{% url 'listings:drafts' %}"><span>📝</span> Taslaklarım{% if draft_count %}<b>{{ draft_count }}</b>{% endif %}</a><a href="{% url 'listings:offer_center' %}"><span>🤝</span> Teklif Merkezi</a><a href="{% url 'listings:matches' %}"><span>◎</span> Akıllı Eşleşmeler{% if new_match_count %}<b>{{ new_match_count }}</b>{% endif %}</a><a href="{% url 'listings:conversation_list' %}"><span>💬</span> Mesajlar</a><a href="{% url 'listings:notifications' %}"><span>🔔</span> Bildirimler</a><a href="{% url 'listings:favorites' %}"><span>♡</span> Favoriler</a><a href="{% url 'listings:saved_searches' %}"><span>⌕</span> Kayıtlı aramalar</a><a href="{% url 'accounts:following' %}"><span>👥</span> Takip ettiklerim</a><hr><a href="{% url 'accounts:profile_edit' %}"><span>●</span> Profili düzenle</a><a href="{% url 'accounts:verification' %}"><span>✓</span> Hesabı doğrula</a><a href="{% url 'accounts:settings' %}"><span>⚙</span> Hesap ve güvenlik</a><a href="{% url 'support_center:ticket_list' %}"><span>🎫</span> Destek taleplerim{% if open_support_ticket_count %}<b>{{ open_support_ticket_count }}</b>{% endif %}</a><a href="{% url 'managed_services:list' %}"><span>🧭</span> Tam Yönetim</a><a href="{% url 'partners:dashboard' %}"><span>💼</span> Kazanç Ağı</a>
   </aside>
 
+  <section class="v1252-mobile-account-tools"
+           aria-label="Hızlı hesap işlemleri">
+
+    <div class="v1252-account-quick-grid">
+
+      <a href="{% url 'listings:my_listings' %}">
+        <span>▤</span>
+        <b>İlanlarım</b>
+        <small>Yönet</small>
+      </a>
+
+      <a href="{% url 'listings:offer_center' %}">
+        <span>🤝</span>
+        <b>Teklifler</b>
+        <small>Kontrol et</small>
+      </a>
+
+      <a href="{% url 'listings:conversation_list' %}">
+        <span>💬</span>
+        <b>Mesajlar</b>
+        {% if unread_message_count %}
+        <i>{{ unread_message_count }}</i>
+        {% else %}
+        <small>Görüşmeler</small>
+        {% endif %}
+      </a>
+
+      <a href="{% url 'listings:favorites' %}">
+        <span>♡</span>
+        <b>Favoriler</b>
+        <small>Kaydettiklerin</small>
+      </a>
+
+    </div>
+
+    <details class="v1252-account-all-tools">
+      <summary>
+        <div>
+          <b>Tüm hesap araçları</b>
+          <small>Diğer özellikleri göster</small>
+        </div>
+        <span>⌄</span>
+      </summary>
+
+      <div class="v1252-account-tool-list">
+        <a href="{% url 'listings:create' %}">＋ Yeni ilan oluştur</a>
+        <a href="{% url 'listings:drafts' %}">
+          📝 Taslaklarım{% if draft_count %} ({{ draft_count }}){% endif %}
+        </a>
+        <a href="{% url 'listings:matches' %}">
+          ◎ Akıllı Eşleşmeler{% if new_match_count %} ({{ new_match_count }}){% endif %}
+        </a>
+        <a href="{% url 'listings:notifications' %}">🔔 Bildirimler</a>
+        <a href="{% url 'listings:saved_searches' %}">⌕ Kayıtlı Aramalar</a>
+        <a href="{% url 'accounts:following' %}">👥 Takip Ettiklerim</a>
+        <a href="{% url 'accounts:profile_edit' %}">● Profili düzenle</a>
+        <a href="{% url 'accounts:verification' %}">✓ Hesabı doğrula</a>
+        <a href="{% url 'accounts:settings' %}">⚙ Hesap ve güvenlik</a>
+        <a href="{% url 'support_center:ticket_list' %}">
+          🎫 Destek taleplerim
+          {% if open_support_ticket_count %} ({{ open_support_ticket_count }}){% endif %}
+        </a>
+        <a href="{% url 'managed_services:list' %}">🧭 Tam Yönetim</a>
+        <a href="{% url 'partners:dashboard' %}">💼 Kazanç Ağı</a>
+      </div>
+    </details>
+
+  </section>
+
   <main class="v16-dashboard-main">
     <section class="v18-profile-completion{% if profile_completion == 100 %} complete{% endif %}">
       <div class="v18-profile-score" style="--profile-score:{{ profile_completion }}%"><strong>{{ profile_completion }}</strong><span>Profil doluluğu</span></div>

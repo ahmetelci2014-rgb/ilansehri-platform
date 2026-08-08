@@ -151,10 +151,129 @@
     </form>
   </div>
   <div class="market-nav"><div class="shell"><a href="{% url 'listings:list' %}">Tüm ilanlar</a><a href="{% url 'listings:kind_landing' 'product' %}">Ürün & Eşya</a><a href="{% url 'listings:kind_landing' 'vehicle' %}">Araç</a><a href="{% url 'listings:kind_landing' 'real_estate' %}">Emlak</a><a href="{% url 'listings:kind_landing' 'service' %}">Hizmet</a><a href="{% url 'listings:kind_landing' 'job' %}">İş</a><a href="{% url 'listings:kind_landing' 'need' %}">Arıyorum</a><a href="{% url 'listings:list' %}?verified=1">Doğrulanmış satıcılar</a></div></div>
-  <div class="mobile-menu" data-mobile-menu><div class="mobile-menu-inner">
-    <a href="{% url 'listings:list' %}">Tüm ilanlar</a><a href="{% url 'listings:compare' %}">Karşılaştır{% if compare_count %} ({{ compare_count }}){% endif %}</a><a href="{% url 'listings:favorites' %}">Favoriler</a><a href="{% url 'listings:offer_center' %}">Teklif Merkezi</a><a href="{% url 'listings:matches' %}">Akıllı Eşleşmeler{% if header_match_count %} ({{ header_match_count }}){% endif %}</a><a href="{% url 'listings:saved_searches' %}">Kayıtlı Aramalar</a><a href="{% url 'accounts:following' %}">Takip Ettiklerim</a><a href="{% url 'listings:notifications' %}">Bildirimler{% if unread_notification_count %} ({{ unread_notification_count }}){% endif %}</a><a href="{% url 'listings:conversation_list' %}">Mesajlar</a>{% if header_pending_appointment_count %}<a href="{% url 'listings:appointment_list' %}">Randevu davetleri ({{ header_pending_appointment_count }})</a>{% endif %}<a href="{% url 'support_center:help_center' %}">Yardım Merkezi</a>{% if user.is_authenticated %}<a href="{% url 'support_center:ticket_list' %}">Destek Taleplerim</a>{% endif %}
-    {% if user.is_authenticated %}<a href="{% url 'accounts:dashboard' %}">Hesabım</a><a href="{% url 'listings:my_listings' %}">İlanlarım</a><a href="{% url 'listings:drafts' %}">Taslaklarım</a><a href="{% url 'accounts:profile_edit' %}">Profilim</a><a href="{% url 'accounts:verification' %}">Doğrulama</a><a href="{% url 'accounts:settings' %}">Hesap ve güvenlik</a><a href="{% url 'accounts:notification_preferences' %}">Bildirim tercihleri</a><a href="{% url 'managed_services:list' %}">İlan hazırlama desteği</a><a href="{% url 'partners:task_list' %}">Görev ortağı alanı</a>{% if user.is_staff %}<a href="{% url 'core:staff_dashboard' %}">Profesyonel Yönetim Merkezi</a><a href="{% url 'support_center:staff_board' %}">Destek Operasyonu</a><a href="{% url 'admin:index' %}">Teknik Admin</a>{% endif %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="mobile-logout">Çıkış yap</button></form>{% else %}<a href="{% url 'login' %}">Giriş yap</a><a href="{% url 'accounts:signup' %}">Üye ol</a>{% endif %}
-  </div></div>
+  <div class="mobile-menu" data-mobile-menu>
+    <div class="mobile-menu-inner v1252-mobile-menu-inner">
+
+      <div class="v1252-mobile-menu-quick">
+        <a href="{% url 'listings:list' %}">
+          <span>⌕</span><b>İlanlar</b>
+        </a>
+
+        {% if user.is_authenticated %}
+        <a href="{% url 'listings:favorites' %}">
+          <span>♡</span><b>Favoriler</b>
+        </a>
+
+        <a href="{% url 'listings:offer_center' %}">
+          <span>🤝</span><b>Teklifler</b>
+          {% if header_offer_count %}<i>{{ header_offer_count }}</i>{% endif %}
+        </a>
+
+        <a href="{% url 'listings:notifications' %}">
+          <span>🔔</span><b>Bildirimler</b>
+          {% if unread_notification_count %}<i>{{ unread_notification_count }}</i>{% endif %}
+        </a>
+        {% else %}
+        <a href="{% url 'listings:compare' %}">
+          <span>⇄</span><b>Karşılaştır</b>
+        </a>
+
+        <a href="{% url 'login' %}">
+          <span>●</span><b>Giriş yap</b>
+        </a>
+
+        <a href="{% url 'accounts:signup' %}">
+          <span>＋</span><b>Üye ol</b>
+        </a>
+        {% endif %}
+      </div>
+
+      {% if user.is_authenticated %}
+      <details class="v1252-mobile-menu-group">
+        <summary>
+          <span>▤</span>
+          <b>Alış & Satış</b>
+          <small>İlan, teklif ve eşleşmeler</small>
+        </summary>
+
+        <div>
+          <a href="{% url 'listings:my_listings' %}">İlanlarım</a>
+          <a href="{% url 'listings:drafts' %}">
+            Taslaklarım{% if draft_count %} ({{ draft_count }}){% endif %}
+          </a>
+          <a href="{% url 'listings:conversation_list' %}">
+            Mesajlar{% if unread_message_count %} ({{ unread_message_count }}){% endif %}
+          </a>
+          <a href="{% url 'listings:offer_center' %}">Teklif Merkezi</a>
+          <a href="{% url 'listings:matches' %}">
+            Akıllı Eşleşmeler{% if header_match_count %} ({{ header_match_count }}){% endif %}
+          </a>
+          <a href="{% url 'listings:saved_searches' %}">Kayıtlı Aramalar</a>
+          <a href="{% url 'accounts:following' %}">Takip Ettiklerim</a>
+          <a href="{% url 'listings:compare' %}">
+            Karşılaştır{% if compare_count %} ({{ compare_count }}){% endif %}
+          </a>
+          {% if header_pending_appointment_count %}
+          <a href="{% url 'listings:appointment_list' %}">
+            Randevular ({{ header_pending_appointment_count }})
+          </a>
+          {% endif %}
+        </div>
+      </details>
+
+      <details class="v1252-mobile-menu-group">
+        <summary>
+          <span>●</span>
+          <b>Hesap & Destek</b>
+          <small>Profil, güvenlik ve yardım</small>
+        </summary>
+
+        <div>
+          <a href="{% url 'accounts:dashboard' %}">Hesabım</a>
+          <a href="{% url 'accounts:profile_edit' %}">Profili düzenle</a>
+          <a href="{% url 'accounts:verification' %}">Hesabı doğrula</a>
+          <a href="{% url 'accounts:settings' %}">Hesap ve güvenlik</a>
+          <a href="{% url 'accounts:notification_preferences' %}">Bildirim tercihleri</a>
+          <a href="{% url 'support_center:ticket_list' %}">Destek taleplerim</a>
+          <a href="{% url 'support_center:help_center' %}">Yardım Merkezi</a>
+          <a href="{% url 'managed_services:list' %}">İlan hazırlama desteği</a>
+          <a href="{% url 'partners:task_list' %}">Kazanç Ağı</a>
+        </div>
+      </details>
+
+      {% if user.is_staff %}
+      <details class="v1252-mobile-menu-group v1252-staff-menu">
+        <summary>
+          <span>⚙</span>
+          <b>Yönetim</b>
+          <small>Personel araçları</small>
+        </summary>
+
+        <div>
+          <a href="{% url 'core:staff_dashboard' %}">Profesyonel Yönetim Merkezi</a>
+          <a href="{% url 'support_center:staff_board' %}">Destek Operasyonu</a>
+          <a href="{% url 'admin:index' %}">Teknik Admin</a>
+        </div>
+      </details>
+      {% endif %}
+
+      <form class="v1252-mobile-logout-form"
+            method="post"
+            action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="mobile-logout">Çıkış yap</button>
+      </form>
+
+      {% else %}
+
+      <div class="v1252-mobile-public-links">
+        <a href="{% url 'core:trust' %}">Güvenli alışveriş</a>
+        <a href="{% url 'support_center:help_center' %}">Yardım Merkezi</a>
+      </div>
+
+      {% endif %}
+    </div>
+  </div>
 </header>
 <main id="main-content">{% if messages %}<div class="message-stack" aria-live="polite">{% for message in messages %}<div class="message {{ message.tags }}" data-flash-message><span>{{ message }}</span><button type="button" aria-label="Bildirimi kapat" data-flash-close>×</button></div>{% endfor %}</div>{% endif %}{% block content %}{% endblock %}</main>
 <footer class="market-footer"><div class="shell market-footer-row"><a class="market-brand footer-logo" href="{% url 'core:home' %}"><span>İŞ</span><b>İlan Şehri</b></a><div><a href="{% url 'core:trust' %}">Güven</a><a href="{% url 'core:terms' %}">Koşullar</a><a href="{% url 'core:privacy' %}">Gizlilik</a><a href="{% url 'core:about' %}">Hakkımızda</a><a href="{% url 'support_center:help_center' %}">Yardım Merkezi</a><a href="{% url 'managed_services:list' %}">İlan desteği</a><a href="{% url 'partners:task_list' %}">Görev ortağı</a></div><small>© {% now "Y" %} İlan Şehri · v1.25.1</small></div></footer>
