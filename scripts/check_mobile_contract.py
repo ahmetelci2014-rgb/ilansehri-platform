@@ -64,6 +64,7 @@ def main() -> int:
     conversation_detail = (ROOT / "templates/listings/conversation_detail.html").read_text(encoding="utf-8")
     offer_center = (ROOT / "templates/listings/offer_center.html").read_text(encoding="utf-8")
     home_template = (ROOT / "templates/core/home.html").read_text(encoding="utf-8")
+    header_location = (ROOT / "templates/includes/header_location_picker.html").read_text(encoding="utf-8")
     listing_card = (ROOT / "templates/listings/_card.html").read_text(encoding="utf-8")
     listing_catalog = (ROOT / "apps/listings/catalog.py").read_text(encoding="utf-8")
     listing_list = (ROOT / "templates/listings/list.html").read_text(encoding="utf-8")
@@ -139,7 +140,9 @@ def main() -> int:
     require(listing_list, "data-v121-category-filter", "templates/listings/list.html")
     require(listing_list, "data-v121-neighborhood", "templates/listings/list.html")
     require(home_template, "data-v122-category-hub", "templates/core/home.html")
-    require(home_template, "preferred_district", "templates/core/home.html")
+    require(header_location, "data-nearby-search", "templates/includes/header_location_picker.html")
+    require(header_location, "data-radius", "templates/includes/header_location_picker.html")
+    require(header_location, "header_city_choices", "templates/includes/header_location_picker.html")
     require(listing_card, "data-market-card", "templates/listings/_card.html")
     require(listing_card, "v122-card-category", "templates/listings/_card.html")
     require(listing_form, "data-v122-wizard-progress", "templates/listings/form.html")
@@ -238,6 +241,7 @@ def main() -> int:
         Path("templates/listings/_card.html"),
         Path("templates/listings/_price_guide.html"),
         Path("templates/listings/_message_form_fields.html"),
+        Path("templates/includes/header_location_picker.html"),
     }
     missing_extends: list[str] = []
     for template in sorted((ROOT / "templates").rglob("*.html")):
