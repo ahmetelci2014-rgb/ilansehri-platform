@@ -5325,3 +5325,536 @@ body.page-list .v121-location-group select{
   text-align:center;
   line-height:1.2;
 }
+
+
+/* =========================================================
+   v1.25.2 — Masaüstü hesap menüsü
+   ========================================================= */
+
+.v1252-desktop-account-menu{
+  position:relative;
+}
+
+.v1252-desktop-account-menu>summary{
+  list-style:none;
+  cursor:pointer;
+}
+
+.v1252-desktop-account-menu>summary::-webkit-details-marker{
+  display:none;
+}
+
+.v1252-desktop-account-popover{
+  position:absolute;
+  right:0;
+  top:calc(100% + 10px);
+  z-index:750;
+  width:190px;
+  padding:7px;
+  border:1px solid #e2e8f0;
+  border-radius:13px;
+  background:#fff;
+  box-shadow:0 16px 36px rgba(15,23,42,.14);
+}
+
+.v1252-desktop-account-popover>a,
+.v1252-desktop-account-popover button{
+  width:100%;
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  padding:8px 10px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#334155;
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  text-align:left;
+  cursor:pointer;
+}
+
+.v1252-desktop-account-popover>a:hover{
+  background:#f1f5f9;
+}
+
+.v1252-desktop-account-popover form{
+  margin:4px 0 0;
+  padding-top:4px;
+  border-top:1px solid #eef2f6;
+}
+
+.v1252-desktop-account-popover button{
+  color:#b42318;
+}
+
+.v1252-desktop-account-popover button:hover{
+  background:#fff1f1;
+}
+
+
+/* =========================================================
+   MASAÜSTÜ ANA SAYFA — tekrarları kaldır
+   ========================================================= */
+
+@media(min-width:1101px){
+
+  /*
+   * Ana kategoriler üst navigasyonda zaten mevcut.
+   * Büyük kategori kartlarını masaüstünde tekrar gösterme.
+   */
+  body.page-home .v16-category-zone{
+    display:none!important;
+  }
+
+  /*
+   * Aynı kategorilerin ikinci/üçüncü vitrinlerini kaldır.
+   * İlan sayfası ana keşif noktası olsun.
+   */
+  body.page-home .v1252-secondary-home-feed{
+    display:none!important;
+  }
+
+  /*
+   * Header'da zaten Ücretsiz ilan ver mevcut.
+   */
+  body.page-home .v16-market-banner{
+    display:none!important;
+  }
+
+  body.page-home .v16-feed{
+    padding-top:25px;
+    padding-bottom:25px;
+  }
+
+  body.page-home .market-trust-strip{
+    margin-top:18px;
+    margin-bottom:24px;
+  }
+
+
+  /* =======================================================
+     MASAÜSTÜ İLAN DETAY — sade, ilan odaklı
+     ======================================================= */
+
+  /*
+   * Konum / güven / yanıt bilgisi sağ tarafta zaten var.
+   */
+  body.page-detail .v123-buyer-assurance{
+    display:none!important;
+  }
+
+  /*
+   * İlan kalite puanı satıcı ve yönetim için faydalı.
+   * Normal alıcıya teknik puan kartını gösterme.
+   */
+  body.page-detail .v131-quality-public{
+    display:none!important;
+  }
+
+  /*
+   * Güvenli alışveriş iki ayrı kutuda tekrar ediyordu.
+   * Dinamik güvenlik kutusu kalıyor.
+   */
+  body.page-detail .v123-safe-buying{
+    display:none!important;
+  }
+
+  /*
+   * Satıcı kartını koru ama kurumsal istatistik duvarını kaldır.
+   */
+  body.page-detail .v123-trust-facts,
+  body.page-detail .v123-trust-badges{
+    display:none!important;
+  }
+
+  body.page-detail .v123-trust-card{
+    padding:12px!important;
+  }
+
+  body.page-detail .v123-trust-card>p{
+    margin:8px 2px 0!important;
+    font-size:11px!important;
+  }
+
+  /*
+   * Masaüstünde "dokun" ifadesi gerekli değil.
+   */
+  body.page-detail .v123-gallery-hint{
+    display:none!important;
+  }
+
+  /*
+   * Üst bilgi satırında konum + tarih + ilan no yeterli.
+   * Görüntülenme ve favori rakamları detayın önüne geçmesin.
+   */
+  body.page-detail .v16-detail-meta>span:nth-child(2),
+  body.page-detail .v16-detail-meta>span:nth-child(3){
+    display:none!important;
+  }
+
+  body.page-detail .v16-detail-heading{
+    margin-bottom:14px!important;
+  }
+
+  body.page-detail .v16-detail-panels{
+    gap:14px!important;
+  }
+
+  body.page-detail .v16-detail-panel{
+    box-shadow:none!important;
+  }
+}
+
+
+/* Tablet ve mobil mevcut hesap menüsünü kullanır */
+@media(max-width:1100px){
+  .v1252-desktop-account-menu{
+    display:none!important;
+  }
+}
+
+
+/* =========================================================
+   v1.25.2 — İLAN DETAY CANLI NAVİGASYON
+   ========================================================= */
+
+.v1252-detail-nav{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px;
+  border:1px solid #e3e8ef;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 7px 20px rgba(15,23,42,.05);
+}
+
+.v1252-detail-nav>a{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:8px 13px;
+  border-radius:11px;
+  color:#526071;
+  font-size:11px;
+  font-weight:850;
+  transition:
+    background .16s ease,
+    color .16s ease,
+    transform .14s ease;
+}
+
+.v1252-detail-nav>a>span{
+  font-size:15px;
+}
+
+.v1252-detail-nav>a:hover{
+  background:#f1f5f9;
+  color:#1e40af;
+}
+
+.v1252-detail-nav>a.active{
+  background:#eff6ff;
+  color:#1d4ed8;
+  box-shadow:inset 0 0 0 1px #bfdbfe;
+}
+
+.v1252-detail-nav>a:nth-child(2).active{
+  background:#f5f3ff;
+  color:#7c3aed;
+  box-shadow:inset 0 0 0 1px #ddd6fe;
+}
+
+.v1252-detail-nav>a:nth-last-child(1).active{
+  background:#ecfdf5;
+  color:#047857;
+  box-shadow:inset 0 0 0 1px #a7f3d0;
+}
+
+
+/* =========================================================
+   KONUM & HARİTA
+   ========================================================= */
+
+.v1252-location-panel{
+  overflow:hidden;
+  border:1px solid #dbe7e5!important;
+  background:
+    linear-gradient(180deg,#f6fffc 0,#fff 180px)!important;
+}
+
+.v1252-location-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:16px;
+}
+
+.v1252-location-head>div:first-child>span{
+  color:#0f766e;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:1.2px;
+}
+
+.v1252-location-head h2{
+  margin:4px 0 4px;
+}
+
+.v1252-location-head p{
+  margin:0;
+  color:#64748b;
+  font-size:11px;
+}
+
+.v1252-location-pin{
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  background:#d1fae5;
+  color:#047857;
+  font-size:22px;
+}
+
+.v1252-location-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.65fr) minmax(230px,.75fr);
+  gap:15px;
+}
+
+.v1252-map-frame{
+  position:relative;
+  min-height:270px;
+  overflow:hidden;
+  border:1px solid #d8e2e8;
+  border-radius:16px;
+  background:#e2e8f0;
+}
+
+.v1252-map-frame iframe{
+  width:100%;
+  height:100%;
+  min-height:270px;
+  display:block;
+  border:0;
+}
+
+.v1252-map-badge{
+  position:absolute;
+  left:12px;
+  bottom:12px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(15,23,42,.82);
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  backdrop-filter:blur(6px);
+}
+
+.v1252-location-info{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:17px;
+  border:1px solid #e4e9ee;
+  border-radius:16px;
+  background:#fff;
+}
+
+.v1252-location-place{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.v1252-location-place>span{
+  width:39px;
+  height:39px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:#ecfdf5;
+  font-size:18px;
+}
+
+.v1252-location-place small{
+  display:block;
+  margin-bottom:2px;
+  color:#8a94a2;
+  font-size:9px;
+  font-weight:800;
+}
+
+.v1252-location-place strong{
+  color:#172033;
+  font-size:14px;
+}
+
+.v1252-location-info>p{
+  margin:15px 0;
+  color:#64748b;
+  font-size:11px;
+  line-height:1.55;
+}
+
+.v1252-location-actions{
+  display:grid;
+  gap:7px;
+}
+
+.v1252-location-actions>a{
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #dbe3ea;
+  border-radius:11px;
+  background:#fff;
+  color:#334155;
+  font-size:10px;
+  font-weight:900;
+}
+
+.v1252-location-actions .v1252-map-primary{
+  border-color:#0f766e;
+  background:#0f766e;
+  color:#fff;
+}
+
+
+/* =========================================================
+   ANA SAYFA — VİTRİN
+   ========================================================= */
+
+.v1252-showcase-feed{
+  position:relative;
+  padding:30px 0;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 90% 10%,rgba(251,146,60,.16),transparent 26%),
+    radial-gradient(circle at 5% 90%,rgba(37,99,235,.09),transparent 28%),
+    linear-gradient(135deg,#fffaf5,#fff 48%,#f7faff);
+  border-top:1px solid #ffedd5;
+  border-bottom:1px solid #e8edf4;
+}
+
+.v1252-showcase-heading h2{
+  color:#172033;
+}
+
+.v1252-showcase-label{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#fff0df;
+  color:#c2410c;
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.8px;
+}
+
+.v1252-showcase-label i{
+  color:#f59e0b;
+  font-style:normal;
+}
+
+.v1252-showcase-grid .market-card{
+  border-color:#fed7aa;
+  box-shadow:0 10px 26px rgba(124,45,18,.07);
+}
+
+.v1252-showcase-grid .market-card:hover{
+  box-shadow:0 15px 34px rgba(124,45,18,.12);
+}
+
+
+/* =========================================================
+   MASAÜSTÜ DETAY — biraz daha canlı, daha az belediye :)
+   ========================================================= */
+
+@media(min-width:1101px){
+
+  body.page-detail .v123-summary-card{
+    overflow:hidden;
+    border-top:4px solid #f97316!important;
+  }
+
+  body.page-detail .v123-description-panel{
+    border-left:3px solid #3b82f6!important;
+  }
+
+  body.page-detail #ozellikler{
+    border-left:3px solid #8b5cf6!important;
+  }
+
+  body.page-detail #konum{
+    border-left:3px solid #10b981!important;
+  }
+
+  body.page-detail #degerlendirmeler{
+    border-left:3px solid #f59e0b!important;
+  }
+}
+
+
+/* =========================================================
+   MOBİL
+   ========================================================= */
+
+@media(max-width:780px){
+
+  .v1252-detail-nav{
+    position:sticky;
+    top:0;
+    z-index:20;
+    width:100%;
+    justify-content:flex-start;
+    gap:6px;
+    overflow-x:auto;
+    padding:7px 2px 8px;
+    border:0;
+    border-radius:0;
+    background:rgba(255,255,255,.96);
+    box-shadow:none;
+    scrollbar-width:none;
+  }
+
+  .v1252-detail-nav::-webkit-scrollbar{
+    display:none;
+  }
+
+  .v1252-detail-nav>a{
+    flex:0 0 auto;
+    min-height:38px;
+    padding:7px 11px;
+  }
+
+  .v1252-location-layout{
+    display:block;
+  }
+
+  .v1252-map-frame,
+  .v1252-map-frame iframe{
+    min-height:225px;
+  }
+
+  .v1252-location-info{
+    margin-top:9px;
+    padding:13px;
+  }
+
+  .v1252-showcase-feed{
+    padding:20px 0;
+  }
+}

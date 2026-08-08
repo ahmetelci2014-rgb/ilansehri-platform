@@ -86,6 +86,14 @@ class HomeView(TemplateView):
         estates = list(scoped.filter(kind=Listing.Kind.REAL_ESTATE).order_by("-is_featured", "-created_at")[:10])
         services = list(scoped.filter(kind=Listing.Kind.SERVICE).order_by("-is_featured", "-created_at")[:10])
 
+        # Ana sayfa vitrini:
+        # Mevcut is_featured altyapısını kullanır.
+        # İleride ücretli vitrin paketleri bu alanı besleyebilir.
+        featured_listings = list(
+            scoped.filter(is_featured=True)
+            .order_by("-published_at", "-created_at")[:10]
+        )
+
         latest_price_history = ListingPriceHistory.objects.filter(
             listing_id=OuterRef("pk")
         ).order_by("-created_at")
@@ -222,6 +230,7 @@ class HomeView(TemplateView):
                 "vehicle_listings": vehicles,
                 "estate_listings": estates,
                 "service_listings": services,
+                "featured_listings": featured_listings,
                 "price_drop_listings": price_drops,
                 "following_listings": following_listings,
                 "recently_viewed": recently_viewed,

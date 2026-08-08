@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="{% static 'css/v123-detail-experience.css' %}?v=1230">
   <link rel="stylesheet" href="{% static 'css/v124-seller-center.css' %}?v=1240">
   <link rel="stylesheet" href="{% static 'css/v125-communication-center.css' %}?v=1250">
-  <link rel="stylesheet" href="{% static 'css/v1252-simplify.css' %}?v=125247">
+  <link rel="stylesheet" href="{% static 'css/v1252-simplify.css' %}?v=125248">
   <script defer src="{% static 'js/app.js' %}?v=125213"></script>
   <script defer src="{% static 'js/v16-premium.js' %}"></script>
   <script defer src="{% static 'js/v17-launch.js' %}"></script>
@@ -128,7 +128,19 @@
           🔔{% if unread_notification_count %}<i>{{ unread_notification_count }}</i>{% endif %}
         </a>
 
-        <a class="market-account" href="{% url 'accounts:dashboard' %}">Hesabım</a>
+        <details class="v1252-desktop-account-menu">
+          <summary class="market-account">Hesabım</summary>
+
+          <div class="v1252-desktop-account-popover">
+            <a href="{% url 'accounts:dashboard' %}">Hesabım</a>
+            <a href="{% url 'accounts:profile_edit' %}">Profil ayarları</a>
+
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit">Çıkış yap</button>
+            </form>
+          </div>
+        </details>
       {% else %}
         <a class="market-account" href="{% url 'login' %}">Giriş yap</a>
       {% endif %}

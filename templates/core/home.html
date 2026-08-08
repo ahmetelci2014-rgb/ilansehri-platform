@@ -26,7 +26,34 @@
 </section>
 
 
-{% if recently_viewed %}<section class="v16-feed shell"><div class="v16-section-heading"><div><span class="v16-feed-label">KALDIĞIN YERDEN</span><h2>Son baktığın ilanlar</h2><p>İlgilendiğin ilanlara tekrar göz at.</p></div><a href="{% url 'listings:list' %}">Yeni ilanları keşfet →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in recently_viewed %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></section>{% endif %}
+
+{% if featured_listings %}
+<section class="v16-feed v1252-showcase-feed">
+  <div class="shell">
+
+    <div class="v16-section-heading v1252-showcase-heading">
+      <div>
+        <span class="v1252-showcase-label">
+          <i>★</i> VİTRİN
+        </span>
+        <h2>Öne çıkan ilanlar</h2>
+        <p>Satıcıların daha görünür olmasını istediği seçili ilanlar.</p>
+      </div>
+
+      <a href="{% url 'listings:list' %}?sort=popular">
+        Tüm ilanları keşfet →
+      </a>
+    </div>
+
+    <div class="market-card-grid horizontal-mobile v1252-showcase-grid">
+      {% for listing in featured_listings %}
+        {% include 'listings/_card.html' with listing=listing %}
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endif %}
 
 {% if price_drop_listings %}<section class="v16-feed alt"><div class="shell"><div class="v16-section-heading"><div><span class="v16-feed-label">FIRSAT ALARMI</span><h2>Fiyatı düşen ilanlar</h2><p>Yeni fiyatıyla daha avantajlı hale gelen ilanlar.</p></div><a href="{% url 'listings:list' %}?price_drop=1&sort=price_drop">Tüm fiyat düşüşleri →</a></div><div class="market-card-grid horizontal-mobile">{% for listing in price_drop_listings %}{% include 'listings/_card.html' with listing=listing %}{% endfor %}</div></div></section>{% endif %}
 
