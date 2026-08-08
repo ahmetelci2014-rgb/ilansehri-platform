@@ -43,6 +43,7 @@
   <link rel="stylesheet" href="{% static 'css/v123-detail-experience.css' %}?v=1230">
   <link rel="stylesheet" href="{% static 'css/v124-seller-center.css' %}?v=1240">
   <link rel="stylesheet" href="{% static 'css/v125-communication-center.css' %}?v=1250">
+  <link rel="stylesheet" href="{% static 'css/v1252-simplify.css' %}?v=1252">
   <script defer src="{% static 'js/app.js' %}"></script>
   <script defer src="{% static 'js/v16-premium.js' %}"></script>
   <script defer src="{% static 'js/v17-launch.js' %}"></script>
@@ -72,20 +73,72 @@
     </form>
     <nav class="market-header-actions">
       <a class="market-location" href="{% url 'listings:list' %}">⌖ {% if user.is_authenticated and user.city %}{{ user.city }}{% else %}Konum seç{% endif %}</a>
-      <a class="market-icon-link has-count" href="{% url 'listings:compare' %}" title="Karşılaştır">⇄{% if compare_count %}<i>{{ compare_count }}</i>{% endif %}</a>
+
+      <details class="v1252-actions-menu">
+        <summary>İşlemler</summary>
+        <div class="v1252-actions-popover">
+          <a href="{% url 'listings:compare' %}">
+            <span>⇄</span><span>Karşılaştır</span>
+            {% if compare_count %}<b>{{ compare_count }}</b>{% endif %}
+          </a>
+
+          {% if user.is_authenticated %}
+          <a href="{% url 'listings:favorites' %}">
+            <span>♡</span><span>Favoriler</span>
+            {% if header_favorite_count %}<b>{{ header_favorite_count }}</b>{% endif %}
+          </a>
+
+          <a href="{% url 'listings:offer_center' %}">
+            <span>🤝</span><span>Teklifler</span>
+            {% if header_offer_count %}<b>{{ header_offer_count }}</b>{% endif %}
+          </a>
+
+          <a href="{% url 'listings:matches' %}">
+            <span>◎</span><span>Akıllı Eşleşmeler</span>
+            {% if header_match_count %}<b>{{ header_match_count }}</b>{% endif %}
+          </a>
+
+          {% if header_pending_appointment_count %}
+          <a href="{% url 'listings:appointment_list' %}">
+            <span>📅</span><span>Randevular</span>
+            <b>{{ header_pending_appointment_count }}</b>
+          </a>
+          {% endif %}
+          {% endif %}
+        </div>
+      </details>
+
       {% if user.is_authenticated %}
-        <a class="market-icon-link has-count" href="{% url 'listings:favorites' %}" title="Favoriler">♡{% if header_favorite_count %}<i>{{ header_favorite_count }}</i>{% endif %}</a>
-        <a class="market-icon-link has-count" href="{% url 'listings:offer_center' %}" title="Teklifler">🤝{% if header_offer_count %}<i>{{ header_offer_count }}</i>{% endif %}</a>
-        <a class="market-icon-link has-count" href="{% url 'listings:matches' %}" title="Akıllı eşleşmeler">◎{% if header_match_count %}<i>{{ header_match_count }}</i>{% endif %}</a>
-        <a class="market-icon-link has-count" href="{% url 'listings:conversation_list' %}" title="Mesajlar">💬{% if unread_message_count %}<i>{{ unread_message_count }}</i>{% endif %}</a>
-        {% if header_pending_appointment_count %}<a class="market-icon-link has-count" href="{% url 'listings:appointment_list' %}" title="Yanıt bekleyen randevular">📅<i>{{ header_pending_appointment_count }}</i></a>{% endif %}
-        <a class="market-icon-link has-count" href="{% url 'listings:notifications' %}" title="Bildirimler">🔔{% if unread_notification_count %}<i>{{ unread_notification_count }}</i>{% endif %}</a>
+        <a class="market-icon-link has-count"
+           href="{% url 'listings:conversation_list' %}"
+           title="Mesajlar"
+           aria-label="Mesajlar">
+          💬{% if unread_message_count %}<i>{{ unread_message_count }}</i>{% endif %}
+        </a>
+
+        <a class="market-icon-link has-count"
+           href="{% url 'listings:notifications' %}"
+           title="Bildirimler"
+           aria-label="Bildirimler">
+          🔔{% if unread_notification_count %}<i>{{ unread_notification_count }}</i>{% endif %}
+        </a>
+
         <a class="market-account" href="{% url 'accounts:dashboard' %}">Hesabım</a>
       {% else %}
         <a class="market-account" href="{% url 'login' %}">Giriş yap</a>
       {% endif %}
-      <a class="market-post-button" href="{% url 'listings:create' %}">＋ Ücretsiz ilan ver</a>
-      <button class="menu-toggle" type="button" aria-label="Menü" aria-expanded="false" data-menu-toggle><span></span><span></span><span></span></button>
+
+      <a class="market-post-button" href="{% url 'listings:create' %}">
+        ＋ Ücretsiz ilan ver
+      </a>
+
+      <button class="menu-toggle"
+              type="button"
+              aria-label="Menü"
+              aria-expanded="false"
+              data-menu-toggle>
+        <span></span><span></span><span></span>
+      </button>
     </nav>
   </div>
   <div class="mobile-market-search" data-mobile-market-search>

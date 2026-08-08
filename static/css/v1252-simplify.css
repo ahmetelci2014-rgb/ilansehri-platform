@@ -1,0 +1,116 @@
+/* İlan Şehri v1.25.2 — sade arayüz katmanı */
+
+/* =========================================================
+   1. ÜST MENÜ SADELEŞTİRME
+   ========================================================= */
+
+.v1252-actions-menu{
+  position:relative;
+  flex:0 0 auto;
+}
+
+.v1252-actions-menu>summary{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:0 12px;
+  border:1px solid #e1e5e9;
+  border-radius:11px;
+  background:#fff;
+  color:#343a40;
+  font-size:12px;
+  font-weight:850;
+  cursor:pointer;
+  list-style:none;
+  white-space:nowrap;
+}
+
+.v1252-actions-menu>summary::-webkit-details-marker{
+  display:none;
+}
+
+.v1252-actions-menu>summary::after{
+  content:"⌄";
+  margin-left:2px;
+  color:#7b838c;
+  font-size:11px;
+}
+
+.v1252-actions-menu[open]>summary{
+  border-color:#b7d8d2;
+  background:#f4faf8;
+  color:#0f766e;
+}
+
+.v1252-actions-popover{
+  position:absolute;
+  right:0;
+  top:calc(100% + 10px);
+  z-index:600;
+  width:270px;
+  padding:8px;
+  border:1px solid #dfe5e7;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 18px 48px rgba(20,35,45,.16);
+}
+
+.v1252-actions-popover>a{
+  min-height:45px;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:8px 10px;
+  border-radius:10px;
+  color:#30383c;
+  font-size:12px;
+  font-weight:800;
+}
+
+.v1252-actions-popover>a:hover{
+  background:#f3f8f7;
+  color:#0f766e;
+}
+
+.v1252-actions-popover>a>span:first-child{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:#edf5f3;
+  font-size:15px;
+}
+
+.v1252-actions-popover>a>span:nth-child(2){
+  flex:1;
+  min-width:0;
+}
+
+.v1252-actions-popover a b{
+  min-width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  padding:0 6px;
+  border-radius:999px;
+  background:#eef2f4;
+  color:#56616a;
+  font-size:10px;
+}
+
+/* Tablet mevcut hamburger düzenini kullanmaya devam eder. */
+@media(max-width:1100px){
+  .v1252-actions-menu{
+    display:none!important;
+  }
+}
+
+/* Mobilde ana menü davranışı değiştirilmez. */
+@media(max-width:780px){
+  .v1252-actions-menu{
+    display:none!important;
+  }
+}
