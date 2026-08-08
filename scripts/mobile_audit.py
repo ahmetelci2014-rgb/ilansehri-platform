@@ -269,6 +269,145 @@ def run_interaction_checks(page: Page, role: str, name: str) -> list[str]:
 
         check("galeri", gallery_check)
 
+    if role == "buyer" and name == "listing-detail":
+        def detail_actions_check():
+            share = page.locator("[data-share-listing]").first
+            copy = page.locator("[data-copy-listing]").first
+
+            if share.count() == 0 or copy.count() == 0:
+                raise AssertionError("Paylaş/kopyala aksiyonları bulunamadı")
+
+            page.evaluate(
+                """
+                () => {
+                  window.__AUDIT_SHARED__ = null;
+                  window.__AUDIT_COPIED__ = null;
+
+                  Object.defineProperty(navigator, "share", {
+                    configurable: true,
+                    value: async (data) => {
+                      window.__AUDIT_SHARED__ = data;
+                    }
+                  });
+
+                  Object.defineProperty(navigator, "clipboard", {
+                    configurable: true,
+                    value: {
+                      writeText: async (value) => {
+                        window.__AUDIT_COPIED__ = value;
+                      }
+                    }
+                  });
+                }
+                """
+            )
+
+            share.click()
+            page.wait_for_function(
+                "() => window.__AUDIT_SHARED__?.url",
+                timeout=3000,
+            )
+
+            # Mobil tasarımda ayrı "Bağlantıyı kopyala" düğmesi
+            # bazı genişliklerde bilinçli olarak gizlidir.
+            # DOM sözleşmesini doğrula; yalnız görünürse gerçek tıklama yap.
+            if not copy.get_attribute("data-copy-url"):
+                raise AssertionError("Kopyalama bağlantısı eksik")
+
+            if copy.is_visible():
+                copy.click()
+                page.wait_for_function(
+                    """() =>
+                      window.__AUDIT_COPIED__
+                      && document.querySelector("[data-copy-toast]")?.hidden === false
+                    """,
+                    timeout=3000,
+                )
+
+            message_box = page.locator("[data-v123-message-box]").first
+            if message_box.count() == 0:
+                raise AssertionError("Mesaj kutusu bulunamadı")
+
+            message_trigger = page.locator("[data-open-message]:visible").first
+            if message_trigger.count():
+                message_trigger.click()
+            else:
+                message_box.locator("summary").first.click()
+
+            page.wait_for_function(
+                "() => document.querySelector('[data-v123-message-box]')?.open === true",
+                timeout=3000,
+            )
+
+            page.evaluate(
+                "() => document.querySelector('[data-v123-message-box]').open = false"
+            )
+
+            offer_box = page.locator("[data-v123-offer-box]").first
+            if offer_box.count():
+                offer_trigger = page.locator("[data-open-offer]:visible").first
+
+                if offer_trigger.count():
+                    offer_trigger.click()
+                else:
+                    offer_box.locator("summary").first.click()
+
+                page.wait_for_function(
+                    "() => document.querySelector('[data-v123-offer-box]')?.open === true",
+                    timeout=3000,
+                )
+            else:
+                pending = page.locator(".pending-offer-card")
+                negotiation = page.get_by_text("Pazarlığı aç", exact=True)
+
+                if pending.count() == 0 and negotiation.count() == 0:
+                    raise AssertionError("Teklif/pazarlık aksiyonu bulunamadı")
+
+            favorite = page.locator(
+                'button[aria-label="Favori durumunu değiştir"]'
+            ).first
+
+            if favorite.count() == 0:
+                raise AssertionError("Favori düğmesi bulunamadı")
+
+            favorite_action = favorite.evaluate(
+                "(button) => button.closest('form')?.action || ''"
+            )
+
+            if not favorite_action:
+                raise AssertionError("Favori form bağlantısı bulunamadı")
+
+            page.evaluate(
+                """
+                () => {
+                  const button = document.querySelector(
+                    'button[aria-label="Favori durumunu değiştir"]'
+                  );
+                  const form = button?.closest("form");
+
+                  window.__AUDIT_FAVORITE_SUBMIT__ = false;
+
+                  form?.addEventListener(
+                    "submit",
+                    (event) => {
+                      event.preventDefault();
+                      window.__AUDIT_FAVORITE_SUBMIT__ = true;
+                    },
+                    {once: true}
+                  );
+                }
+                """
+            )
+
+            favorite.click()
+
+            page.wait_for_function(
+                "() => window.__AUDIT_FAVORITE_SUBMIT__ === true",
+                timeout=3000,
+            )
+
+        check("detay-aksiyonlari", detail_actions_check)
+
     if role == "seller" and name == "new-listing":
         def wizard_gps_check():
             manual = page.locator("[data-ai-manual-start]").first
