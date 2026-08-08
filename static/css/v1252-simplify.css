@@ -4969,3 +4969,100 @@ body.page-list .v121-location-group select{
     min-height:48px;
   }
 }
+
+/* =========================================================
+   v1.25.2 — İlan kartı mikro etkileşimleri
+   ========================================================= */
+
+.market-card{
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.market-card-media img{
+  transition:transform .28s ease;
+}
+
+.market-card-tool{
+  transition:
+    transform .15s ease,
+    background .15s ease,
+    color .15s ease,
+    border-color .15s ease;
+}
+
+/* Favori daha net */
+.market-card-tool:not(.compare-tool).active{
+  color:#e11d48!important;
+  background:#fff1f2!important;
+  border-color:#fecdd3!important;
+}
+
+/* Favoriye basma hissi */
+.v1252-favorite-pop{
+  animation:v1252FavoritePop .32s ease;
+}
+
+@keyframes v1252FavoritePop{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.28)}
+  100%{transform:scale(1)}
+}
+
+
+/* Masaüstünde çok hafif yükselme */
+@media(hover:hover) and (pointer:fine){
+
+  .market-card:hover{
+    transform:translateY(-3px);
+    border-color:#d7dee8;
+    box-shadow:0 13px 30px rgba(15,23,42,.09);
+  }
+
+  .market-card:hover .market-card-media img{
+    transform:scale(1.025);
+  }
+
+  .market-card-tool:hover{
+    transform:scale(1.07);
+  }
+}
+
+
+/* Telefonda dokunma hissi */
+@media(max-width:780px){
+
+  .market-card{
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  .market-card:active{
+    transform:scale(.985);
+  }
+
+  .market-card-tool:active{
+    transform:scale(.88);
+  }
+
+  /* Favori erişilebilir ama gereksiz büyük değil */
+  .market-card-tool:not(.compare-tool){
+    box-shadow:0 3px 10px rgba(15,23,42,.10);
+  }
+}
+
+
+/* Hareket azaltma tercihini koru */
+@media(prefers-reduced-motion:reduce){
+
+  .market-card,
+  .market-card-media img,
+  .market-card-tool{
+    transition:none!important;
+  }
+
+  .v1252-favorite-pop{
+    animation:none!important;
+  }
+}
