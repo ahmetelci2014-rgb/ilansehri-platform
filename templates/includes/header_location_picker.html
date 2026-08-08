@@ -1,0 +1,45 @@
+<details class="header-location-picker">
+  <summary>
+    <span>⌖</span>
+    <b>{% if request.GET.city %}{{ request.GET.city }}{% elif user.is_authenticated and user.city %}{{ user.city }}{% else %}Tüm Türkiye{% endif %}</b>
+    <i>⌄</i>
+  </summary>
+
+  <div class="header-location-panel">
+    <div class="header-radius-picker" data-header-radius>
+      <span>Mesafe</span>
+      <button type="button" data-radius-value="5">5 km</button>
+      <button type="button" data-radius-value="10">10 km</button>
+      <button type="button" data-radius-value="25" class="active">25 km</button>
+      <button type="button" data-radius-value="50">50 km</button>
+      <button type="button" data-radius-value="100">100 km</button>
+    </div>
+    <button type="button"
+            data-nearby-search
+            data-radius="25"
+            data-url="{% url 'listings:list' %}"
+            data-fallback-city="{% if user.is_authenticated %}{{ user.city }}{% endif %}"
+            data-fallback-district="{% if user.is_authenticated %}{{ user.district }}{% endif %}">
+      <span>◎</span>
+      <div><b>Konumumu kullan</b><small>25 km çevrendeki ilanlar</small></div>
+    </button>
+
+    <a href="{% url 'listings:list' %}">
+      <span>🇹🇷</span>
+      <div><b>Tüm Türkiye</b><small>Tüm şehirlerdeki ilanlar</small></div>
+    </a>
+
+    <form action="{% url 'listings:list' %}" method="get">
+      <label>Şehir seç</label>
+      <div>
+        <select name="city" required>
+          <option value="">Şehir seç...</option>
+          {% for value,label in header_city_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit">Göster</button>
+      </div>
+    </form>
+  </div>
+</details>

@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="{% static 'css/v123-detail-experience.css' %}?v=1230">
   <link rel="stylesheet" href="{% static 'css/v124-seller-center.css' %}?v=1240">
   <link rel="stylesheet" href="{% static 'css/v125-communication-center.css' %}?v=1250">
-  <link rel="stylesheet" href="{% static 'css/v1252-simplify.css' %}?v=125222">
+  <link rel="stylesheet" href="{% static 'css/v1252-simplify.css' %}?v=125226">
   <script defer src="{% static 'js/app.js' %}?v=125213"></script>
   <script defer src="{% static 'js/v16-premium.js' %}"></script>
   <script defer src="{% static 'js/v17-launch.js' %}"></script>
@@ -60,7 +60,7 @@
   <script defer src="{% static 'js/v123-detail-experience.js' %}?v=125222"></script>
   <script defer src="{% static 'js/v124-seller-center.js' %}?v=1240"></script>
   <script defer src="{% static 'js/v125-communication-center.js' %}?v=1250"></script>
-  <script defer src="{% static 'js/v1252-menu-fix.js' %}?v=2"></script>
+  <script defer src="{% static 'js/v1252-menu-fix.js' %}?v=4"></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body class="marketplace-body v18-theme app-{{ request.resolver_match.namespace|default:'core' }} page-{{ request.resolver_match.url_name|default:'page' }}">
@@ -73,7 +73,7 @@
       <span>⌕</span><input name="q" placeholder="Ne arıyorsun? Telefon, araç, ev, usta..." autocomplete="off" data-search-input><button>Ara</button><div class="search-suggestion-panel header-suggestion-panel" data-search-results hidden></div>
     </form>
     <nav class="market-header-actions">
-      <a class="market-location" href="{% url 'listings:list' %}">⌖ {% if user.is_authenticated and user.city %}{{ user.city }}{% else %}Konum seç{% endif %}</a>
+      {% include 'includes/header_location_picker.html' %}
 
       <details class="v1252-actions-menu">
         <summary>İşlemler</summary>

@@ -1,6 +1,7 @@
 from django.db.models import F, Q
 from django.utils import timezone
 
+from .locations import CITY_CHOICES
 from .matching import blocked_owner_ids
 from .models import Appointment, Favorite, ListingMatch, Message, Notification, Offer
 
@@ -16,6 +17,7 @@ def notification_counts(request):
             "header_match_count": 0,
             "header_pending_appointment_count": 0,
             "compare_count": compare_count,
+            "header_city_choices": CITY_CHOICES,
         }
     unread_messages = Message.objects.filter(
         Q(conversation__buyer=request.user) | Q(conversation__seller=request.user),
@@ -53,4 +55,5 @@ def notification_counts(request):
             starts_at__gte=now,
         ).count(),
         "compare_count": compare_count,
+        "header_city_choices": CITY_CHOICES,
     }

@@ -18,3 +18,22 @@ document.addEventListener("click", function (event) {
 
   document.body.classList.toggle("menu-open", willOpen);
 }, true);
+
+/* header konum mesafesi */
+document.addEventListener("DOMContentLoaded", () => {
+  const picker = document.querySelector("[data-header-radius]");
+  const nearby = document.querySelector(".header-location-panel [data-nearby-search]");
+  if (!picker || !nearby) return;
+
+  picker.querySelectorAll("[data-radius-value]").forEach((button) => {
+    button.addEventListener("click", () => {
+      picker.querySelectorAll("[data-radius-value]").forEach((item) => {
+        item.classList.remove("active");
+      });
+      button.classList.add("active");
+      nearby.dataset.radius = button.dataset.radiusValue;
+      const copy = nearby.querySelector("small");
+      if (copy) copy.textContent = `${button.dataset.radiusValue} km çevrendeki ilanlar`;
+    });
+  });
+});
