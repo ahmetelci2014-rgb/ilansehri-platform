@@ -14,6 +14,13 @@ from django.views.generic import TemplateView
 from apps.accounts.models import AccountClosureRequest, AccountRiskEvent, User, UserFollow, UserReport
 from apps.ai_listing.models import AIAnalysis, AISettings
 from apps.listings.catalog import category_market_kind
+from apps.listings.location_preference import effective_listing_params
+from apps.listings.search_alerts import (
+    apply_listing_filters,
+    attach_nearby_distances,
+    nearby_sort_key,
+    parse_nearby_params,
+)
 from apps.listings.models import Category, Favorite, Listing, ListingPriceHistory, ListingReport, Offer, Review, Transaction
 from apps.managed_services.models import ManagedRequest
 from apps.partners.models import PartnerProfile, Task
@@ -44,33 +51,44 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         published = _listing_queryset()
-        preferred_city = (self.request.GET.get("city") or "").strip()
-        preferred_district = (self.request.GET.get("district") or "").strip()
-        if self.request.user.is_authenticated:
-            if not preferred_city:
-                preferred_city = self.request.user.city.strip()
-            if not preferred_district:
-                preferred_district = self.request.user.district.strip()
+        location_params = effective_listing_params(self.request)
 
-        nearby = published.filter(city__iexact=preferred_city) if preferred_city else published
-        if preferred_district:
-            district_nearby = nearby.filter(district__iexact=preferred_district)
-            if district_nearby.exists():
-                nearby = district_nearby
-        if preferred_city and not nearby.exists():
-            nearby = published
+        preferred_city = (location_params.get("city") or "").strip()
+        preferred_district = (location_params.get("district") or "").strip()
 
-        latest = list(nearby.order_by("-is_featured", "-published_at", "-created_at")[:12])
-        popular = list(published.order_by("-view_count", "-favorite_count", "-created_at")[:10])
-        vehicles = list(published.filter(kind=Listing.Kind.VEHICLE).order_by("-is_featured", "-created_at")[:10])
-        estates = list(published.filter(kind=Listing.Kind.REAL_ESTATE).order_by("-is_featured", "-created_at")[:10])
-        services = list(published.filter(kind=Listing.Kind.SERVICE).order_by("-is_featured", "-created_at")[:10])
+        scoped = apply_listing_filters(
+            published,
+            location_params,
+            user=self.request.user,
+        )
+
+        if parse_nearby_params(location_params):
+            nearby_items = attach_nearby_distances(
+                scoped,
+                location_params,
+            )
+            nearby_items.sort(key=nearby_sort_key)
+            nearby_ids = [item.pk for item in nearby_items]
+            scoped = published.filter(pk__in=nearby_ids)
+            latest = nearby_items[:12]
+        else:
+            latest = list(
+                scoped.order_by(
+                    "-is_featured",
+                    "-published_at",
+                    "-created_at",
+                )[:12]
+            )
+        popular = list(scoped.order_by("-view_count", "-favorite_count", "-created_at")[:10])
+        vehicles = list(scoped.filter(kind=Listing.Kind.VEHICLE).order_by("-is_featured", "-created_at")[:10])
+        estates = list(scoped.filter(kind=Listing.Kind.REAL_ESTATE).order_by("-is_featured", "-created_at")[:10])
+        services = list(scoped.filter(kind=Listing.Kind.SERVICE).order_by("-is_featured", "-created_at")[:10])
 
         latest_price_history = ListingPriceHistory.objects.filter(
             listing_id=OuterRef("pk")
         ).order_by("-created_at")
         price_drops = list(
-            published.annotate(
+            scoped.annotate(
                 latest_price_old=Subquery(latest_price_history.values("old_price")[:1]),
                 latest_price_new=Subquery(latest_price_history.values("new_price")[:1]),
                 latest_price_changed_at=Subquery(latest_price_history.values("created_at")[:1]),
@@ -83,13 +101,13 @@ class HomeView(TemplateView):
         if self.request.user.is_authenticated:
             followed_sellers = UserFollow.objects.filter(follower=self.request.user).values_list("seller_id", flat=True)
             following_listings = list(
-                published.filter(owner_id__in=followed_sellers).order_by("-published_at", "-created_at")[:10]
+                scoped.filter(owner_id__in=followed_sellers).order_by("-published_at", "-created_at")[:10]
             )
 
         recent_ids = self.request.session.get("recently_viewed", [])[:8]
         recent_map = {
             item.pk: item
-            for item in published.filter(pk__in=recent_ids)
+            for item in scoped.filter(pk__in=recent_ids)
         }
         recently_viewed = [recent_map[item_id] for item_id in recent_ids if item_id in recent_map]
 
@@ -101,11 +119,11 @@ class HomeView(TemplateView):
 
         kind_counts = {
             row["kind"]: row["total"]
-            for row in published.order_by().values("kind").annotate(total=Count("id"))
+            for row in scoped.order_by().values("kind").annotate(total=Count("id"))
         }
         category_counts = {
             row["category_id"]: row["total"]
-            for row in published.order_by().values("category_id").annotate(total=Count("id"))
+            for row in scoped.order_by().values("category_id").annotate(total=Count("id"))
         }
         category_shortcuts: dict[str, list[dict]] = {kind: [] for kind, _label in Listing.Kind.choices}
         category_rows = (
@@ -156,7 +174,7 @@ class HomeView(TemplateView):
                 "favorite_ids": favorite_ids,
                 "compare_ids": set(self.request.session.get("compare_listing_ids", [])),
                 "category_tiles": category_tiles,
-                "listing_count": published.count(),
+                "listing_count": scoped.count(),
                 "member_count": User.objects.filter(is_active=True).count(),
                 "active_city_count": published.order_by().exclude(city="").values("city").distinct().count(),
                 "review_count": Review.objects.filter(is_visible=True).count(),

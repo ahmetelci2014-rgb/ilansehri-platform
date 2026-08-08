@@ -2,11 +2,13 @@ from django.db.models import F, Q
 from django.utils import timezone
 
 from .locations import CITY_CHOICES
+from .location_preference import header_location_context
 from .matching import blocked_owner_ids
 from .models import Appointment, Favorite, ListingMatch, Message, Notification, Offer
 
 
 def notification_counts(request):
+    location_context = header_location_context(request)
     compare_count = len(request.session.get("compare_listing_ids", [])) if hasattr(request, "session") else 0
     if not request.user.is_authenticated:
         return {
@@ -18,6 +20,7 @@ def notification_counts(request):
             "header_pending_appointment_count": 0,
             "compare_count": compare_count,
             "header_city_choices": CITY_CHOICES,
+            **location_context,
         }
     unread_messages = Message.objects.filter(
         Q(conversation__buyer=request.user) | Q(conversation__seller=request.user),
@@ -56,4 +59,5 @@ def notification_counts(request):
         ).count(),
         "compare_count": compare_count,
         "header_city_choices": CITY_CHOICES,
+        **location_context,
     }

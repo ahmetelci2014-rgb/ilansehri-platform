@@ -42,6 +42,8 @@
       url.searchParams.delete("lng");
       url.searchParams.delete("radius");
       url.searchParams.delete("sort");
+      url.searchParams.delete("district");
+      url.searchParams.delete("neighborhood");
       url.searchParams.set("city", city);
       if (district) url.searchParams.set("district", district);
       announce("Konum izni verilmedi. Profilindeki şehir ve ilçe ile arama yapılıyor.", "warning");
@@ -58,10 +60,23 @@
     const url = targetUrl(button);
     url.searchParams.delete("city");
     url.searchParams.delete("district");
+    url.searchParams.delete("neighborhood");
     url.searchParams.set("lat", position.coords.latitude.toFixed(3));
     url.searchParams.set("lng", position.coords.longitude.toFixed(3));
     url.searchParams.set("radius", button.dataset.radius || "25");
     url.searchParams.set("sort", "nearby");
+
+    const fallbackCity = (button.dataset.fallbackCity || "").trim();
+    const fallbackDistrict = (button.dataset.fallbackDistrict || "").trim();
+
+    if (fallbackCity) {
+      url.searchParams.set("city", fallbackCity);
+    }
+
+    if (fallbackDistrict) {
+      url.searchParams.set("district", fallbackDistrict);
+    }
+
     window.location.assign(url.toString());
   }
 

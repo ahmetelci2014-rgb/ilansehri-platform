@@ -48,6 +48,7 @@ from .geocoding import (
     reverse_geocode,
 )
 from .locations import CITY_CHOICES, get_districts, get_neighborhoods
+from .location_preference import effective_listing_params
 from .models import (
     Appointment,
     Category,
@@ -104,6 +105,7 @@ from .safety import (
 from .search_alerts import (
     apply_listing_filters,
     attach_nearby_distances,
+    nearby_sort_key,
     normalize_saved_search_params,
     parse_nearby_params,
     parse_listing_number_query,
@@ -557,7 +559,7 @@ class ListingListView(ListView):
             .select_related("owner", "category")
             .prefetch_related("images", "price_history")
         )
-        params = self.request.GET
+        params = effective_listing_params(self.request)
         qs = apply_listing_filters(qs, params, user=self.request.user)
         sort = params.get("sort", "newest")
         ordering = {
@@ -574,13 +576,14 @@ class ListingListView(ListView):
         if parse_nearby_params(params):
             items = attach_nearby_distances(qs, params)
             if sort == "nearby":
-                items.sort(key=lambda item: (item.distance_km, not item.is_featured, -item.pk))
+                items.sort(key=nearby_sort_key)
             return items
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        pagination_params = self.request.GET.copy()
+        source_params = effective_listing_params(self.request)
+        pagination_params = source_params.copy()
         pagination_params.pop("page", None)
         context["pagination_query"] = pagination_params.urlencode()
 
@@ -590,9 +593,9 @@ class ListingListView(ListView):
                 Favorite.objects.filter(user=self.request.user).values_list("listing_id", flat=True)
             )
 
-        params = normalize_saved_search_params(self.request.GET)
+        params = normalize_saved_search_params(source_params)
         display_filters = dict(params)
-        display_filters["sort"] = self.request.GET.get("sort", "newest")[:20] or "newest"
+        display_filters["sort"] = source_params.get("sort", "newest")[:20] or "newest"
         all_categories = list(
             Category.objects.filter(is_active=True)
             .select_related("parent", "parent__parent")
@@ -646,9 +649,13 @@ class ListingListView(ListView):
                 display_value = category_path(selected_category)
             elif key in {"verified", "managed", "price_drop", "following"}:
                 display_value = "Evet"
-            remove_params = self.request.GET.copy()
+            remove_params = source_params.copy()
             remove_params.pop("page", None)
             remove_params.pop(key, None)
+            if key == "city":
+                remove_params.pop("district", None)
+                remove_params.pop("neighborhood", None)
+                remove_params["location_reset"] = "1"
             active_labels.append(
                 {
                     "key": key,
@@ -660,9 +667,10 @@ class ListingListView(ListView):
 
         nearby = parse_nearby_params(params)
         if nearby:
-            remove_params = self.request.GET.copy()
+            remove_params = source_params.copy()
             for key in ("lat", "lng", "radius"):
                 remove_params.pop(key, None)
+            remove_params["location_reset"] = "1"
             if remove_params.get("sort") == "nearby":
                 remove_params["sort"] = "newest"
             active_labels.append(

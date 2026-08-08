@@ -186,6 +186,7 @@ def parse_nearby_params(params):
 def apply_listing_filters(qs, params, *, user=None):
     """Liste ekranı ve kayıtlı aramalar için ortak filtre sözleşmesi."""
     params = normalize_saved_search_params(params)
+    nearby = parse_nearby_params(params)
     q = params.get("q", "")
     if q:
         listing_number = parse_listing_number_query(q)
@@ -229,10 +230,15 @@ def apply_listing_filters(qs, params, *, user=None):
         qs = qs.filter(category_id__in=descendant_category_ids(category_id))
 
     for key, lookup in exact_filters.items():
+        if nearby and key == "city":
+            continue
         value = params.get(key)
         if value:
             qs = qs.filter(**{lookup: value})
+
     for key, lookup in partial_filters.items():
+        if nearby and key in {"district", "neighborhood"}:
+            continue
         value = params.get(key)
         if value:
             qs = qs.filter(**{lookup: value})
@@ -265,13 +271,13 @@ def apply_listing_filters(qs, params, *, user=None):
         followed_ids = UserFollow.objects.filter(follower=user).values_list("seller_id", flat=True)
         qs = qs.filter(owner_id__in=followed_ids)
 
-    nearby = parse_nearby_params(params)
     if nearby:
         lat, lng, radius = nearby
         lat_delta = radius / 111.0
         lng_factor = max(cos(radians(lat)), 0.15)
         lng_delta = radius / (111.0 * lng_factor)
-        qs = qs.filter(
+
+        coordinate_match = Q(
             latitude__isnull=False,
             longitude__isnull=False,
             latitude__gte=lat - lat_delta,
@@ -279,6 +285,17 @@ def apply_listing_filters(qs, params, *, user=None):
             longitude__gte=lng - lng_delta,
             longitude__lte=lng + lng_delta,
         )
+
+        fallback_city = params.get("city", "").strip()
+
+        if fallback_city:
+            location_fallback = (
+                (Q(latitude__isnull=True) | Q(longitude__isnull=True))
+                & Q(city__iexact=fallback_city)
+            )
+            qs = qs.filter(coordinate_match | location_fallback)
+        else:
+            qs = qs.filter(coordinate_match)
     return qs
 
 
@@ -298,20 +315,72 @@ def haversine_distance_km(lat1: float, lng1: float, lat2: float, lng2: float) ->
     return 6371.0088 * 2 * asin(min(1.0, sqrt(a)))
 
 
+def nearby_sort_key(item):
+    distance = getattr(item, "distance_km", None)
+
+    if distance is not None:
+        return (
+            0,
+            float(distance),
+            not item.is_featured,
+            -item.pk,
+        )
+
+    return (
+        getattr(item, "location_match_rank", 9),
+        0,
+        not item.is_featured,
+        -item.pk,
+    )
+
+
 def attach_nearby_distances(items, params):
-    """Yakınlık filtresini kesin mesafeyle tamamlar ve mesafeyi nesneye ekler."""
+    """GPS'li ilanları km ile, GPS'siz ilanları şehir/ilçe eşleşmesiyle dahil et."""
     nearby = parse_nearby_params(params)
     if not nearby:
         return list(items)
+
     lat, lng, radius = nearby
+
+    fallback_city = str(_get(params, "city", "")).strip().casefold()
+    fallback_district = str(_get(params, "district", "")).strip().casefold()
+
     matched = []
+
     for item in items:
-        if item.latitude is None or item.longitude is None:
+        if item.latitude is not None and item.longitude is not None:
+            distance = haversine_distance_km(
+                lat,
+                lng,
+                float(item.latitude),
+                float(item.longitude),
+            )
+
+            if distance <= radius:
+                item.distance_km = round(distance, 1)
+                item.location_match_kind = "exact"
+                item.location_match_rank = 0
+                matched.append(item)
+
             continue
-        distance = haversine_distance_km(lat, lng, float(item.latitude), float(item.longitude))
-        if distance <= radius:
-            item.distance_km = round(distance, 1)
-            matched.append(item)
+
+        item_city = str(item.city or "").strip().casefold()
+
+        if not fallback_city or item_city != fallback_city:
+            continue
+
+        item_district = str(item.district or "").strip().casefold()
+        same_district = bool(
+            fallback_district
+            and item_district
+            and item_district == fallback_district
+        )
+
+        item.distance_km = None
+        item.location_match_kind = "district" if same_district else "city"
+        item.location_match_rank = 1 if same_district else 2
+        matched.append(item)
+
     return matched
 
 
