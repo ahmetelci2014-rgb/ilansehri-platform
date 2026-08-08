@@ -122,6 +122,7 @@ class PageResult:
     small_targets: int = 0
     console_errors: list[str] = field(default_factory=list)
     page_errors: list[str] = field(default_factory=list)
+    interaction_errors: list[str] = field(default_factory=list)
     screenshot: str = ""
     error: str = ""
 
@@ -134,6 +135,7 @@ class PageResult:
             or self.horizontal_overflow > 2
             or self.console_errors
             or self.page_errors
+            or self.interaction_errors
         )
 
 
@@ -165,6 +167,109 @@ def login(page: Page, base_url: str, username: str, password: str) -> None:
 
     if "/hesap/login/" in page.url:
         raise RuntimeError(f"Demo giriş başarısız: {username}")
+
+
+
+def run_interaction_checks(page: Page, role: str, name: str) -> list[str]:
+    """Kritik mobil kontrolleri gerçekten tıklayarak doğrula."""
+    errors: list[str] = []
+
+    def check(label, callback):
+        try:
+            callback()
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{label}: {type(exc).__name__}: {exc}")
+
+    if role == "public" and name == "home":
+        def menu_check():
+            toggle = page.locator("[data-menu-toggle]").first
+            menu = page.locator("[data-mobile-menu]").first
+
+            if toggle.count() == 0 or menu.count() == 0:
+                raise AssertionError("Mobil menü öğeleri bulunamadı")
+
+            toggle.click()
+            page.wait_for_function(
+                "() => document.querySelector('[data-mobile-menu]')?.classList.contains('is-open')",
+                timeout=3000,
+            )
+
+            if toggle.get_attribute("aria-expanded") != "true":
+                raise AssertionError("Menü açıldı ama aria-expanded=true olmadı")
+
+            toggle.click()
+            page.wait_for_function(
+                "() => !document.querySelector('[data-mobile-menu]')?.classList.contains('is-open')",
+                timeout=3000,
+            )
+
+        check("hamburger", menu_check)
+
+    if role == "public" and name == "listings":
+        def filter_check():
+            open_button = page.locator("[data-filter-open]").first
+            panel = page.locator("[data-filter-panel]").first
+            close_button = page.locator("[data-filter-close]").first
+
+            if (
+                open_button.count() == 0
+                or panel.count() == 0
+                or close_button.count() == 0
+            ):
+                raise AssertionError("Filtre kontrol öğeleri bulunamadı")
+
+            open_button.click()
+            page.wait_for_function(
+                "() => document.querySelector('[data-filter-panel]')?.classList.contains('is-open')",
+                timeout=3000,
+            )
+
+            close_button.click()
+            page.wait_for_function(
+                "() => !document.querySelector('[data-filter-panel]')?.classList.contains('is-open')",
+                timeout=3000,
+            )
+
+        check("filtre", filter_check)
+
+    if role == "public" and name == "listing-detail":
+        def gallery_check():
+            stage = page.locator("[data-v123-gallery-stage]").first
+            lightbox = page.locator("[data-v123-lightbox]").first
+            main_image = page.locator("[data-v123-main-image]").first
+
+            if stage.count() == 0 or lightbox.count() == 0:
+                raise AssertionError("Galeri veya lightbox bulunamadı")
+
+            # Fotoğrafsız demo ilanda açılacak görsel olmadığı için
+            # yapısal kontrol yeterlidir.
+            if main_image.count() == 0:
+                return
+
+            stage.click(position={"x": 60, "y": 60})
+
+            page.wait_for_function(
+                "() => document.querySelector('[data-v123-lightbox]')?.hidden === false",
+                timeout=3000,
+            )
+
+            close_button = page.locator(
+                "[data-v123-lightbox] [data-gallery-close]"
+            ).first
+
+            if close_button.count() == 0:
+                raise AssertionError("Galeri kapatma düğmesi bulunamadı")
+
+            close_button.click()
+
+            page.wait_for_function(
+                "() => document.querySelector('[data-v123-lightbox]')?.hidden === true",
+                timeout=3000,
+            )
+
+        check("galeri", gallery_check)
+
+    return errors
 
 
 def inspect_page(
@@ -221,6 +326,7 @@ def inspect_page(
         result.horizontal_overflow = int(metrics["overflow"])
         result.overflow_elements = list(metrics["overflowElements"])[:20]
         result.small_targets = int(metrics["smallTargets"])
+        result.interaction_errors = run_interaction_checks(page, role, name)
 
         filename = f"{slugify(role)}__{slugify(viewport_name)}__{slugify(name)}.png"
         screenshot_path = output_dir / "screenshots" / filename
@@ -312,6 +418,7 @@ def write_report(output_dir: Path, results: list[PageResult]) -> None:
             "critical": sum(result.critical for result in results),
             "overflow_pages": sum(result.horizontal_overflow > 2 for result in results),
             "console_error_pages": sum(bool(result.console_errors or result.page_errors) for result in results),
+            "interaction_error_pages": sum(bool(result.interaction_errors) for result in results),
         },
         "results": [asdict(result) | {"critical": result.critical} for result in results],
     }
@@ -327,6 +434,7 @@ def write_report(output_dir: Path, results: list[PageResult]) -> None:
         f"- Kritik sonuç: {payload['summary']['critical']}",
         f"- Yatay taşma görülen: {payload['summary']['overflow_pages']}",
         f"- Tarayıcı hatası görülen: {payload['summary']['console_error_pages']}",
+        f"- Etkileşim hatası görülen: {payload['summary']['interaction_error_pages']}",
         "",
         "| Rol | Ekran | Sayfa | HTTP | Taşma | Küçük hedef | Sonuç |",
         "|---|---|---|---:|---:|---:|---|",
