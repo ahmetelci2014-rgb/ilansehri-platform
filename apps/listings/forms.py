@@ -6,7 +6,14 @@ import re
 from django import forms
 from django.utils import timezone
 
-from .catalog import category_market_kind, category_matches_kind, category_path
+from .catalog import (
+    category_detail_fields,
+    category_detail_profile,
+    category_market_kind,
+    category_matches_kind,
+    category_path,
+    category_required_fields,
+)
 from .locations import CITY_CHOICES, get_districts, get_neighborhoods
 from .message_safety import analyze_message
 from .models import (
@@ -61,6 +68,9 @@ class CategorySelect(forms.Select):
             has_children = any(item.is_active for item in children) if children is not None else instance.children.filter(is_active=True).exists()
             option["attrs"]["data-category-leaf"] = "0" if has_children else "1"
             option["attrs"]["data-category-path"] = category_path(instance)
+            option["attrs"]["data-category-slug"] = instance.slug
+            option["attrs"]["data-category-profile"] = category_detail_profile(instance)
+            option["attrs"]["data-category-fields"] = ",".join(category_detail_fields(instance))
         return option
 
 
@@ -338,31 +348,36 @@ class ListingForm(forms.ModelForm):
         if action not in price_optional_actions and not cleaned.get("price_on_request") and cleaned.get("price") is None:
             self.add_error("price", "Fiyat gir veya teklif almak istediğini işaretle.")
 
-        if kind == Listing.Kind.PRODUCT and not cleaned.get("condition"):
-            self.add_error("condition", "Ürünün durumunu belirt.")
-        elif kind == Listing.Kind.VEHICLE:
-            for field, message in (
-                ("brand", "Araç markasını belirt."),
-                ("model_name", "Araç modelini belirt."),
-                ("model_year", "Model yılını belirt."),
-            ):
-                if not cleaned.get(field):
-                    self.add_error(field, message)
-            year = cleaned.get("model_year")
-            if year and not 1900 <= year <= timezone.now().year + 1:
-                self.add_error("model_year", "Geçerli bir model yılı gir.")
-        elif kind == Listing.Kind.REAL_ESTATE:
-            if not cleaned.get("room_count"):
-                self.add_error("room_count", "Oda sayısını belirt.")
-            if not cleaned.get("area_m2"):
-                self.add_error("area_m2", "Metrekare bilgisini belirt.")
-        elif kind == Listing.Kind.SERVICE:
-            if not cleaned.get("service_area"):
-                self.add_error("service_area", "Hizmet verdiğin bölgeyi belirt.")
-            if not cleaned.get("fee_type"):
-                self.add_error("fee_type", "Ücret tipini seç.")
-        elif kind == Listing.Kind.JOB and not cleaned.get("job_type"):
-            self.add_error("job_type", "Çalışma şeklini seç.")
+        detail_required_messages = {
+            "condition": "Ürün / parça durumunu belirt.",
+            "brand": "Markayı belirt.",
+            "model_name": "Modeli belirt.",
+            "model_year": "Model yılını belirt.",
+            "room_count": "Oda sayısını belirt.",
+            "area_m2": "Metrekare bilgisini belirt.",
+            "service_area": "Hizmet bölgesini belirt.",
+            "fee_type": "Ücret tipini seç.",
+            "job_type": "Çalışma şeklini seç.",
+        }
+
+        for field_name in category_required_fields(
+            category,
+            kind,
+            action,
+        ):
+            if not cleaned.get(field_name):
+                self.add_error(
+                    field_name,
+                    detail_required_messages[field_name],
+                )
+
+        year = cleaned.get("model_year")
+        if year and not 1900 <= year <= timezone.now().year + 1:
+            self.add_error(
+                "model_year",
+                "Geçerli bir model yılı gir.",
+            )
+
         return cleaned
 
     def save(self, commit=True):

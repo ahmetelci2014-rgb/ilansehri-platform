@@ -2223,3 +2223,10 @@ body.page-detail .v1252-desktop-call-button:hover{
     scroll-margin-bottom:210px!important;
   }
 }
+
+
+/* v1.25.2 kategoriye özel alan görünürlük sözleşmesi */
+body.page-create [data-listing-form] [data-kind-field][hidden],
+body.page-update [data-listing-form] [data-kind-field][hidden]{
+  display:none!important;
+}

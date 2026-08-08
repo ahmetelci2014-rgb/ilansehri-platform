@@ -106,42 +106,118 @@ document.addEventListener("DOMContentLoaded", () => {
   const listingForm = document.querySelector("[data-listing-form]");
   const kindSelect = listingForm?.querySelector("#id_kind");
   const actionSelect = listingForm?.querySelector("#id_action");
-  const fieldKinds = {
-    condition: ["product", "vehicle"], delivery_type: ["product", "vehicle", "real_estate", "service"], brand: ["product", "vehicle"], model_name: ["product", "vehicle"],
+  const categorySelect = listingForm?.querySelector("[data-category-select]");
+
+  /*
+   * Eski/özel kategori kayıtları için güvenli fallback.
+   * Normal katalogda asıl kaynak option üzerindeki data-category-fields'tır.
+   */
+  const fallbackFieldKinds = {
+    condition: ["product", "vehicle"],
+    delivery_type: ["product", "vehicle", "real_estate", "service"],
+    brand: ["product", "vehicle"],
+    model_name: ["product", "vehicle"],
     color: ["product", "vehicle", "real_estate"],
     search_tags_text: ["product", "vehicle", "real_estate", "service", "need", "job"],
     technical_features_text: ["product", "vehicle", "real_estate", "service", "need", "job"],
-    model_year: ["vehicle"], mileage: ["vehicle"], fuel_type: ["vehicle"], transmission: ["vehicle"],
-    room_count: ["real_estate"], area_m2: ["real_estate"], building_age: ["real_estate"], floor_location: ["real_estate"], heating_type: ["real_estate"],
-    service_area: ["service"], fee_type: ["service"], job_type: ["job"], experience_level: ["job"],
+    model_year: ["vehicle"],
+    mileage: ["vehicle"],
+    fuel_type: ["vehicle"],
+    transmission: ["vehicle"],
+    room_count: ["real_estate"],
+    area_m2: ["real_estate"],
+    building_age: ["real_estate"],
+    floor_location: ["real_estate"],
+    heating_type: ["real_estate"],
+    service_area: ["service"],
+    fee_type: ["service"],
+    job_type: ["job"],
+    experience_level: ["job"],
   };
+
   const allowedActions = {
-    product: ["sell", "rent", "swap", "wanted"], vehicle: ["sell", "rent", "swap", "wanted"],
-    real_estate: ["sell", "rent", "wanted"], service: ["service_offer", "service_request"],
-    need: ["wanted", "service_request"], job: ["job_offer", "job_request"],
+    product: ["sell", "rent", "swap", "wanted"],
+    vehicle: ["sell", "rent", "swap", "wanted"],
+    real_estate: ["sell", "rent", "wanted"],
+    service: ["service_offer", "service_request"],
+    need: ["wanted", "service_request"],
+    job: ["job_offer", "job_request"],
   };
-  const updateKindFields = () => {
-    const selected = kindSelect?.value || "";
+
+  const selectedCategoryFields = () => {
+    const option = categorySelect?.selectedOptions?.[0];
+
+    if (!option?.value) return null;
+
+    if (!Object.prototype.hasOwnProperty.call(
+      option.dataset,
+      "categoryFields",
+    )) {
+      return null;
+    }
+
+    return new Set(
+      String(option.dataset.categoryFields || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    );
+  };
+
+  const updateDetailFields = () => {
+    const selectedKind = kindSelect?.value || "";
+    const categoryFields = selectedCategoryFields();
+
     listingForm?.querySelectorAll("[data-kind-field]").forEach((wrapper) => {
       const name = wrapper.dataset.kindField;
-      const visible = (fieldKinds[name] || []).includes(selected);
+
+      const visible = categoryFields !== null
+        ? categoryFields.has(name)
+        : (fallbackFieldKinds[name] || []).includes(selectedKind);
+
       wrapper.hidden = !visible;
-      wrapper.querySelectorAll("input,select,textarea").forEach((field) => { field.disabled = !visible; });
+
+      wrapper.querySelectorAll("input,select,textarea").forEach((field) => {
+        field.disabled = !visible;
+      });
     });
-    if (actionSelect && selected) {
-      const allowed = allowedActions[selected] || [];
+
+    if (actionSelect && selectedKind) {
+      const allowed = allowedActions[selectedKind] || [];
+
       Array.from(actionSelect.options).forEach((option) => {
         if (!option.value) return;
-        option.hidden = !allowed.includes(option.value);
-        option.disabled = !allowed.includes(option.value);
+
+        const visible = allowed.includes(option.value);
+        option.hidden = !visible;
+        option.disabled = !visible;
       });
-      if (actionSelect.value && !allowed.includes(actionSelect.value)) actionSelect.value = "";
+
+      if (
+        actionSelect.value
+        && !allowed.includes(actionSelect.value)
+      ) {
+        actionSelect.value = "";
+      }
     }
   };
+
   if (kindSelect) {
-    updateKindFields();
-    kindSelect.addEventListener("change", updateKindFields);
+    updateDetailFields();
+
+    /*
+     * v121-discovery kategori listesini aynı change event'inde daraltıyor.
+     * Bir sonraki tick'te çalışarak temizlenmiş kategori değerini okuruz.
+     */
+    kindSelect.addEventListener("change", () => {
+      window.setTimeout(updateDetailFields, 0);
+    });
   }
+
+  categorySelect?.addEventListener(
+    "change",
+    updateDetailFields,
+  );
 
   const cityInput = listingForm?.querySelector("[data-location-city]");
   const districtInput = listingForm?.querySelector("[data-location-district]");
