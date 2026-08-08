@@ -3936,3 +3936,249 @@ body.page-list .v121-results-top p{
     display:none!important;
   }
 }
+
+/* v1.25.2 — sade filtre hiyerarşisi */
+
+body.page-list .v1252-filter-main-title{
+  margin:0 0 10px!important;
+  color:#0f172a!important;
+  font-size:13px!important;
+  font-weight:950!important;
+}
+
+/* Fiyat, temel filtrelerin devamı gibi görünür */
+body.page-list .v1252-price-continuation{
+  margin-top:-5px!important;
+  padding-top:3px!important;
+  border-top:0!important;
+}
+
+body.page-list .v1252-price-title{
+  margin:0 0 7px!important;
+  color:#64748b!important;
+  font-size:10px!important;
+  font-weight:850!important;
+}
+
+/* İleri filtreler tek başlık altında */
+body.page-list .v1252-more-filters{
+  margin:5px 0 0;
+  border-top:1px solid #e5eaf0;
+}
+
+body.page-list .v1252-more-filters>summary{
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 2px;
+  cursor:pointer;
+  list-style:none;
+  color:#0f172a;
+}
+
+body.page-list .v1252-more-filters>summary::-webkit-details-marker{
+  display:none;
+}
+
+body.page-list .v1252-more-filters>summary span{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+body.page-list .v1252-more-filters>summary b{
+  font-size:12px;
+  font-weight:950;
+}
+
+body.page-list .v1252-more-filters>summary small{
+  color:#7c8794;
+  font-size:9px;
+  line-height:1.3;
+}
+
+body.page-list .v1252-more-filters>summary i{
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#eff6ff;
+  color:#2563eb;
+  font-size:13px;
+  font-style:normal;
+  transition:transform .18s ease;
+}
+
+body.page-list .v1252-more-filters[open]>summary i{
+  transform:rotate(180deg);
+}
+
+body.page-list .v1252-more-filters .v121-filter-group h3 span{
+  display:none!important;
+}
+
+body.page-list .v1252-more-filters .v121-filter-group h3{
+  font-size:11px!important;
+  color:#475569!important;
+}
+
+
+/* TELEFON */
+@media(max-width:780px){
+
+  body.page-list .v121-filter-sheet form{
+    padding-left:13px!important;
+    padding-right:13px!important;
+  }
+
+  body.page-list .v121-filter-group{
+    padding:11px 0!important;
+  }
+
+  body.page-list .v1252-filter-main-title{
+    font-size:13px!important;
+  }
+
+  body.page-list .v1252-more-filters{
+    margin-top:3px;
+  }
+
+  body.page-list .v1252-more-filters>summary{
+    min-height:55px;
+    padding:10px 0;
+  }
+
+  body.page-list .v1252-more-filters>.v121-filter-group{
+    padding:10px 0!important;
+  }
+}
+
+
+/* MASAÜSTÜ */
+@media(min-width:781px){
+
+  body.page-list .v1252-more-filters>summary{
+    border-radius:10px;
+  }
+
+  body.page-list .v1252-more-filters>summary:hover{
+    color:#1d4ed8;
+  }
+}
+
+
+/* v1.25.2 — liste görünüm ve konum düzeltmesi */
+
+body.page-list .v1252-location-help{
+  margin:-3px 0 10px;
+  color:#64748b;
+  font-size:9px;
+  line-height:1.4;
+}
+
+body.page-list .v121-location-group input,
+body.page-list .v121-location-group select{
+  width:100%;
+  background:#fff;
+}
+
+
+/* MOBİL: tek güvenilir fotoğraf ızgarası */
+@media(max-width:780px){
+
+  body.page-list .market-card-grid.list-grid,
+  body.page-list .market-card-grid.list-grid.v16-compact-view{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card{
+    display:block!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card-link{
+    display:block!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card-media{
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    aspect-ratio:1.12/1!important;
+    border-radius:13px 13px 0 0!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card-body{
+    padding:8px 8px 9px!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card-tools{
+    left:auto!important;
+    right:7px!important;
+    top:7px!important;
+  }
+}
+
+
+/* MASAÜSTÜ: ızgara */
+@media(min-width:781px){
+
+  body.page-list .list-grid:not(.v16-compact-view){
+    display:grid!important;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr))!important;
+    gap:14px!important;
+  }
+
+
+  /* MASAÜSTÜ: gerçek liste görünümü */
+  body.page-list .list-grid.v16-compact-view{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card{
+    display:block!important;
+    position:relative!important;
+    min-height:165px!important;
+    overflow:hidden!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card-link{
+    display:grid!important;
+    grid-template-columns:220px minmax(0,1fr)!important;
+    min-height:165px!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card-media{
+    width:100%!important;
+    height:100%!important;
+    min-height:165px!important;
+    aspect-ratio:auto!important;
+    border-radius:16px 0 0 16px!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card-body{
+    min-width:0!important;
+    padding:15px 16px!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view .market-card-tools{
+    left:auto!important;
+    right:10px!important;
+    top:10px!important;
+  }
+
+  body.page-list .list-grid.v16-compact-view h3{
+    max-width:80%;
+    font-size:15px!important;
+  }
+}

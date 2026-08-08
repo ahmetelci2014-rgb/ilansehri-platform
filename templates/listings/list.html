@@ -34,7 +34,7 @@
       {% if active_filters.lat and active_filters.lng %}<input type="hidden" name="lat" value="{{ active_filters.lat }}"><input type="hidden" name="lng" value="{{ active_filters.lng }}">{% endif %}
 
       <section class="v121-filter-group">
-        <h3><span>1</span>Kategori ve işlem</h3>
+        <h3 class="v1252-filter-main-title">Temel filtreler</h3>
         <label>İlan türü
           <select name="kind" data-kind-filter data-v121-kind-filter>
             <option value="">Tüm ilan türleri</option>
@@ -56,21 +56,28 @@
       </section>
 
       <section class="v121-filter-group v121-location-group">
-        <h3><span>2</span>Konum</h3>
+        <h3 class="v1252-filter-main-title">Konum</h3>
+        <p class="v1252-location-help">Şehri seç; ilçe ve mahalleyi ara veya doğrudan yaz.</p>
         <label>Şehir
           <select name="city" data-v121-city><option value="">Tüm Türkiye</option>{% for value,label in city_choices %}<option value="{{ value }}" {% if active_filters.city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
         </label>
-        <label>İlçe<input name="district" value="{{ active_filters.district }}" placeholder="İlçe seçin veya yazın" list="filter-district-options" data-v121-district autocomplete="address-level2"></label>
-        <label>Mahalle<input name="neighborhood" value="{{ active_filters.neighborhood }}" placeholder="Mahalle" list="filter-neighborhood-options" data-v121-neighborhood autocomplete="address-level3"></label>
+        <label>İlçe<input name="district" value="{{ active_filters.district }}" placeholder="İlçe ara veya yaz" list="filter-district-options" data-v121-district autocomplete="address-level2"></label>
+        <label>Mahalle<input name="neighborhood" value="{{ active_filters.neighborhood }}" placeholder="Mahalle ara veya yaz" list="filter-neighborhood-options" data-v121-neighborhood autocomplete="address-level3"></label>
         <datalist id="filter-district-options">{% for item in district_suggestions %}<option value="{{ item }}">{% endfor %}</datalist>
         <datalist id="filter-neighborhood-options">{% for item in neighborhood_suggestions %}<option value="{{ item }}">{% endfor %}</datalist>
         {% if active_filters.lat and active_filters.lng %}<label>Yakınlık yarıçapı<select name="radius"><option value="5" {% if active_filters.radius == '5' %}selected{% endif %}>5 km</option><option value="10" {% if active_filters.radius == '10' %}selected{% endif %}>10 km</option><option value="25" {% if active_filters.radius == '25' or not active_filters.radius %}selected{% endif %}>25 km</option><option value="50" {% if active_filters.radius == '50' %}selected{% endif %}>50 km</option><option value="100" {% if active_filters.radius == '100' %}selected{% endif %}>100 km</option></select></label>{% endif %}
       </section>
 
-      <section class="v121-filter-group">
-        <h3><span>3</span>Fiyat</h3>
+      <section class="v121-filter-group v1252-price-continuation">
+        <h3 class="v1252-price-title">Fiyat aralığı</h3>
         <div class="market-filter-pair"><label>En az<input type="number" min="0" name="min_price" value="{{ active_filters.min_price }}" placeholder="0 TL"></label><label>En çok<input type="number" min="0" name="max_price" value="{{ active_filters.max_price }}" placeholder="Üst sınır"></label></div>
       </section>
+
+      <details class="v1252-more-filters">
+        <summary>
+          <span><b>Daha fazla filtre</b><small>İlan türüne özel özellikler ve güven seçenekleri</small></span>
+          <i aria-hidden="true">⌄</i>
+        </summary>
 
       <section class="v121-filter-group" data-kind-section="product">
         <h3><span>4</span>Ürün ayrıntıları</h3>
@@ -119,6 +126,8 @@
         <label class="market-check price-drop-check"><input type="checkbox" name="price_drop" value="1" {% if active_filters.price_drop == '1' %}checked{% endif %}> Fiyatı düşen ilanlar</label>
         {% if user.is_authenticated %}<label class="market-check"><input type="checkbox" name="following" value="1" {% if active_filters.following == '1' %}checked{% endif %}> Takip ettiğim satıcılar</label>{% endif %}
       </section>
+
+      </details>
 
       <div class="v121-filter-actions">
         <a href="{% url 'listings:list' %}">Temizle</a>
