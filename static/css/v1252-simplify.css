@@ -1707,3 +1707,285 @@ body.page-detail .v1252-desktop-call-button:hover{
   }
 }
 
+/* v1.25.2 mobil ilan listeleme sadeleştirme */
+
+@media(max-width:780px){
+
+  /* =======================================================
+     ÜST ARAMA ZATEN MOBİL HEADER'DA VAR
+     Sayfa içinde ikinci büyük arama bloğunu tekrarlama.
+     ======================================================= */
+
+  body.page-list .v121-discovery-search{
+    display:none!important;
+  }
+
+
+  /* =======================================================
+     İLAN TÜRÜ ÇİPLERİ
+     Tek satır yatay kaydırma; daha kompakt.
+     ======================================================= */
+
+  body.page-list .market-list-chips{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    margin:3px -12px 0;
+    padding:3px 12px 6px;
+    scrollbar-width:none;
+    overscroll-behavior-inline:contain;
+  }
+
+  body.page-list .market-list-chips::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.page-list .market-list-chips>a{
+    flex:0 0 auto;
+    min-height:34px;
+    display:flex;
+    align-items:center;
+    padding:6px 10px;
+    border-radius:999px;
+    white-space:nowrap;
+    font-size:10px;
+  }
+
+
+  /* =======================================================
+     ALT KATEGORİLER
+     Mobilde sadece ilk 5 ana kısayolu göster.
+     Tam kategori seçimi Filtrele içinde devam ediyor.
+     ======================================================= */
+
+  body.page-list .v121-category-shortcuts{
+    gap:6px;
+    margin:4px -12px 0;
+    padding:3px 12px 5px;
+    scrollbar-width:none;
+  }
+
+  body.page-list .v121-category-shortcuts::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.page-list .v121-category-shortcuts>a{
+    min-height:36px;
+    padding:5px 8px;
+    border-radius:11px;
+    box-shadow:none;
+  }
+
+  body.page-list .v121-category-shortcuts>a:nth-child(n+6){
+    display:none!important;
+  }
+
+  body.page-list .v121-category-shortcuts span{
+    width:24px;
+    height:24px;
+  }
+
+  body.page-list .v121-category-shortcuts b{
+    font-size:10px;
+  }
+
+  body.page-list .v121-category-shortcuts small{
+    display:none;
+  }
+
+
+  /* =======================================================
+     HIZLI FİLTRELER
+     5 seçenek yerine 3 ana keşif yolu.
+     Diğerleri tam Filtrele panelinde bulunuyor.
+     ======================================================= */
+
+  body.page-list .v131-mobile-quick-filters{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    margin:5px -12px 0;
+    padding:3px 12px 7px;
+    scrollbar-width:none;
+  }
+
+  body.page-list .v131-mobile-quick-filters::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.page-list .v131-mobile-quick-filters>a,
+  body.page-list .v131-mobile-quick-filters>button{
+    flex:0 0 auto;
+    min-height:36px;
+    padding:6px 10px;
+    border-radius:11px;
+    font-size:10px;
+    white-space:nowrap;
+  }
+
+  /* Yakınımda + En yeni + Fiyatı düşen kalsın */
+  body.page-list .v131-mobile-quick-filters>*:nth-child(n+4){
+    display:none!important;
+  }
+
+
+  /* =======================================================
+     SONUÇ BAŞLIĞI
+     ======================================================= */
+
+  body.page-list .v121-list-layout{
+    padding-top:7px;
+  }
+
+  body.page-list .v121-results-top h1{
+    margin:0 0 2px;
+    font-size:20px;
+    line-height:1.15;
+  }
+
+  body.page-list .v121-results-top p{
+    margin:0;
+    font-size:10px;
+    color:#6b7b88;
+  }
+
+  body.page-list .v18-active-count{
+    display:none;
+  }
+
+
+  /* =======================================================
+     ANA ARAÇLAR
+     Mobilde: Filtrele + Sırala.
+     Karşılaştır hamburger menüde zaten mevcut.
+     ======================================================= */
+
+  body.page-list .v121-results-top .result-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    margin-top:8px;
+  }
+
+  body.page-list .v121-results-top .mobile-filter-button{
+    width:100%;
+    min-height:43px;
+    justify-content:center;
+    border-radius:12px;
+    font-size:11px;
+    font-weight:900;
+  }
+
+  body.page-list .v121-results-top .compare-result-link{
+    display:none!important;
+  }
+
+  body.page-list .v121-results-top .v121-sort-form{
+    width:100%;
+    min-width:0;
+  }
+
+  body.page-list .v121-results-top .v121-sort-form label{
+    display:block;
+    width:100%;
+  }
+
+  body.page-list .v121-results-top .v121-sort-form select{
+    width:100%;
+    min-height:43px;
+    border-radius:12px;
+    font-size:11px;
+  }
+
+  /* Aramayı kaydet ana akışı bölmesin.
+     Aktif filtre varsa sonuçların altında küçük seçenek olarak kalır. */
+  body.page-list .v121-results-top .save-search-popover{
+    grid-column:1/-1;
+    order:3;
+  }
+
+  body.page-list .v121-results-top .save-search-popover>summary{
+    min-height:36px;
+    justify-content:center;
+    padding:6px 10px;
+    border:0;
+    background:transparent;
+    color:#52706e;
+    font-size:10px;
+  }
+
+
+  /* =======================================================
+     AKTİF FİLTRELER
+     ======================================================= */
+
+  body.page-list .v121-active-filters{
+    gap:5px;
+    margin:6px -12px 8px;
+    padding:2px 12px 4px;
+    scrollbar-width:none;
+  }
+
+  body.page-list .v121-active-filters::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.page-list .v121-active-filters>a{
+    min-height:31px;
+    padding:4px 7px 4px 9px;
+    font-size:9px;
+  }
+
+
+  /* =======================================================
+     FİLTRE BOTTOM-SHEET
+     Mevcut işlevler aynı, görsel yoğunluk biraz azaltıldı.
+     ======================================================= */
+
+  body.page-list .v121-filter-sheet .market-filter-title{
+    padding:14px 14px 10px;
+  }
+
+  body.page-list .v121-filter-sheet .market-filter-title small{
+    display:none;
+  }
+
+  body.page-list .v121-filter-sheet .market-filter-title h2{
+    font-size:16px;
+  }
+
+  body.page-list .v121-filter-group{
+    padding:12px 1px;
+  }
+
+  body.page-list .v121-filter-group h3{
+    margin-bottom:8px;
+    font-size:12px;
+  }
+
+  body.page-list .v121-filter-group h3 span{
+    width:20px;
+    height:20px;
+  }
+
+  body.page-list .v121-filter-group>label,
+  body.page-list .v121-filter-group .market-filter-pair label{
+    margin:7px 0;
+    font-size:10px;
+  }
+}
+
+
+@media(max-width:390px){
+
+  body.page-list .v121-results-top .result-actions{
+    grid-template-columns:1fr 1fr;
+  }
+
+  body.page-list .market-list-chips>a,
+  body.page-list .v131-mobile-quick-filters>a,
+  body.page-list .v131-mobile-quick-filters>button{
+    font-size:9px;
+  }
+}
+
