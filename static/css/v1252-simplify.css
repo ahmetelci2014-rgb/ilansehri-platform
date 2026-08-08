@@ -5105,3 +5105,29 @@ body.page-list .v121-location-group select{
     bottom:28px;
   }
 }
+
+/* v1.25.2 — Mobil kategori şeritleri */
+
+@media(max-width:780px){
+
+  body.page-list .market-list-chips,
+  body.page-list .v121-category-shortcuts{
+    scroll-behavior:smooth;
+    scrollbar-width:none;
+    overscroll-behavior-x:contain;
+  }
+
+  body.page-list .market-list-chips::-webkit-scrollbar,
+  body.page-list .v121-category-shortcuts::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.page-list .market-list-chips>a,
+  body.page-list .v121-category-shortcuts>a{
+    scroll-snap-align:center;
+  }
+
+  body.page-list .market-list-chips>a.active{
+    box-shadow:0 4px 12px rgba(37,99,235,.13);
+  }
+}
