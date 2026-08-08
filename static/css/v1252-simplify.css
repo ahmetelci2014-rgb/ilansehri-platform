@@ -4182,3 +4182,567 @@ body.page-list .v121-location-group select{
     font-size:15px!important;
   }
 }
+
+/* =========================================================
+   v1.25.2 — Satıcı Profili 2.0
+   ========================================================= */
+
+.page-public_profile{
+  background:#f5f7fb;
+}
+
+.page-public_profile .seller-store-head{
+  padding:20px 0 8px;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(249,115,22,.10),transparent 32%),
+    radial-gradient(circle at 0% 20%,rgba(37,99,235,.10),transparent 30%);
+}
+
+.page-public_profile .seller-store-grid{
+  position:relative;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  gap:20px;
+  align-items:center;
+  padding:24px;
+  background:#fff;
+  border:1px solid #e7ebf2;
+  border-radius:24px;
+  box-shadow:0 12px 35px rgba(15,23,42,.07);
+}
+
+.page-public_profile .public-avatar{
+  width:96px;
+  height:96px;
+  border-radius:50%;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  flex:none;
+  background:linear-gradient(145deg,#2563eb,#1d4ed8);
+  color:#fff;
+  font-size:34px;
+  font-weight:900;
+  border:5px solid #fff;
+  box-shadow:0 8px 24px rgba(37,99,235,.22);
+}
+
+.page-public_profile .public-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.page-public_profile .seller-store-labels{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-bottom:8px;
+}
+
+.page-public_profile .seller-store-labels span,
+.page-public_profile .seller-store-labels b{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.page-public_profile .seller-store-labels span{
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+
+.page-public_profile .seller-store-labels b{
+  background:#ecfdf5;
+  color:#15803d;
+}
+
+.page-public_profile .seller-store-copy h1{
+  margin:0;
+  font-size:30px;
+  line-height:1.15;
+  letter-spacing:-.4px;
+  color:#0f172a;
+}
+
+.page-public_profile .seller-store-copy>p{
+  max-width:700px;
+  margin:8px 0 12px;
+  line-height:1.55;
+  color:#64748b;
+}
+
+.page-public_profile .seller-store-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 18px;
+  font-size:13px;
+  font-weight:650;
+  color:#475569;
+}
+
+.page-public_profile .seller-store-actions{
+  display:grid;
+  gap:9px;
+  min-width:190px;
+}
+
+.page-public_profile .seller-store-actions form{
+  margin:0;
+}
+
+.page-public_profile .seller-store-actions button{
+  width:100%;
+  min-height:44px;
+  border-radius:13px;
+}
+
+.page-public_profile .v118-trust-overview{
+  margin-top:16px;
+}
+
+.page-public_profile .v118-trust-card{
+  border-radius:22px;
+  box-shadow:0 8px 28px rgba(15,23,42,.055);
+}
+
+.page-public_profile .seller-store-stats{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:10px;
+  margin-top:14px;
+  margin-bottom:24px;
+}
+
+.page-public_profile .seller-store-stats>div{
+  min-width:0;
+  padding:15px 10px;
+  text-align:center;
+  background:#fff;
+  border:1px solid #e5eaf1;
+  border-radius:16px;
+}
+
+.page-public_profile .seller-store-stats b{
+  display:block;
+  margin-bottom:4px;
+  font-size:17px;
+  color:#0f172a;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.page-public_profile .seller-store-stats span{
+  display:block;
+  color:#64748b;
+  font-size:11px;
+  line-height:1.35;
+}
+
+.page-public_profile .seller-listings{
+  padding-top:6px;
+}
+
+.page-public_profile .seller-reviews-section{
+  margin-top:28px;
+  padding:30px 0 50px;
+  background:#fff;
+  border-top:1px solid #e7ebf2;
+}
+
+.page-public_profile .seller-review-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.page-public_profile .seller-review-list article{
+  padding:18px;
+  background:#f8fafc;
+  border:1px solid #e5eaf1;
+  border-radius:18px;
+}
+
+.page-public_profile .seller-review-list article>p{
+  color:#475569;
+  line-height:1.55;
+}
+
+.page-public_profile .seller-review-list footer{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid #e5e7eb;
+  font-size:12px;
+}
+
+.page-public_profile .seller-review-list footer span{
+  color:#64748b;
+  text-align:right;
+}
+
+@media(max-width:1000px){
+  .page-public_profile .seller-store-stats{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+}
+
+@media(max-width:700px){
+  .page-public_profile .seller-store-head{
+    padding-top:10px;
+  }
+
+  .page-public_profile .seller-store-grid{
+    grid-template-columns:74px minmax(0,1fr);
+    gap:13px;
+    padding:16px;
+    border-radius:18px;
+  }
+
+  .page-public_profile .public-avatar{
+    width:74px;
+    height:74px;
+    font-size:26px;
+    border-width:4px;
+  }
+
+  .page-public_profile .seller-store-copy h1{
+    font-size:22px;
+  }
+
+  .page-public_profile .seller-store-copy>p{
+    grid-column:1/-1;
+    font-size:13px;
+  }
+
+  .page-public_profile .seller-store-meta{
+    font-size:12px;
+  }
+
+  .page-public_profile .seller-store-actions{
+    grid-column:1/-1;
+    grid-template-columns:1fr 1fr;
+    width:100%;
+  }
+
+  .page-public_profile .seller-store-actions button{
+    min-height:42px;
+    padding:8px 9px;
+    font-size:12px;
+  }
+
+  .page-public_profile .seller-store-stats{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    margin-top:10px;
+  }
+
+  .page-public_profile .seller-store-stats>div{
+    padding:12px 8px;
+  }
+
+  .page-public_profile .seller-store-stats b{
+    font-size:16px;
+  }
+
+  .page-public_profile .seller-review-list{
+    grid-template-columns:1fr;
+  }
+
+  .page-public_profile .seller-review-list footer{
+    display:block;
+  }
+
+  .page-public_profile .seller-review-list footer span{
+    display:block;
+    margin-top:4px;
+    text-align:left;
+  }
+
+  .page-public_profile .v118-trust-overview{
+    margin-top:12px;
+  }
+
+  .page-public_profile .v118-trust-card{
+    padding:18px;
+    border-radius:18px;
+  }
+}
+
+/* =========================================================
+   v1.25.2 — Sade Satıcı Profili
+   ========================================================= */
+
+.page-public_profile{
+  background:#f6f7f9;
+}
+
+.v1252-seller-profile{
+  padding:22px 0 12px;
+}
+
+.v1252-seller-main{
+  display:grid;
+  grid-template-columns:88px minmax(0,1fr) auto;
+  gap:18px;
+  align-items:center;
+  padding:22px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:20px;
+}
+
+.v1252-seller-avatar{
+  width:88px;
+  height:88px;
+  border-radius:50%;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  background:#2563eb;
+  color:#fff;
+  font-size:30px;
+  font-weight:900;
+}
+
+.v1252-seller-avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.v1252-seller-name-row{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.v1252-seller-name-row h1{
+  margin:0;
+  color:#111827;
+  font-size:26px;
+  line-height:1.15;
+}
+
+.v1252-verified{
+  width:21px;
+  height:21px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#2563eb;
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+}
+
+.v1252-seller-location{
+  margin-top:6px;
+  color:#6b7280;
+  font-size:13px;
+}
+
+.v1252-seller-bio{
+  max-width:680px;
+  margin:9px 0 0;
+  color:#4b5563;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.v1252-seller-mini-stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px 18px;
+  margin-top:13px;
+  color:#6b7280;
+  font-size:12px;
+}
+
+.v1252-seller-mini-stats b{
+  color:#111827;
+}
+
+.v1252-seller-controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.v1252-seller-controls form{
+  margin:0;
+}
+
+.v1252-follow-button{
+  min-height:42px;
+  padding:0 18px;
+  border:0;
+  border-radius:12px;
+  background:#2563eb;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.v1252-seller-more{
+  position:relative;
+}
+
+.v1252-seller-more>summary{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border:1px solid #dfe3e8;
+  border-radius:12px;
+  background:#fff;
+  color:#475569;
+  font-weight:900;
+  cursor:pointer;
+  list-style:none;
+}
+
+.v1252-seller-more>summary::-webkit-details-marker{
+  display:none;
+}
+
+.v1252-seller-more>div{
+  position:absolute;
+  z-index:20;
+  top:48px;
+  right:0;
+  width:210px;
+  padding:8px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  box-shadow:0 14px 35px rgba(15,23,42,.12);
+}
+
+.v1252-seller-more button,
+.v1252-seller-more summary{
+  width:100%;
+  padding:9px 10px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  text-align:left;
+  cursor:pointer;
+  color:#475569;
+}
+
+.v1252-report-details form{
+  margin-top:8px;
+  padding:9px;
+  background:#f8fafc;
+  border-radius:10px;
+}
+
+.v1252-report-details form p{
+  margin:7px 0;
+}
+
+.v1252-seller-listings{
+  padding-top:20px;
+}
+
+.v1252-seller-reviews{
+  padding-top:34px;
+  padding-bottom:50px;
+}
+
+.v1252-review-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.v1252-review-grid article{
+  padding:16px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:15px;
+}
+
+.v1252-review-top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.v1252-review-top span{
+  color:#d97706;
+  font-weight:800;
+}
+
+.v1252-review-grid p{
+  margin:9px 0;
+  color:#4b5563;
+  line-height:1.5;
+}
+
+.v1252-review-grid small{
+  color:#9ca3af;
+}
+
+@media(max-width:700px){
+
+  .v1252-seller-profile{
+    padding-top:10px;
+  }
+
+  .v1252-seller-main{
+    grid-template-columns:68px minmax(0,1fr);
+    gap:12px;
+    padding:15px;
+    border-radius:16px;
+  }
+
+  .v1252-seller-avatar{
+    width:68px;
+    height:68px;
+    font-size:24px;
+  }
+
+  .v1252-seller-name-row h1{
+    font-size:20px;
+  }
+
+  .v1252-seller-bio{
+    grid-column:1/-1;
+  }
+
+  .v1252-seller-mini-stats{
+    grid-column:1/-1;
+    gap:6px 13px;
+    padding-top:4px;
+    border-top:1px solid #f0f1f3;
+  }
+
+  .v1252-seller-controls{
+    grid-column:1/-1;
+    width:100%;
+  }
+
+  .v1252-seller-controls form:first-child{
+    flex:1;
+  }
+
+  .v1252-follow-button{
+    width:100%;
+  }
+
+  .v1252-review-grid{
+    grid-template-columns:1fr;
+  }
+
+  .v1252-seller-listings{
+    padding-top:14px;
+  }
+}
