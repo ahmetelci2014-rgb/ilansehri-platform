@@ -3315,3 +3315,254 @@ body.v1252-compact-detail .v1252-mobile-report>summary::before{
   height:auto!important;
   background:transparent!important;
 }
+
+/* v1.25.2 — gerçek marketplace ana sayfa */
+body.page-home{
+  background:#f6f8fb;
+}
+
+/* Kategoriler artık ana giriş alanı */
+body.page-home .v16-category-zone{
+  background:#fff;
+  border-bottom:1px solid #e8edf3;
+}
+
+body.page-home .v16-section-shell{
+  padding-top:20px;
+  padding-bottom:18px;
+}
+
+body.page-home .v16-section-heading{
+  margin-bottom:13px;
+}
+
+body.page-home .v16-section-heading h2{
+  font-size:21px;
+}
+
+body.page-home .v122-category-hub{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:10px;
+}
+
+body.page-home .v122-category-card{
+  min-height:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
+}
+
+body.page-home .v122-category-card::after{
+  display:none;
+}
+
+body.page-home .v122-category-main{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:115px;
+  padding:12px 6px;
+  border:1px solid #e6ebf1;
+  border-radius:18px;
+  background:#fff;
+  text-align:center;
+  box-shadow:0 5px 16px rgba(15,23,42,.045);
+}
+
+body.page-home .v122-category-main:hover{
+  transform:translateY(-2px);
+}
+
+body.page-home .v122-category-main .v16-category-icon{
+  width:54px;
+  height:54px;
+  margin:0;
+  border-radius:18px;
+  font-size:24px;
+}
+
+body.page-home .v122-category-copy b{
+  margin:0;
+  font-size:12px;
+}
+
+body.page-home .v122-category-copy small{
+  margin-top:2px;
+  font-size:9px;
+}
+
+body.page-home .v122-category-main>i,
+body.page-home .v122-category-shortcuts,
+body.page-home .v122-category-empty,
+body.page-home .v16-home-stats{
+  display:none!important;
+}
+
+/* Her kategori kendi rengi */
+body.page-home .v122-category-card.product .v16-category-icon{background:#fff0a8}
+body.page-home .v122-category-card.vehicle .v16-category-icon{background:#dbeafe}
+body.page-home .v122-category-card.real_estate .v16-category-icon{background:#e9d5ff}
+body.page-home .v122-category-card.service .v16-category-icon{background:#ffedd5}
+body.page-home .v122-category-card.job .v16-category-icon{background:#d1fae5}
+body.page-home .v122-category-card.need .v16-category-icon{background:#fce7f3}
+
+/* Hızlı keşif artık küçük araç çubuğu */
+body.page-home .v18-market-shortcuts{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+  margin-top:12px;
+  margin-bottom:5px;
+}
+
+body.page-home .v18-market-shortcuts>a,
+body.page-home .v18-market-shortcuts>button{
+  min-height:58px;
+  padding:9px 10px;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:none;
+}
+
+body.page-home .v18-market-shortcuts small{
+  font-size:9px;
+}
+
+/* İlan akışını yukarı ve sıkı tut */
+body.page-home .v16-feed{
+  padding-top:20px;
+  padding-bottom:24px;
+}
+
+@media(max-width:780px){
+
+  body.page-home .v16-section-shell{
+    padding-top:12px;
+    padding-bottom:10px;
+  }
+
+  body.page-home .v16-section-heading{
+    margin-bottom:8px;
+  }
+
+  body.page-home .v16-section-heading h2{
+    font-size:17px;
+  }
+
+  body.page-home .v16-section-heading p{
+    display:none;
+  }
+
+  body.page-home .v122-category-hub{
+    display:flex;
+    gap:5px;
+    overflow-x:auto;
+    padding:0 0 5px;
+    scrollbar-width:none;
+  }
+
+  body.page-home .v122-category-hub::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.page-home .v122-category-card{
+    flex:0 0 82px;
+  }
+
+  body.page-home .v122-category-main{
+    min-height:91px;
+    padding:8px 3px;
+    border:0;
+    box-shadow:none;
+  }
+
+  body.page-home .v122-category-main .v16-category-icon{
+    width:50px;
+    height:50px;
+    border-radius:17px;
+    font-size:22px;
+  }
+
+  body.page-home .v122-category-copy b{
+    font-size:10px;
+    line-height:1.15;
+  }
+
+  body.page-home .v122-category-copy small{
+    display:none;
+  }
+
+  body.page-home .v18-market-shortcuts{
+    display:flex;
+    gap:7px;
+    overflow-x:auto;
+    margin-top:7px;
+    padding-bottom:5px;
+    scrollbar-width:none;
+  }
+
+  body.page-home .v18-market-shortcuts>a,
+  body.page-home .v18-market-shortcuts>button{
+    flex:0 0 138px;
+    min-height:53px;
+  }
+
+  body.page-home .v18-market-shortcuts>a:nth-of-type(n+3){
+    display:flex!important;
+  }
+
+  body.page-home .v16-feed{
+    padding-top:12px;
+  }
+}
+
+/* v1.25.2 ana sayfa iki hızlı keşif */
+body.page-home .v1252-home-quicklinks{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding-top:10px;
+  padding-bottom:4px;
+}
+
+body.page-home .v1252-home-quicklinks>a{
+  min-height:38px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 12px;
+  border:1px solid #e1e7ee;
+  border-radius:999px;
+  background:#fff;
+  color:#334155;
+  font-size:11px;
+  font-weight:850;
+  box-shadow:0 3px 10px rgba(15,23,42,.04);
+}
+
+body.page-home .v1252-home-quicklinks>a:first-child span{
+  color:#2563eb;
+}
+
+body.page-home .v1252-home-quicklinks>a:last-child span{
+  color:#f97316;
+}
+
+@media(max-width:780px){
+  body.page-home .v1252-home-quicklinks{
+    gap:6px;
+    padding-top:7px;
+    overflow-x:auto;
+  }
+
+  body.page-home .v1252-home-quicklinks>a{
+    flex:0 0 auto;
+    min-height:34px;
+    padding:6px 10px;
+    font-size:10px;
+  }
+}
