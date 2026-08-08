@@ -1199,3 +1199,511 @@ body.page-detail .v1252-desktop-call-button:hover{
   }
 }
 
+/* v1.25.2 mobil ilan verme sadeleştirme */
+
+@media(max-width:780px){
+
+  /* =======================================================
+     SAYFA BAŞLANGICI
+     ======================================================= */
+
+  body.page-create .v16-wizard-page,
+  body.page-update .v16-wizard-page{
+    padding:12px 9px 104px;
+  }
+
+  body.page-create .v16-wizard-intro,
+  body.page-update .v16-wizard-intro{
+    margin-bottom:10px;
+    text-align:left;
+  }
+
+  body.page-create .v16-wizard-intro .section-label,
+  body.page-update .v16-wizard-intro .section-label{
+    display:none;
+  }
+
+  body.page-create .v16-wizard-intro h1,
+  body.page-update .v16-wizard-intro h1{
+    margin:0;
+    font-size:22px;
+    line-height:1.12;
+    letter-spacing:-.7px;
+  }
+
+  body.page-create .v16-wizard-intro>p,
+  body.page-update .v16-wizard-intro>p{
+    display:none;
+  }
+
+
+  /* =======================================================
+     TASLAK BİLGİLERİ
+     ======================================================= */
+
+  /* Tarayıcı taslağı küçük bilgi satırı olsun */
+  body.page-create .v18-draft-note{
+    min-height:42px;
+    margin:0 0 7px;
+    padding:7px 9px;
+    border-radius:12px;
+    box-shadow:none;
+  }
+
+  body.page-create .v18-draft-note>span{
+    display:none;
+  }
+
+  body.page-create .v18-draft-note b{
+    font-size:10px;
+  }
+
+  body.page-create .v18-draft-note small{
+    display:none;
+  }
+
+  body.page-create .v18-draft-note button{
+    min-height:32px;
+    padding:5px 8px;
+    font-size:9px;
+  }
+
+  /* Hesap taslağı yoksa ikinci büyük açıklamayı telefonda gösterme */
+  body.page-create .v19-server-draft-note:not(.has-draft){
+    display:none!important;
+  }
+
+  body.page-create .v19-server-draft-note.has-draft,
+  body.page-update .v19-server-draft-note.has-draft{
+    margin:0 0 8px;
+    padding:9px 10px;
+    border-radius:12px;
+  }
+
+  body.page-create .v19-server-draft-note.has-draft small,
+  body.page-update .v19-server-draft-note.has-draft small{
+    font-size:9px;
+    line-height:1.35;
+  }
+
+
+  /* =======================================================
+     CANLI ÖNİZLEME
+     Telefonda son kontrol adımı zaten var.
+     ======================================================= */
+
+  body.page-create .v16-wizard-preview,
+  body.page-update .v16-wizard-preview{
+    display:none!important;
+  }
+
+
+  /* =======================================================
+     WIZARD ANA KART
+     ======================================================= */
+
+  body.page-create .v16-wizard-card,
+  body.page-update .v16-wizard-card{
+    display:block;
+  }
+
+  body.page-create .v16-wizard-main,
+  body.page-update .v16-wizard-main{
+    border-radius:18px;
+    box-shadow:0 5px 18px rgba(15,23,42,.05);
+  }
+
+
+  /* =======================================================
+     AI HIZLI BAŞLANGIÇ
+     Fotoğraf seç + AI çalıştır. Açıklama kalabalığını azalt.
+     ======================================================= */
+
+  body.page-create .ai-quick-start{
+    padding:12px!important;
+    border-radius:17px;
+  }
+
+  body.page-create .ai-quick-heading{
+    display:grid;
+    grid-template-columns:34px minmax(0,1fr);
+    gap:8px;
+    align-items:center;
+  }
+
+  body.page-create .ai-quick-icon{
+    width:34px;
+    height:34px;
+    font-size:16px;
+  }
+
+  body.page-create .ai-quick-heading small,
+  body.page-create .ai-provider-chip,
+  body.page-create .ai-quick-heading p{
+    display:none!important;
+  }
+
+  body.page-create .ai-quick-heading h2{
+    margin:0;
+    font-size:15px;
+    line-height:1.25;
+  }
+
+  body.page-create .ai-upload-panel{
+    margin-top:10px;
+    padding:8px!important;
+    border-radius:14px;
+  }
+
+  body.page-create .ai-upload-target{
+    min-height:122px;
+    padding:14px 10px!important;
+    border-radius:13px;
+  }
+
+  body.page-create .ai-upload-camera{
+    font-size:27px;
+  }
+
+  body.page-create .ai-upload-target strong{
+    font-size:12px;
+  }
+
+  body.page-create .ai-upload-target small{
+    display:none!important;
+  }
+
+  body.page-create .ai-upload-target em{
+    margin-top:7px;
+    padding:7px 11px;
+    font-size:10px;
+  }
+
+  body.page-create .ai-upload-toolbar{
+    margin-top:6px;
+    font-size:9px;
+  }
+
+  body.page-create .v121-photo-quality{
+    display:none!important;
+  }
+
+  body.page-create .ai-listing-status{
+    margin-top:7px;
+    padding:8px 9px;
+    font-size:9px;
+    line-height:1.35;
+  }
+
+  body.page-create .ai-listing-button{
+    width:100%;
+    min-height:48px;
+    margin-top:8px;
+    border-radius:13px;
+    font-size:12px;
+  }
+
+  body.page-create .ai-quick-footer{
+    margin-top:7px;
+  }
+
+  body.page-create .ai-quick-footer>small{
+    display:none!important;
+  }
+
+  body.page-create .ai-manual-start{
+    width:100%;
+    min-height:40px;
+    font-size:10px;
+  }
+
+
+  /* =======================================================
+     ADIM GÖSTERGESİ
+     5 uzun başlık yerine numaralar + yalnız aktif başlık.
+     ======================================================= */
+
+  body.page-create .v16-stepper,
+  body.page-update .v16-stepper{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    overflow:hidden;
+    padding:8px 9px;
+  }
+
+  body.page-create .v16-stepper button,
+  body.page-update .v16-stepper button{
+    flex:0 0 31px;
+    width:31px;
+    min-width:31px;
+    min-height:36px;
+    display:flex;
+    flex-direction:row;
+    justify-content:center;
+    gap:0;
+    padding:2px;
+    font-size:0!important;
+    border-radius:10px;
+  }
+
+  body.page-create .v16-stepper button::after,
+  body.page-update .v16-stepper button::after{
+    display:none!important;
+  }
+
+  body.page-create .v16-stepper button span,
+  body.page-update .v16-stepper button span{
+    flex:0 0 27px;
+    width:27px;
+    height:27px;
+    font-size:10px!important;
+  }
+
+  body.page-create .v16-stepper button.active,
+  body.page-update .v16-stepper button.active{
+    flex:1 1 auto;
+    width:auto;
+    min-width:0;
+    justify-content:flex-start;
+    gap:7px;
+    padding:4px 8px 4px 4px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:10px!important;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+
+  body.page-create .v16-stepper button.active span,
+  body.page-update .v16-stepper button.active span{
+    flex:0 0 27px;
+  }
+
+
+  /* =======================================================
+     İLERLEME ÇUBUĞU
+     ======================================================= */
+
+  body.page-create .v122-wizard-progress,
+  body.page-update .v122-wizard-progress{
+    padding:7px 10px;
+  }
+
+  body.page-create .v122-wizard-progress span,
+  body.page-update .v122-wizard-progress span{
+    font-size:9px;
+  }
+
+
+  /* =======================================================
+     ADIM İÇERİKLERİ
+     ======================================================= */
+
+  body.page-create .v16-wizard-section,
+  body.page-update .v16-wizard-section{
+    padding:14px 12px;
+  }
+
+  body.page-create .v16-step-head,
+  body.page-update .v16-step-head{
+    gap:9px;
+    margin-bottom:13px;
+  }
+
+  body.page-create .v16-step-head>span,
+  body.page-update .v16-step-head>span{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    border-radius:11px;
+    font-size:11px;
+  }
+
+  body.page-create .v16-step-head h2,
+  body.page-update .v16-step-head h2{
+    font-size:17px;
+    line-height:1.2;
+  }
+
+  body.page-create .v16-step-head p,
+  body.page-update .v16-step-head p{
+    display:none!important;
+  }
+
+  body.page-create .v16-field-grid,
+  body.page-update .v16-field-grid{
+    gap:9px;
+  }
+
+  body.page-create .v16-field-grid .field,
+  body.page-update .v16-field-grid .field{
+    margin-bottom:3px;
+  }
+
+  body.page-create .v16-field-grid .field>label,
+  body.page-update .v16-field-grid .field>label{
+    margin-bottom:5px;
+    font-size:11px;
+  }
+
+  body.page-create .v16-field-grid textarea,
+  body.page-update .v16-field-grid textarea{
+    min-height:105px;
+  }
+
+  /* Uzun açıklama kutularını mobilde tekrarlama */
+  body.page-create .v16-choice-help,
+  body.page-update .v16-choice-help{
+    display:none!important;
+  }
+
+
+  /* =======================================================
+     FİYAT REHBERİ
+     Özellik kalsın, kart daha küçük olsun.
+     ======================================================= */
+
+  body.page-create .v141-form-price-guide,
+  body.page-update .v141-form-price-guide{
+    margin-top:8px;
+    padding:10px;
+    border-radius:14px;
+  }
+
+  body.page-create .v141-form-price-head,
+  body.page-update .v141-form-price-head{
+    gap:8px;
+  }
+
+  body.page-create .v141-form-price-head>span,
+  body.page-update .v141-form-price-head>span{
+    width:32px;
+    height:32px;
+    font-size:16px;
+  }
+
+  body.page-create .v141-form-price-head small,
+  body.page-create .v141-form-price-head p,
+  body.page-update .v141-form-price-head small,
+  body.page-update .v141-form-price-head p{
+    display:none!important;
+  }
+
+  body.page-create .v141-form-price-head h3,
+  body.page-update .v141-form-price-head h3{
+    margin:0;
+    font-size:13px;
+  }
+
+  body.page-create .v141-form-price-actions,
+  body.page-update .v141-form-price-actions{
+    margin-top:8px;
+  }
+
+  body.page-create .v141-form-price-actions>small,
+  body.page-update .v141-form-price-actions>small{
+    display:none!important;
+  }
+
+  body.page-create .v141-form-price-actions button,
+  body.page-update .v141-form-price-actions button{
+    min-height:42px;
+    font-size:10px;
+  }
+
+
+  /* =======================================================
+     KONUM
+     ======================================================= */
+
+  body.page-create .v116-listing-location,
+  body.page-update .v116-listing-location{
+    margin-top:8px;
+    padding:10px;
+    border-radius:14px;
+  }
+
+  body.page-create .v116-listing-location button,
+  body.page-update .v116-listing-location button{
+    min-height:42px;
+    font-size:10px;
+  }
+
+  body.page-create .v116-listing-location small,
+  body.page-update .v116-listing-location small{
+    font-size:8px;
+    line-height:1.35;
+  }
+
+
+  /* =======================================================
+     ALT İLERİ / GERİ BAR
+     Mevcut sticky davranış korunuyor, daha uygulama benzeri.
+     ======================================================= */
+
+  body.page-create .v16-wizard-footer,
+  body.page-update .v16-wizard-footer{
+    left:0;
+    right:0;
+    bottom:calc(61px + env(safe-area-inset-bottom));
+    margin:0;
+    padding:8px 10px;
+    border-top:1px solid #dce5ee;
+    background:rgba(255,255,255,.97);
+    box-shadow:0 -8px 24px rgba(15,23,42,.08);
+    backdrop-filter:blur(12px);
+  }
+
+  body.page-create .v16-wizard-footer button,
+  body.page-update .v16-wizard-footer button{
+    min-width:0;
+    min-height:48px;
+    flex:1;
+    padding:9px 12px;
+    border-radius:13px;
+    font-size:12px;
+  }
+
+  body.page-create .v16-wizard-next,
+  body.page-create .v16-wizard-submit,
+  body.page-update .v16-wizard-next,
+  body.page-update .v16-wizard-submit{
+    background:#2563eb;
+  }
+}
+
+
+@media(max-width:390px){
+
+  body.page-create .v16-wizard-intro h1,
+  body.page-update .v16-wizard-intro h1{
+    font-size:20px;
+  }
+
+  body.page-create .v16-stepper,
+  body.page-update .v16-stepper{
+    gap:3px;
+    padding-inline:6px;
+  }
+
+  body.page-create .v16-stepper button,
+  body.page-update .v16-stepper button{
+    flex-basis:28px;
+    width:28px;
+    min-width:28px;
+  }
+
+  body.page-create .v16-stepper button span,
+  body.page-update .v16-stepper button span{
+    width:25px;
+    height:25px;
+    flex-basis:25px;
+  }
+
+  body.page-create .v16-stepper button.active,
+  body.page-update .v16-stepper button.active{
+    font-size:9px!important;
+  }
+}
+
