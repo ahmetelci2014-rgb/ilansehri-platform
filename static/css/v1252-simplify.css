@@ -3775,3 +3775,164 @@ body.page-home .market-card .compare-tool{
   }
 }
 
+
+/* v1.25.2 — sade ilan sonuç sayfası */
+
+body.page-list{
+  background:#f6f8fb;
+}
+
+/* Üst alan yalnız ilan türlerini taşısın */
+body.page-list .market-list-head{
+  padding:8px 0!important;
+  background:#fff!important;
+  border-bottom:1px solid #e7ebf0!important;
+  box-shadow:none!important;
+}
+
+body.page-list .market-list-chips{
+  margin:0!important;
+  padding:0!important;
+}
+
+body.page-list .market-list-chips>a{
+  min-height:36px!important;
+  padding:7px 12px!important;
+  border-radius:999px!important;
+  font-size:11px!important;
+}
+
+/* Alt kategoriler masaüstünde küçük kalsın */
+body.page-list .v121-category-shortcuts{
+  margin-top:8px!important;
+}
+
+body.page-list .v121-category-shortcuts>a{
+  min-height:38px!important;
+  box-shadow:none!important;
+}
+
+/* Sonuç alanı */
+body.page-list .v121-list-layout{
+  padding-top:14px!important;
+}
+
+body.page-list .v121-results-top{
+  margin-bottom:10px!important;
+}
+
+body.page-list .v121-results-top h1{
+  margin:0 0 3px!important;
+  font-size:22px!important;
+}
+
+body.page-list .v121-results-top p{
+  margin:0!important;
+  color:#64748b!important;
+  font-size:11px!important;
+}
+
+/* Masaüstü filtre kolonu ilanlardan rol çalmasın */
+@media(min-width:781px){
+
+  body.page-list .v121-list-layout{
+    grid-template-columns:245px minmax(0,1fr)!important;
+    gap:18px!important;
+  }
+
+  body.page-list .v121-filter-sheet{
+    border-radius:16px!important;
+    box-shadow:none!important;
+  }
+
+  body.page-list .v121-filter-group{
+    padding-top:13px!important;
+    padding-bottom:13px!important;
+  }
+
+  body.page-list .v121-results-top .result-actions{
+    gap:7px!important;
+  }
+}
+
+
+/* TELEFON */
+@media(max-width:780px){
+
+  /* Tür seçimi tek ince yatay satır */
+  body.page-list .market-list-head{
+    position:static!important;
+    padding:6px 0!important;
+  }
+
+  body.page-list .market-list-chips{
+    display:flex!important;
+    gap:5px!important;
+    overflow-x:auto!important;
+    padding:2px 0!important;
+    scrollbar-width:none;
+  }
+
+  body.page-list .market-list-chips::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.page-list .market-list-chips>a{
+    flex:0 0 auto!important;
+    min-height:32px!important;
+    padding:5px 9px!important;
+    font-size:9.5px!important;
+  }
+
+  /* Alt kategori ikinci satırını telefonda kaldır */
+  body.page-list .v121-category-shortcuts{
+    display:none!important;
+  }
+
+  body.page-list .v121-list-layout{
+    padding:9px 12px 24px!important;
+  }
+
+  body.page-list .v121-results-top{
+    gap:6px!important;
+    margin-bottom:8px!important;
+  }
+
+  body.page-list .v121-results-top h1{
+    font-size:18px!important;
+  }
+
+  body.page-list .v121-results-top p{
+    font-size:9.5px!important;
+  }
+
+  /* Telefonda sadece iki ana işlem */
+  body.page-list .v121-results-top .result-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:6px!important;
+    margin-top:5px!important;
+  }
+
+  body.page-list .mobile-filter-button,
+  body.page-list .v121-sort-form select{
+    min-height:40px!important;
+    height:40px!important;
+    border-radius:11px!important;
+    font-size:10px!important;
+  }
+
+  /* Kart/list görünüm seçimi gereksiz */
+  body.page-list .v16-view-switch{
+    display:none!important;
+  }
+
+  /* Mobil ilk ekranda kayıtlı arama ikincil */
+  body.page-list .save-search-popover{
+    display:none!important;
+  }
+
+  body.page-list .compare-result-link{
+    display:none!important;
+  }
+}

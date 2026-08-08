@@ -3,33 +3,6 @@
 {% block content %}
 <section class="market-list-head v12-list-head v121-list-head">
   <div class="shell">
-    <form class="market-searchbar list-search v12-list-search v121-discovery-search"
-          method="get"
-          data-search-suggest
-          data-search-url="{% url 'listings:search_suggestions' %}"
-          data-v121-location-form
-          data-location-url="{% url 'listings:location_suggestions' %}">
-      <div class="market-search-main">
-        <span aria-hidden="true">⌕</span>
-        <input name="q" value="{{ active_filters.q }}" placeholder="İlan, marka veya model ara" autocomplete="off" data-search-input>
-        <div class="search-suggestion-panel" data-search-results hidden></div>
-      </div>
-      <label class="market-search-city">
-        <span aria-hidden="true">⌖</span>
-        <select name="city" data-v121-city aria-label="Şehir">
-          <option value="">Tüm Türkiye</option>
-          {% for value,label in city_choices %}<option value="{{ value }}" {% if active_filters.city == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
-        </select>
-      </label>
-      <input class="market-district-input" name="district" value="{{ active_filters.district }}" placeholder="İlçe" list="list-district-options" data-v121-district autocomplete="address-level2" aria-label="İlçe">
-      <input class="market-neighborhood-input" name="neighborhood" value="{{ active_filters.neighborhood }}" placeholder="Mahalle" list="list-neighborhood-options" data-v121-neighborhood autocomplete="address-level3" aria-label="Mahalle">
-      <datalist id="list-district-options">{% for item in district_suggestions %}<option value="{{ item }}">{% endfor %}</datalist>
-      <datalist id="list-neighborhood-options">{% for item in neighborhood_suggestions %}<option value="{{ item }}">{% endfor %}</datalist>
-      {% if active_filters.kind %}<input type="hidden" name="kind" value="{{ active_filters.kind }}">{% endif %}
-      {% if active_filters.category %}<input type="hidden" name="category" value="{{ active_filters.category }}">{% endif %}
-      {% if active_filters.lat and active_filters.lng %}<input type="hidden" name="lat" value="{{ active_filters.lat }}"><input type="hidden" name="lng" value="{{ active_filters.lng }}"><input type="hidden" name="radius" value="{{ active_filters.radius|default:'25' }}">{% endif %}
-      <button type="submit">Ara</button>
-    </form>
 
     <div class="market-list-chips" aria-label="İlan türleri">
       <a href="{% url 'listings:list' %}" class="{% if not active_filters.kind %}active{% endif %}">Tümü</a>
@@ -42,13 +15,6 @@
       </nav>
     {% endif %}
 
-    <nav class="v131-mobile-quick-filters" aria-label="Hızlı ilan filtreleri">
-      <button type="button" data-nearby-search data-url="{% url 'listings:list' %}" data-fallback-city="{% firstof active_filters.city user.city '' %}" data-fallback-district="{% firstof active_filters.district user.district '' %}" class="{% if active_filters.lat and active_filters.lng %}active{% endif %}"><span>◎</span> Yakınımda</button>
-      <a href="{% url 'listings:list' %}?sort=newest{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.sort == 'newest' %}active{% endif %}"><span>⚡</span> En yeni</a>
-      <a href="{% url 'listings:list' %}?price_drop=1&sort=price_drop{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.price_drop == '1' %}active{% endif %}"><span>↓</span> Fiyatı düşen</a>
-      <a href="{% url 'listings:list' %}?verified=1{% if active_filters.city %}&city={{ active_filters.city|urlencode }}{% endif %}" class="{% if active_filters.verified == '1' %}active{% endif %}"><span>✓</span> Doğrulanmış</a>
-      {% if user.is_authenticated and user.city %}<a href="{% url 'listings:list' %}?city={{ user.city|urlencode }}{% if user.district %}&district={{ user.district|urlencode }}{% endif %}" class="{% if active_filters.city == user.city %}active{% endif %}"><span>⌖</span> Çevrem</a>{% endif %}
-    </nav>
   </div>
 </section>
 
@@ -165,7 +131,6 @@
   <div class="market-results">
     <div class="market-results-top v121-results-top">
       <div>
-        <span class="v18-result-kicker">KONUM ODAKLI İLAN AKIŞI</span>
         <h1>{{ result_title }}</h1>
         <p><b>{{ paginator.count }}</b> ilan bulundu{% if location_summary %} · <span>⌖ {{ location_summary }}</span>{% endif %}{% if active_filter_count %} · <span class="v18-active-count">{{ active_filter_count }} aktif filtre</span>{% endif %}</p>
       </div>
@@ -178,7 +143,6 @@
       </div>
     </div>
 
-    <div class="v131-mobile-result-summary" aria-live="polite"><strong>{{ paginator.count }} ilan</strong><span>{% if active_filter_count %}{{ active_filter_count }} filtre aktif{% elif location_summary %}{{ location_summary }}{% else %}En güncel sonuçlar{% endif %}</span></div>
 
     {% if active_filter_labels %}<div class="active-filter-row v121-active-filters" aria-label="Aktif filtreler">{% for item in active_filter_labels %}<a href="{{ item.remove_url }}" title="{{ item.label }} filtresini kaldır"><span><b>{{ item.label }}:</b> {{ item.value }}</span><i aria-hidden="true">×</i></a>{% endfor %}<a class="clear-all" href="{% url 'listings:list' %}">Tümünü temizle</a></div>{% endif %}
 
