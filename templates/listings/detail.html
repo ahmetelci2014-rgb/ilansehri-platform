@@ -30,7 +30,7 @@
       <button class="v16-circle-action" type="button" title="Paylaş" aria-label="İlanı paylaş" data-share-listing data-share-title="{{ listing.title }}" data-share-url="{{ canonical_url }}">↗</button>
       <button class="v16-circle-action" type="button" title="Bağlantıyı kopyala" aria-label="Bağlantıyı kopyala" data-copy-listing data-copy-url="{{ canonical_url }}">⧉</button>
       <form method="post" action="{% url 'listings:toggle_compare' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_compared %} active{% endif %}" title="Karşılaştır" aria-label="Karşılaştırmaya ekle">⇄</button></form>
-      {% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_favorite %} active{% endif %}" title="Favori" aria-label="Favori durumunu değiştir">{% if is_favorite %}♥{% else %}♡{% endif %}</button></form>{% endif %}
+      {% if user.is_authenticated %}<form method="post" action="{% url 'listings:toggle_favorite' listing.slug %}" data-detail-favorite>{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="v16-circle-action{% if is_favorite %} active{% endif %}" title="Favori" aria-label="Favori durumunu değiştir">{% if is_favorite %}♥{% else %}♡{% endif %}</button></form>{% endif %}
     </div>
   </header>
 

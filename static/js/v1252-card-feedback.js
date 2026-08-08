@@ -24,7 +24,7 @@
   };
 
   const updateFavoriteButtons = (action, active) => {
-    document.querySelectorAll("[data-card-favorite]").forEach((form) => {
+    document.querySelectorAll("[data-card-favorite], [data-detail-favorite]").forEach((form) => {
       if (form.action !== action) return;
 
       const button = form.querySelector(".market-card-tool");
@@ -41,7 +41,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll("[data-card-favorite]").forEach((form) => {
+    document.querySelectorAll("[data-card-favorite], [data-detail-favorite]").forEach((form) => {
       const button = form.querySelector(".market-card-tool");
 
       if (!button) return;
