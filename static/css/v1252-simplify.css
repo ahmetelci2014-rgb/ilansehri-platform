@@ -3566,3 +3566,212 @@ body.page-home .v1252-home-quicklinks>a:last-child span{
     font-size:10px;
   }
 }
+
+/* v1.25.2 — fotoğraf odaklı ilan kartları */
+
+.market-card[data-market-card]{
+  border:1px solid #e4e9ef!important;
+  border-radius:17px!important;
+  background:#fff!important;
+  box-shadow:0 4px 15px rgba(15,23,42,.05)!important;
+}
+
+.market-card[data-market-card]:hover{
+  transform:translateY(-2px)!important;
+  box-shadow:0 10px 28px rgba(15,23,42,.10)!important;
+}
+
+/* Fotoğraf kartın ana öğesi */
+.market-card[data-market-card] .market-card-media{
+  aspect-ratio:4/3!important;
+  border-radius:16px 16px 0 0!important;
+}
+
+/* Favori fotoğrafın sağ üstünde */
+.market-card[data-market-card] .market-card-tools{
+  top:9px!important;
+  right:9px!important;
+}
+
+.market-card[data-market-card] .market-card-tool{
+  width:35px!important;
+  height:35px!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.94)!important;
+  box-shadow:0 4px 14px rgba(15,23,42,.15)!important;
+  font-size:18px!important;
+}
+
+/* Ana sayfada karşılaştırma kartı kalabalıklaştırmasın */
+body.page-home .market-card .compare-tool{
+  display:none!important;
+}
+
+/* İçerik sade */
+.market-card[data-market-card] .market-card-body{
+  padding:11px 12px 12px!important;
+}
+
+.market-card[data-market-card] .market-card-price{
+  color:#111827!important;
+  font-size:17px!important;
+  font-weight:950!important;
+  letter-spacing:-.4px!important;
+}
+
+.market-card[data-market-card] h3{
+  min-height:0!important;
+  margin:5px 0 8px!important;
+  color:#334155!important;
+  font-size:13px!important;
+  line-height:1.35!important;
+  font-weight:750!important;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+/* Kategori üst yazısını geri çek */
+.market-card[data-market-card] .v122-card-category{
+  margin-bottom:5px!important;
+}
+
+.market-card[data-market-card] .v122-card-category>span{
+  font-size:9px!important;
+  color:#94a3b8!important;
+}
+
+/* Teknik özellikler ufak chip */
+.market-card[data-market-card] .market-card-specs{
+  gap:4px!important;
+  min-height:0!important;
+  margin-bottom:7px!important;
+}
+
+.market-card[data-market-card] .market-card-specs span{
+  padding:3px 6px!important;
+  border:0!important;
+  border-radius:7px!important;
+  background:#f1f5f9!important;
+  color:#64748b!important;
+  font-size:9px!important;
+}
+
+/* Konum ana ikincil bilgi */
+.market-card[data-market-card] .market-card-meta{
+  margin-top:4px!important;
+  color:#64748b!important;
+  font-size:10px!important;
+}
+
+.market-card[data-market-card] .market-card-meta>span::before{
+  content:"⌖ ";
+  color:#2563eb;
+}
+
+.market-card[data-market-card] .market-card-meta time{
+  color:#94a3b8!important;
+}
+
+/* Rozetler daha küçük */
+.market-card[data-market-card] .market-card-badges{
+  gap:4px!important;
+}
+
+.market-card[data-market-card] .market-card-action,
+.market-card[data-market-card] .market-card-featured,
+.market-card[data-market-card] .market-card-managed,
+.market-card[data-market-card] .market-card-price-drop{
+  padding:4px 6px!important;
+  border-radius:7px!important;
+  font-size:9px!important;
+}
+
+
+/* MOBİL — Letgo benzeri ilan odaklı kart */
+@media(max-width:780px){
+
+  .market-card-grid{
+    gap:8px!important;
+  }
+
+  .market-card[data-market-card]{
+    border-radius:14px!important;
+  }
+
+  .market-card[data-market-card] .market-card-media{
+    aspect-ratio:1.12/1!important;
+    border-radius:13px 13px 0 0!important;
+  }
+
+  .market-card[data-market-card] .market-card-body{
+    padding:8px 8px 9px!important;
+  }
+
+  /* Mobilde kategori yazısı gereksiz */
+  .market-card[data-market-card] .v122-card-category{
+    display:none!important;
+  }
+
+  .market-card[data-market-card] .market-card-price{
+    font-size:14px!important;
+  }
+
+  .market-card[data-market-card] h3{
+    margin:4px 0 6px!important;
+    font-size:11px!important;
+    line-height:1.3!important;
+  }
+
+  /* En fazla iki özellik */
+  .market-card[data-market-card] .market-card-specs span:nth-child(n+3){
+    display:none!important;
+  }
+
+  .market-card[data-market-card] .market-card-specs span{
+    font-size:8px!important;
+    padding:2px 4px!important;
+  }
+
+  /* Satıcıyı karta değil detay sayfasına bırak */
+  .market-card[data-market-card] .market-card-seller{
+    display:none!important;
+  }
+
+  /* Mahalle ikinci satırını kaldır */
+  .market-card[data-market-card] .market-card-meta small{
+    display:none!important;
+  }
+
+  .market-card[data-market-card] .market-card-meta{
+    grid-template-columns:minmax(0,1fr) auto!important;
+    margin-top:5px!important;
+    font-size:8.5px!important;
+  }
+
+  .market-card[data-market-card] .market-card-tool{
+    width:31px!important;
+    height:31px!important;
+    font-size:16px!important;
+  }
+
+  /* Mobilde karşılaştırma detay sayfasında yapılır */
+  .market-card[data-market-card] .compare-tool{
+    display:none!important;
+  }
+
+  .market-card[data-market-card] .market-card-photo{
+    right:7px!important;
+    bottom:7px!important;
+    padding:3px 5px!important;
+    font-size:8px!important;
+  }
+
+  /* Kart üstünde en fazla iki rozet */
+  .market-card[data-market-card] .market-card-badges>span:nth-child(n+3){
+    display:none!important;
+  }
+}
+
