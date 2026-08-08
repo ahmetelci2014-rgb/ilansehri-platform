@@ -480,6 +480,8 @@ def inspect_page(
     viewport_name: str,
     name: str,
     path: str,
+    *,
+    run_interactions: bool = True,
 ) -> PageResult:
     result = PageResult(role=role, viewport=viewport_name, name=name, requested_path=path)
     console_errors: list[str] = []
@@ -526,7 +528,8 @@ def inspect_page(
         result.horizontal_overflow = int(metrics["overflow"])
         result.overflow_elements = list(metrics["overflowElements"])[:20]
         result.small_targets = int(metrics["smallTargets"])
-        result.interaction_errors = run_interaction_checks(page, role, name)
+        if run_interactions:
+            result.interaction_errors = run_interaction_checks(page, role, name)
 
         filename = f"{slugify(role)}__{slugify(viewport_name)}__{slugify(name)}.png"
         screenshot_path = output_dir / "screenshots" / filename

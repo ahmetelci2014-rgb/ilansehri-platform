@@ -158,6 +158,7 @@ def inspect_responsive_page(
         viewport_name,
         name,
         path,
+        run_interactions=False,
     )
 
     if result.error or result.status is None or result.status >= 400:
