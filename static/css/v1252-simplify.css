@@ -1989,3 +1989,33 @@ body.page-detail .v1252-desktop-call-button:hover{
   }
 }
 
+
+/* v1.25.2 — mobil hamburger görünürlük düzeltmesi */
+@media(max-width:1100px){
+  body.marketplace-body .market-header{
+    overflow:visible!important;
+  }
+
+  body.marketplace-body .mobile-menu{
+    position:absolute!important;
+    top:100%!important;
+    right:0!important;
+    bottom:auto!important;
+    left:0!important;
+
+    width:100%!important;
+    max-height:calc(100dvh - 70px)!important;
+    overflow-y:auto!important;
+
+    z-index:950!important;
+
+    background:#fff!important;
+  }
+
+  body.marketplace-body .mobile-menu.is-open{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    pointer-events:auto!important;
+  }
+}
