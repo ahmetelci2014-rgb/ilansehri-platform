@@ -579,6 +579,35 @@ class ListingFlowTests(TestCase):
         payload = response.json()
         self.assertTrue(any(item["url"] == listing.get_absolute_url() for item in payload["results"]))
 
+    def test_listing_number_search_accepts_supported_formats(self):
+        listing = self.create_listing(title="Numarayla bulunacak özel ilan")
+        queries = (
+            str(listing.pk),
+            f"#{listing.pk}",
+            f"İlan {listing.pk}",
+            f"İlan No {listing.pk}",
+        )
+        for query in queries:
+            with self.subTest(query=query):
+                response = self.client.get(
+                    reverse("listings:list"),
+                    {"q": query},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, listing.title)
+
+    def test_search_suggestions_prioritizes_exact_listing_number(self):
+        listing = self.create_listing(title="Numaralı arama önerisi")
+        response = self.client.get(
+            reverse("listings:search_suggestions"),
+            {"q": f"İlan No {listing.pk}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        results = response.json()["results"]
+        self.assertTrue(results)
+        self.assertEqual(results[0]["url"], listing.get_absolute_url())
+        self.assertIn(f"İlan No: {listing.pk}", results[0]["meta"])
+
     def test_saved_search_page_and_alert_toggle_are_private(self):
         saved = SavedSearch.objects.create(
             user=self.buyer,

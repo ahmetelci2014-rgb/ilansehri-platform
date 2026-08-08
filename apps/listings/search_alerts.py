@@ -6,6 +6,8 @@ için bildirim alır.
 """
 from __future__ import annotations
 
+import re
+
 from decimal import Decimal, InvalidOperation
 from math import asin, cos, radians, sin, sqrt
 
@@ -74,6 +76,28 @@ MAX_TEXT_LENGTHS = {
     "experience_level": 80,
 }
 ALLOWED_RADIUS_KM = (5, 10, 25, 50, 100)
+
+
+
+_LISTING_NUMBER_PATTERNS = (
+    re.compile(r"^(?:#\s*)?(\d+)$"),
+    re.compile(r"^ilan(?:\s+no)?\s*[:#-]?\s*(\d+)$"),
+)
+
+
+def parse_listing_number_query(value):
+    text = " ".join(str(value or "").strip().split())
+    text = text.casefold().replace("i̇", "i")
+    for pattern in _LISTING_NUMBER_PATTERNS:
+        match = pattern.fullmatch(text)
+        if not match:
+            continue
+        digits = match.group(1)
+        if len(digits) > 18:
+            return None
+        number = int(digits)
+        return number if number > 0 else None
+    return None
 
 
 def _get(params, key: str, default=""):
@@ -164,14 +188,18 @@ def apply_listing_filters(qs, params, *, user=None):
     params = normalize_saved_search_params(params)
     q = params.get("q", "")
     if q:
-        qs = qs.filter(
-            Q(title__icontains=q)
-            | Q(description__icontains=q)
-            | Q(category__name__icontains=q)
-            | Q(brand__icontains=q)
-            | Q(model_name__icontains=q)
-            | Q(color__icontains=q)
-        )
+        listing_number = parse_listing_number_query(q)
+        if listing_number is not None and qs.filter(pk=listing_number).exists():
+            qs = qs.filter(pk=listing_number)
+        else:
+            qs = qs.filter(
+                Q(title__icontains=q)
+                | Q(description__icontains=q)
+                | Q(category__name__icontains=q)
+                | Q(brand__icontains=q)
+                | Q(model_name__icontains=q)
+                | Q(color__icontains=q)
+            )
 
     exact_filters = {
         "city": "city__iexact",

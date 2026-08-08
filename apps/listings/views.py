@@ -106,6 +106,7 @@ from .search_alerts import (
     attach_nearby_distances,
     normalize_saved_search_params,
     parse_nearby_params,
+    parse_listing_number_query,
     saved_search_result_params,
 )
 
@@ -398,11 +399,32 @@ class SavedSearchListView(LoginRequiredMixin, TemplateView):
 @require_GET
 def search_suggestions(request):
     query = request.GET.get("q", "").strip()[:80]
-    if len(query) < 2:
+    listing_number = parse_listing_number_query(query)
+    if len(query) < 2 and listing_number is None:
         return JsonResponse({"results": []})
 
     results = []
     seen = set()
+
+    if listing_number is not None:
+        exact_listing = (
+            Listing.objects.filter(_active_listing_q(), pk=listing_number)
+            .select_related("category")
+            .first()
+        )
+        if exact_listing:
+            seen.add(("listing", exact_listing.pk))
+            results.append(
+                {
+                    "label": exact_listing.title,
+                    "meta": (
+                        f"İlan No: {exact_listing.pk} · "
+                        f"{exact_listing.get_kind_display()} · {exact_listing.city}"
+                    ),
+                    "type": "listing_number",
+                    "url": exact_listing.get_absolute_url(),
+                }
+            )
 
     listings = (
         Listing.objects.filter(_active_listing_q())
@@ -416,7 +438,7 @@ def search_suggestions(request):
         .order_by("-is_featured", "-view_count", "-created_at")[:6]
     )
     for listing in listings:
-        key = ("listing", listing.title.lower())
+        key = ("listing", listing.pk)
         if key in seen:
             continue
         seen.add(key)
