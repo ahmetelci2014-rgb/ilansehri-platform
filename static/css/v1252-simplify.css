@@ -4915,3 +4915,57 @@ body.page-list .v121-location-group select{
     background:#2563eb!important;
   }
 }
+
+/* =========================================================
+   v1.25.2 — Arama Deneyimi 2.0
+   ========================================================= */
+
+.v1252-search-recent-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:9px 12px 7px;
+  border-bottom:1px solid #edf0f3;
+}
+
+.v1252-search-recent-head b{
+  color:#64748b;
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.v1252-search-recent-head button{
+  padding:5px 7px;
+  border:0;
+  background:transparent;
+  color:#64748b;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.v1252-search-recent-head button:hover{
+  color:#dc2626;
+}
+
+.v1252-recent-search>span{
+  background:#f1f5f9!important;
+  color:#475569!important;
+}
+
+.v1252-recent-search small{
+  color:#64748b;
+}
+
+@media(max-width:780px){
+  .v1252-search-recent-head{
+    padding:10px 11px 8px;
+  }
+
+  .v1252-recent-search{
+    min-height:48px;
+  }
+}

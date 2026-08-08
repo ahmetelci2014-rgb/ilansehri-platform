@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="{% static 'css/v123-detail-experience.css' %}?v=1230">
   <link rel="stylesheet" href="{% static 'css/v124-seller-center.css' %}?v=1240">
   <link rel="stylesheet" href="{% static 'css/v125-communication-center.css' %}?v=1250">
-  <link rel="stylesheet" href="{% static 'css/v1252-simplify.css' %}?v=125236">
+  <link rel="stylesheet" href="{% static 'css/v1252-simplify.css' %}?v=125237">
   <script defer src="{% static 'js/app.js' %}?v=125213"></script>
   <script defer src="{% static 'js/v16-premium.js' %}"></script>
   <script defer src="{% static 'js/v17-launch.js' %}"></script>
@@ -54,12 +54,13 @@
   <script defer src="{% static 'js/v132-mobile-system.js' %}?v=1141"></script>
   <script defer src="{% static 'js/v141-price-guide.js' %}?v=1141"></script>
   <script defer src="{% static 'js/v15-message-safety.js' %}?v=1150"></script>
-  <script defer src="{% static 'js/v116-location-discovery.js' %}?v=125214"></script>
+  <script defer src="{% static 'js/v116-location-discovery.js' %}?v=125217"></script>
   <script defer src="{% static 'js/v121-discovery.js' %}?v=1210"></script>
   <script defer src="{% static 'js/v122-market-polish.js' %}?v=1220"></script>
   <script defer src="{% static 'js/v123-detail-experience.js' %}?v=125222"></script>
   <script defer src="{% static 'js/v124-seller-center.js' %}?v=1240"></script>
   <script defer src="{% static 'js/v125-communication-center.js' %}?v=1250"></script>
+  <script defer src="{% static 'js/v1252-search-experience.js' %}?v=1"></script>
   <script defer src="{% static 'js/v1252-menu-fix.js' %}?v=4"></script>
   {% block extra_head %}{% endblock %}
 </head>
@@ -69,7 +70,7 @@
 <header class="market-header" data-header>
   <div class="shell market-header-row">
     <a class="market-brand" href="{% url 'core:home' %}" aria-label="İlan Şehri ana sayfa"><span>İŞ</span><b>İlan Şehri</b></a>
-    <form class="header-search" action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}">
+    <form class="header-search" action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}" data-search-location="{{ header_location_label }}">
       <span>⌕</span><input name="q" placeholder="İlan No, telefon, araç, ev veya hizmet ara" autocomplete="off" data-search-input><button>Ara</button><div class="search-suggestion-panel header-suggestion-panel" data-search-results hidden></div>
     </form>
     <nav class="market-header-actions">
@@ -143,7 +144,7 @@
     </nav>
   </div>
   <div class="mobile-market-search" data-mobile-market-search>
-    <form action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}" data-mobile-search-form>
+    <form action="{% url 'listings:list' %}" data-search-suggest data-search-url="{% url 'listings:search_suggestions' %}" data-search-location="{{ header_location_label }}" data-mobile-search-form>
       <span aria-hidden="true">⌕</span>
       <input name="q" value="{{ request.GET.q|default:'' }}" placeholder="İlan No, araç, ev veya hizmet ara" autocomplete="off" aria-label="İlanlarda ara" data-search-input data-mobile-search-input>
       <button class="mobile-search-clear" type="button" aria-label="Aramayı temizle" data-mobile-search-clear hidden>×</button>
