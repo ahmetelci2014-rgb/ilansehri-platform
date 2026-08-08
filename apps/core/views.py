@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.conf import settings
@@ -55,6 +56,7 @@ class HomeView(TemplateView):
 
         preferred_city = (location_params.get("city") or "").strip()
         preferred_district = (location_params.get("district") or "").strip()
+        nearby_location = parse_nearby_params(location_params)
 
         scoped = apply_listing_filters(
             published,
@@ -62,7 +64,7 @@ class HomeView(TemplateView):
             user=self.request.user,
         )
 
-        if parse_nearby_params(location_params):
+        if nearby_location:
             nearby_items = attach_nearby_distances(
                 scoped,
                 location_params,
@@ -159,10 +161,62 @@ class HomeView(TemplateView):
             tile["count"] = kind_counts.get(tile["kind"], 0)
             tile["shortcuts"] = category_shortcuts.get(tile["kind"], [])
 
+        location_query = {}
+        for key in (
+            "city",
+            "district",
+            "neighborhood",
+            "lat",
+            "lng",
+            "radius",
+        ):
+            value = str(location_params.get(key) or "").strip()
+            if value:
+                location_query[key] = value
+
+        if nearby_location:
+            radius = nearby_location[2]
+            location_query["sort"] = "nearby"
+            location_feed_label = "YAKININDA"
+            location_feed_heading = f"{radius} km çevrendeki ilanlar"
+
+            area_parts = [
+                part for part in (preferred_city, preferred_district)
+                if part
+            ]
+
+            if area_parts:
+                location_feed_subtitle = (
+                    f"{' / '.join(area_parts)} ve yakınındaki ilanlar "
+                    "mesafeye göre sıralanıyor."
+                )
+            else:
+                location_feed_subtitle = (
+                    "Konumuna en yakın ilanlar mesafeye göre sıralanıyor."
+                )
+        elif preferred_city:
+            location_query["sort"] = "newest"
+            location_feed_label = "ŞEHRİNDE"
+            location_feed_heading = f"{preferred_city} ilanları"
+            location_feed_subtitle = (
+                f"{preferred_city} içinde yayınlanan en yeni ilanlar."
+            )
+        else:
+            location_query["sort"] = "newest"
+            location_feed_label = "YENİ EKLENENLER"
+            location_feed_heading = "En yeni ilanlar"
+            location_feed_subtitle = (
+                "Türkiye genelinde yayınlanan en yeni ilanlar."
+            )
+
         context.update(
             {
                 "preferred_city": preferred_city,
                 "preferred_district": preferred_district,
+                "location_feed_label": location_feed_label,
+                "location_feed_heading": location_feed_heading,
+                "location_feed_subtitle": location_feed_subtitle,
+                "location_result_query": urlencode(location_query),
                 "latest_listings": latest,
                 "popular_listings": popular,
                 "vehicle_listings": vehicles,
