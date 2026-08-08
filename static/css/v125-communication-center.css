@@ -12,3 +12,139 @@
 @media(max-width:980px){.v125-chat-layout{grid-template-columns:minmax(0,1fr) 300px}.v125-inbox-summary,.v125-offer-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.v125-transaction-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:780px){.v125-page-head{display:grid;margin:18px 0 14px}.v125-head-actions{justify-content:flex-start}.v125-inbox-summary,.v125-offer-summary{gap:8px}.v125-inbox-summary>a,.v125-offer-summary>a{padding:11px;border-radius:13px}.v125-inbox-summary>a>span,.v125-offer-summary>a>span{width:34px;height:34px}.v125-inbox-summary b,.v125-offer-summary b{font-size:1.05rem}.v125-inbox-toolbar,.v125-offer-toolbar{display:grid;padding:8px}.v125-inbox-toolbar nav,.v125-offer-toolbar nav{width:100%}.v125-inbox-toolbar form,.v125-offer-toolbar form{width:100%;min-width:0}.v125-conversation-row{grid-template-columns:minmax(0,1fr)}.v125-conversation-main{grid-template-columns:64px minmax(0,1fr) 16px;gap:10px;padding:11px}.v125-conversation-cover{width:64px;height:64px}.v125-row-tools{justify-content:flex-end;border-left:0;border-top:1px solid #edf1f5;padding:5px 9px}.v125-conversation-title time{display:none}.v125-conversation-title h2{font-size:.9rem}.v125-conversation-copy>p{font-size:.78rem}.v125-conversation-meta span:nth-child(2){display:none}.v125-chat-head{grid-template-columns:auto minmax(0,1fr);margin:14px 0 10px}.v125-chat-head-actions{grid-column:1/-1;justify-content:flex-end}.v125-chat-title h1{font-size:1.05rem}.v125-chat-layout{display:flex;flex-direction:column}.v125-thread-card{width:100%;order:1}.v125-chat-sidebar{width:100%;order:2}.v125-thread{min-height:360px;max-height:58vh;padding:11px}.v125-message{max-width:88%;font-size:16px}.v125-composer{position:sticky;bottom:72px;z-index:8;padding:9px 10px;box-shadow:0 -8px 22px rgba(16,35,60,.1)}.v125-message-form{grid-template-columns:minmax(0,1fr) auto}.v125-message-form .v15-message-field textarea{min-height:62px;font-size:16px}.v125-message-form .v15-message-field:has(input[type=file]){display:none}.v125-message-form>.button{padding:10px 12px}.v125-composer-note{display:none}.v125-listing-summary{grid-template-columns:76px minmax(0,1fr)}.v125-listing-summary img,.v125-listing-placeholder{width:76px;height:72px}.v125-offer-card{grid-template-columns:74px minmax(0,1fr);gap:10px;padding:10px}.v125-offer-photo{width:74px;height:74px}.v125-offer-card-head{display:block}.v125-offer-status{display:inline-block;margin-top:3px}.v125-offer-price-line strong{font-size:1.05rem}.v125-offer-links{gap:7px}.v125-offer-links time{width:100%;margin-left:0}.v125-offer-actions{grid-column:1/-1}.v125-transaction-grid{display:flex;overflow:auto}.v125-transaction-grid>a{min-width:220px}.v125-counter-box>form{left:auto;right:-100px}.v125-status-tabs{padding:0}.v125-status-tabs a{font-size:.72rem}}
 @media(max-width:430px){.v125-inbox-summary>a,.v125-offer-summary>a{gap:8px}.v125-inbox-summary small,.v125-offer-summary small{font-size:.68rem}.v125-head-actions{display:grid;grid-template-columns:1fr 1fr}.v125-head-actions a{text-align:center}.v125-conversation-main{grid-template-columns:56px minmax(0,1fr) 12px}.v125-conversation-cover{width:56px;height:58px}.v125-conversation-meta strong{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v125-chat-head-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}.v125-chat-head-actions a,.v125-chat-head-actions button{width:100%;text-align:center}.v125-message{max-width:92%}.v125-quick-replies button{font-size:.66rem}.v125-offer-card{grid-template-columns:62px minmax(0,1fr)}.v125-offer-photo{width:62px;height:66px}.v125-offer-card-head h2{font-size:.88rem}.v125-offer-price-line span{display:none}}
+
+/* v1.25.1 responsive stabilizasyon */
+
+/* Tablet: 781-1100 px arama ve üst menü */
+@media (min-width:781px) and (max-width:1100px){
+  body.marketplace-body .market-header-row{
+    gap:12px;
+  }
+
+  body.marketplace-body .market-brand{
+    flex:0 0 auto;
+  }
+
+  body.marketplace-body .header-search{
+    display:flex!important;
+    flex:1 1 360px;
+    min-width:220px;
+    max-width:620px;
+  }
+
+  body.marketplace-body .header-search input{
+    min-width:0;
+  }
+
+  body.marketplace-body .market-header-actions{
+    gap:7px;
+    flex:0 0 auto;
+  }
+
+  body.marketplace-body .market-header-actions>a:not(.market-post-button){
+    display:none!important;
+  }
+
+  body.marketplace-body .market-header-actions .menu-toggle{
+    display:flex!important;
+  }
+
+  body.marketplace-body .mobile-menu{
+    top:100%;
+    z-index:450;
+    max-height:calc(100dvh - 78px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+
+  body.marketplace-body .mobile-menu-inner{
+    max-height:none;
+    overflow:visible;
+  }
+
+  body.marketplace-body .market-nav .shell{
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+    scrollbar-width:none;
+  }
+
+  body.marketplace-body .market-nav .shell::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.marketplace-body .market-nav a{
+    flex:0 0 auto;
+    white-space:nowrap;
+  }
+}
+
+@media (min-width:781px) and (max-width:900px){
+  body.marketplace-body .market-header-actions .market-post-button{
+    display:none!important;
+  }
+
+  body.marketplace-body .header-search{
+    max-width:none;
+  }
+}
+
+/* Mobil mesajlaşma */
+@media (max-width:780px){
+
+  body.page-conversation_detail .v125-composer{
+    bottom:var(--v132-bottom-safe,calc(82px + env(safe-area-inset-bottom)));
+  }
+
+  body.page-conversation_detail
+  .v125-message-form
+  .v15-message-field:has(input[type="file"]){
+    display:grid!important;
+    grid-column:1/-1;
+    gap:5px;
+    min-width:0;
+    padding-top:2px;
+  }
+
+  body.page-conversation_detail
+  .v125-message-form
+  .v15-message-field:has(input[type="file"]) label{
+    margin:0;
+    font-size:.72rem;
+    font-weight:800;
+    color:#526176;
+  }
+
+  body.page-conversation_detail
+  .v125-message-form
+  .v15-message-field:has(input[type="file"])
+  input[type="file"]{
+    width:100%;
+    min-height:42px;
+    padding:7px 8px;
+    border:1px solid #d6e0ea;
+    border-radius:10px;
+    background:#f8fafc;
+    font-size:.75rem;
+  }
+
+  body.page-conversation_detail
+  .v125-message-form
+  .v15-message-field:has(input[type="file"]) small{
+    display:none;
+  }
+
+  body.page-conversation_detail .v125-thread{
+    scroll-padding-bottom:18px;
+  }
+}
+
+@media (max-width:430px){
+  body.page-conversation_detail .v125-message-form{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:7px;
+  }
+
+  body.page-conversation_detail .v125-message-form>.button{
+    min-width:72px;
+  }
+}
