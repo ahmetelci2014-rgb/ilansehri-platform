@@ -17,9 +17,10 @@
         </article>
       {% endfor %}
     </div>
-    <div class="v16-home-stats v122-home-stats">
-      <div><b>{{ listing_count }}</b><span>aktif ilan</span></div><div><b>{{ member_count }}</b><span>kayıtlı üye</span></div><div><b>{{ active_city_count }}</b><span>aktif şehir</span></div><div><b>{{ review_count }}</b><span>doğrulanmış değerlendirme</span></div>
-      <a href="{% url 'listings:create' %}"><i>＋</i><div><b>Ücretsiz ilan ver</b><span>Fotoğrafını ekle, birkaç adımda yayınla</span></div></a>
+    <div class="v1252-home-market-summary" aria-label="İlan Şehri özeti">
+      <span><b>{{ listing_count }}</b> aktif ilan</span>
+      <i aria-hidden="true">•</i>
+      <span><b>{{ active_city_count }}</b> aktif şehir</span>
     </div>
   </div>
 </section>

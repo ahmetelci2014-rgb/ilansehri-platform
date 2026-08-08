@@ -5227,3 +5227,35 @@ body.page-list .v121-location-group select{
     color:#fff;
   }
 }
+
+/* v1.25.2 — Ana sayfa pazar özeti */
+
+.v1252-home-market-summary{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-top:14px;
+  padding:9px 12px;
+  color:#64748b;
+  font-size:12px;
+}
+
+.v1252-home-market-summary b{
+  color:#0f172a;
+  font-weight:900;
+}
+
+.v1252-home-market-summary i{
+  color:#cbd5e1;
+  font-style:normal;
+}
+
+@media(max-width:780px){
+  .v1252-home-market-summary{
+    justify-content:flex-start;
+    margin-top:8px;
+    padding:6px 2px;
+    font-size:11px;
+  }
+}
