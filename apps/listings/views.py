@@ -1408,16 +1408,59 @@ def change_listing_status(request, slug, action):
 @login_required
 @require_POST
 def toggle_favorite(request, slug):
-    listing = get_object_or_404(Listing, _active_listing_q(), slug=slug)
-    favorite, created = Favorite.objects.get_or_create(user=request.user, listing=listing)
+    listing = get_object_or_404(
+        Listing,
+        _active_listing_q(),
+        slug=slug,
+    )
+
+    favorite, created = Favorite.objects.get_or_create(
+        user=request.user,
+        listing=listing,
+    )
+
     if created:
-        Listing.objects.filter(pk=listing.pk).update(favorite_count=F("favorite_count") + 1)
-        messages.success(request, "İlan favorilerine eklendi.")
+        Listing.objects.filter(pk=listing.pk).update(
+            favorite_count=F("favorite_count") + 1
+        )
+        active = True
     else:
         favorite.delete()
-        Listing.objects.filter(pk=listing.pk, favorite_count__gt=0).update(favorite_count=F("favorite_count") - 1)
-        messages.info(request, "İlan favorilerinden çıkarıldı.")
-    return redirect(_safe_next_url(request, listing.get_absolute_url()))
+        Listing.objects.filter(
+            pk=listing.pk,
+            favorite_count__gt=0,
+        ).update(
+            favorite_count=F("favorite_count") - 1
+        )
+        active = False
+
+    listing.refresh_from_db(fields=["favorite_count"])
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse(
+            {
+                "active": active,
+                "favorite_count": listing.favorite_count,
+            }
+        )
+
+    if active:
+        messages.success(
+            request,
+            "İlan favorilerine eklendi.",
+        )
+    else:
+        messages.info(
+            request,
+            "İlan favorilerinden çıkarıldı.",
+        )
+
+    return redirect(
+        _safe_next_url(
+            request,
+            listing.get_absolute_url(),
+        )
+    )
 
 
 class CompareListView(TemplateView):

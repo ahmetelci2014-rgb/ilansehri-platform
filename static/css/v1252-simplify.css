@@ -5066,3 +5066,42 @@ body.page-list .v121-location-group select{
     animation:none!important;
   }
 }
+
+/* v1.25.2 — anlık favori bildirimi */
+
+.v1252-card-feedback-toast{
+  position:fixed;
+  z-index:1200;
+  left:50%;
+  bottom:86px;
+  max-width:calc(100vw - 28px);
+  padding:10px 14px;
+  border-radius:999px;
+  background:#111827;
+  color:#fff;
+  font-size:12px;
+  font-weight:850;
+  box-shadow:0 10px 28px rgba(15,23,42,.20);
+  opacity:0;
+  pointer-events:none;
+  transform:translate(-50%,8px);
+  transition:
+    opacity .18s ease,
+    transform .18s ease;
+}
+
+.v1252-card-feedback-toast.show{
+  opacity:1;
+  transform:translate(-50%,0);
+}
+
+[data-card-favorite] .market-card-tool:disabled{
+  opacity:.72;
+  cursor:wait;
+}
+
+@media(min-width:781px){
+  .v1252-card-feedback-toast{
+    bottom:28px;
+  }
+}
