@@ -5259,3 +5259,56 @@ body.page-list .v121-location-group select{
     font-size:11px;
   }
 }
+
+/* v1.25.2 — Anlık satıcı takibi */
+
+.v1252-follow-button.is-following{
+  background:#f1f5f9;
+  color:#334155;
+  border-color:#cbd5e1;
+}
+
+.v1252-follow-button:disabled{
+  opacity:.7;
+  cursor:wait;
+}
+
+.v1252-follow-button:not(:disabled):active{
+  transform:scale(.97);
+}
+
+/* v1.25.2 — Takip butonu hızlı durum */
+
+.v1252-follow-button.is-busy{
+  opacity:.88;
+  cursor:progress;
+  pointer-events:none;
+}
+
+.v1252-follow-button.is-following{
+  background:#f1f5f9;
+  color:#334155;
+  border-color:#cbd5e1;
+}
+
+
+/* Takip butonu işlem sırasında da normal tıklanabilir görünür */
+.v1252-follow-button.is-busy{
+  opacity:1!important;
+  cursor:pointer!important;
+}
+
+.v1252-follow-button{
+  cursor:pointer;
+}
+
+/* v1.25.2 — takip butonunda bekleme imlecini kesin kaldır */
+
+.v1252-follow-button,
+.v1252-follow-button.is-busy,
+.v1252-follow-button.is-loading,
+.v1252-follow-button[aria-busy="true"]{
+  cursor:pointer!important;
+  pointer-events:auto!important;
+  opacity:1!important;
+}

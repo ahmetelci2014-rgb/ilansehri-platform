@@ -46,7 +46,10 @@
       {% if user.is_authenticated and user != profile_user %}
       <div class="v1252-seller-controls">
 
-        <form method="post" action="{% url 'accounts:toggle_follow' profile_user.pk %}">
+        <form method="post"
+              action="{% url 'accounts:toggle_follow' profile_user.pk %}"
+              data-profile-follow data-async-submit
+              data-following="{% if is_following %}1{% else %}0{% endif %}">
           {% csrf_token %}
           <button class="v1252-follow-button" type="submit">
             {% if is_following %}

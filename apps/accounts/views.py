@@ -535,27 +535,75 @@ class FollowingListView(LoginRequiredMixin, TemplateView):
 
 @require_POST
 def toggle_follow(request, pk):
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
     if not request.user.is_authenticated:
+        if is_ajax:
+            return JsonResponse({"detail": "auth_required"}, status=401)
         return redirect("login")
+
     seller = get_object_or_404(User, pk=pk, is_active=True)
+
     if seller == request.user:
+        if is_ajax:
+            return JsonResponse(
+                {"detail": "Kendi hesabını takip edemezsin."},
+                status=400,
+            )
         messages.warning(request, "Kendi hesabını takip edemezsin.")
         return redirect("accounts:public_profile", username=seller.username)
-    follow, created = UserFollow.objects.get_or_create(follower=request.user, seller=seller)
+
+    follow, created = UserFollow.objects.get_or_create(
+        follower=request.user,
+        seller=seller,
+    )
+
     if created:
-        messages.success(request, f"{seller.display_name} takip ediliyor.")
+        if not is_ajax:
+            messages.success(
+                request,
+                f"{seller.display_name} takip ediliyor.",
+            )
+
         create_notification(
             user=seller,
             actor=request.user,
             notification_type=Notification.Type.FOLLOW,
             title="Yeni takipçin var",
             body=f"{request.user.display_name} mağazanı takip etmeye başladı.",
-            link=reverse("accounts:public_profile", kwargs={"username": request.user.username}),
+            link=reverse(
+                "accounts:public_profile",
+                kwargs={"username": request.user.username},
+            ),
         )
+
+        following = True
+
     else:
         follow.delete()
-        messages.info(request, f"{seller.display_name} takibi bırakıldı.")
-    return redirect("accounts:public_profile", username=seller.username)
+
+        if not is_ajax:
+            messages.info(
+                request,
+                f"{seller.display_name} takibi bırakıldı.",
+            )
+
+        following = False
+
+    if is_ajax:
+        return JsonResponse(
+            {
+                "following": following,
+                "follower_count": UserFollow.objects.filter(
+                    seller=seller,
+                ).count(),
+            }
+        )
+
+    return redirect(
+        "accounts:public_profile",
+        username=seller.username,
+    )
 
 
 class VerificationCenterView(LoginRequiredMixin, TemplateView):

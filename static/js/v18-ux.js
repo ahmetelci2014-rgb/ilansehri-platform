@@ -67,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Prevent accidental duplicate submits and show immediate feedback.
   document.querySelectorAll("form").forEach((form) => {
     form.addEventListener("submit", (event) => {
+      if (form.hasAttribute("data-async-submit")) return;
       if (event.defaultPrevented) return;
       const submitter = event.submitter;
       if (!submitter || submitter.hasAttribute("formnovalidate")) return;
