@@ -113,11 +113,12 @@ class MobileMarketplaceExperienceTests(TestCase):
         self.assertContains(response, "data-v123-mobile-contact-bar")
         self.assertContains(response, "12.500 TL")
 
-    def test_listing_list_contains_mobile_quick_filters_and_result_summary(self):
+    def test_listing_list_contains_mobile_filter_and_sort_controls(self):
         response = self.client.get(reverse("listings:list"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "v131-mobile-quick-filters")
-        self.assertContains(response, "v131-mobile-result-summary")
+        self.assertContains(response, "mobile-filter-button")
+        self.assertContains(response, "v121-sort-form")
+        self.assertContains(response, "market-list-chips")
         self.assertContains(response, "data-kind-filter")
         self.assertContains(response, "data-v121-category-filter")
         self.assertContains(response, "data-v121-neighborhood")
