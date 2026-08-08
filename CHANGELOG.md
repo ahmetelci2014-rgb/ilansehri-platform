@@ -1,5 +1,16 @@
 # Değişiklik Günlüğü
 
+## v1.25.1 — Mobil, tablet ve masaüstü stabilizasyonu
+
+- Mobil görüşme ekranında daha önce gizlenen görsel mesaj yükleme alanı yeniden kullanılabilir hale getirildi.
+- Mobil sabit mesaj yazma alanının alt navigasyon ve güvenli ekran boşluklarıyla çakışması giderildi.
+- 781–1100 px tablet genişliklerinde üst arama, menü ve navigasyon geçişleri düzenlendi.
+- 900 px ilan sonuç ekranındaki sonuç araçlarının yatay taşması giderildi.
+- Destek Operasyonu ekip tablosunun tablet ekranında ana sayfayı yatay taşırması engellendi.
+- Mobil Görsel Denetim korunurken 900, 1024, 1280 ve 1440 px genişlikleri kapsayan ayrı Tablet ve Masaüstü Görsel Denetim eklendi.
+- Yeni responsive denetim 160/160 ekran kombinasyonunu başarıyla doğrular.
+- Yeni tablo veya model alanı eklenmedi; veritabanı migration işlemi gerekmez.
+
 ## v1.25.0 — Mesajlaşma, teklif ve iletişim merkezi
 
 - Mesaj kutusuna işlem bekleyen, okunmamış, alış, satış ve arşiv görünümleri eklendi.

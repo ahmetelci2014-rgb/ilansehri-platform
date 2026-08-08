@@ -1,5 +1,16 @@
 # İlan Şehri
 
+## v1.25.1 Mobil, tablet ve masaüstü stabilizasyonu
+
+- Mobil mesajlaşmada görsel gönderme alanı yeniden kullanılabilir hale getirildi.
+- Sabit mobil mesaj yazma alanının alt navigasyonla çakışması giderildi.
+- 781–1100 px tablet aralığında üst menü ve arama düzeni stabilize edildi.
+- 900 px ilan sonuç ekranındaki yatay taşma giderildi.
+- Destek Operasyonu ekip tablosunun tablet taşması düzeltildi.
+- 900, 1024, 1280 ve 1440 px ekranlarda çalışan ayrı Tablet ve Masaüstü Görsel Denetim eklendi.
+- Responsive denetim 160/160 ekran kombinasyonunu hatasız tamamlar.
+- Veritabanı şema değişikliği yoktur; migration gerekmez.
+
 ## v1.25 Mesajlaşma, teklif ve iletişim merkezi
 
 - Mesaj kutusu işlem bekleyen, okunmamış, alış, satış ve arşiv görünümünde yönetilir.
@@ -11,7 +22,7 @@
 - Teklif kartları ilgili konuşmaya bağlanır; bildirimler ve işlem dönüşleri odaklanan teklif kartını açar.
 - Randevu araçları ana iletişim akışından çıkarılıp ikincil güvenlik araçlarının altına taşındı.
 
-> Güncel sürüm: **v1.25.0** — mesaj, teklif ve güvenli işlem devamlılığı tek iletişim merkezinde yönetilir.
+> Güncel sürüm: **v1.25.1** — mesaj, teklif ve güvenli işlem devamlılığı tek iletişim merkezinde yönetilir.
 
 İlan Şehri; ürün, araç, emlak, hizmet, ihtiyaç ve iş ilanlarını yerel kullanıcılarla buluşturan güven odaklı profesyonel marketplace platformudur.
 
