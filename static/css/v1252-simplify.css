@@ -1037,3 +1037,60 @@
   }
 }
 
+
+
+/* v1.25.2 mobil sohbet butonu */
+
+@media(max-width:780px){
+
+  body.page-detail .v123-mobile-contact-bar{
+    gap:8px;
+    padding-inline:10px;
+  }
+
+  /* Sohbet: mobilde ana iletişim işlemi */
+  body.page-detail .v123-mobile-contact-bar>a[data-open-message]{
+    min-height:50px;
+    background:#16a34a!important;
+    border:1px solid #15803d!important;
+    color:#fff!important;
+    box-shadow:0 7px 18px rgba(22,163,74,.22);
+    font-size:0!important;
+  }
+
+  body.page-detail .v123-mobile-contact-bar>a[data-open-message]::before{
+    content:"💬 Sohbet";
+    font-size:12px;
+    font-weight:950;
+  }
+
+  body.page-detail .v123-mobile-contact-bar>button[data-open-offer]{
+    min-height:50px;
+    background:#2563eb;
+    box-shadow:0 7px 18px rgba(37,99,235,.20);
+  }
+
+  /* Devam eden pazarlık bağlantısı */
+  body.page-detail .v123-mobile-contact-bar>a[href*="tekliflerim"]{
+    min-height:50px;
+    background:#2563eb!important;
+    border-color:#2563eb!important;
+    color:#fff!important;
+    font-weight:900;
+  }
+
+  /* İlan içindeki mesaj kutusu */
+  body.page-detail
+  .v123-contact-stack
+  .market-action-box[data-v123-message-box]{
+    border:1px solid #bbf7d0;
+    background:#f0fdf4;
+  }
+
+  body.page-detail
+  .v123-contact-stack
+  .market-action-box[data-v123-message-box]>summary{
+    color:#166534;
+    font-weight:900;
+  }
+}
