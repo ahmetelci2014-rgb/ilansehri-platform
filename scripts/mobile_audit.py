@@ -269,6 +269,206 @@ def run_interaction_checks(page: Page, role: str, name: str) -> list[str]:
 
         check("galeri", gallery_check)
 
+    if role == "seller" and name == "new-listing":
+        def wizard_gps_check():
+            manual = page.locator("[data-ai-manual-start]").first
+            if manual.count() and manual.is_visible():
+                manual.click()
+                page.wait_for_timeout(150)
+
+            def choose_first(selector, preferred=None):
+                field = page.locator(selector).first
+                if field.count() == 0:
+                    return
+                value = field.evaluate(
+                    """(el, preferred) => {
+                        const options = Array.from(el.options || []);
+                        const preferredOption = options.find(
+                            o => o.value === preferred && !o.disabled && !o.hidden
+                        );
+                        const first = preferredOption || options.find(
+                            o => o.value && !o.disabled && !o.hidden
+                        );
+                        return first?.value || "";
+                    }""",
+                    preferred,
+                )
+                if value:
+                    field.select_option(value)
+
+            choose_first('[name="kind"]', "product")
+            page.wait_for_timeout(150)
+            choose_first('[name="action"]', "sell")
+            choose_first('[name="category"]')
+            choose_first('[name="management_mode"]')
+
+            next_button = page.locator("[data-v16-next]").first
+            if next_button.count() == 0:
+                raise AssertionError("Sihirbaz Devam et düğmesi bulunamadı")
+
+            next_button.click()
+
+            page.wait_for_function(
+                "() => document.querySelector('[data-v16-section=\"2\"]')?.classList.contains('active')",
+                timeout=3000,
+            )
+
+            required = page.locator(
+                '[data-v16-section="2"].active input[required], '
+                '[data-v16-section="2"].active textarea[required], '
+                '[data-v16-section="2"].active select[required]'
+            )
+
+            for index in range(required.count()):
+                field = required.nth(index)
+                if not field.is_visible() or not field.is_enabled():
+                    continue
+
+                tag = field.evaluate("(el) => el.tagName")
+                field_type = (field.get_attribute("type") or "").lower()
+                name_attr = field.get_attribute("name") or ""
+
+                if tag == "SELECT":
+                    if not field.input_value():
+                        value = field.evaluate(
+                            """el => Array.from(el.options)
+                                .find(o => o.value && !o.disabled && !o.hidden)?.value || """""
+                        )
+                        if value:
+                            field.select_option(value)
+                elif field_type == "checkbox":
+                    field.check()
+                elif not field.input_value():
+                    if field_type == "number" or name_attr == "price":
+                        field.fill("1000")
+                    elif tag == "TEXTAREA" or name_attr == "description":
+                        field.fill(
+                            "Mobil audit için yeterli uzunlukta güvenli test açıklaması."
+                        )
+                    elif name_attr == "title":
+                        field.fill("Mobil audit test ilanı")
+                    else:
+                        field.fill("Mobil audit")
+
+            step_four = page.locator('[data-v16-step="4"]').first
+            if step_four.count() == 0:
+                raise AssertionError("Konum adımı bulunamadı")
+
+            step_four.click()
+
+            page.wait_for_function(
+                "() => document.querySelector('[data-v16-section=\"4\"]')?.classList.contains('active')",
+                timeout=3000,
+            )
+
+            page.evaluate(
+                """
+                () => {
+                  const capture = document.querySelector(
+                    '[data-listing-location-capture]'
+                  );
+                  const reverseUrl = capture?.dataset.reverseUrl || '';
+
+                  if (!window.__ILANSEHRI_AUDIT_ORIGINAL_FETCH__) {
+                    window.__ILANSEHRI_AUDIT_ORIGINAL_FETCH__ =
+                      window.fetch.bind(window);
+                  }
+
+                  const originalFetch =
+                    window.__ILANSEHRI_AUDIT_ORIGINAL_FETCH__;
+
+                  window.fetch = async (input, init) => {
+                    const url =
+                      typeof input === 'string'
+                        ? input
+                        : (input?.url || String(input));
+
+                    if (reverseUrl && url.includes(reverseUrl)) {
+                      return new Response(
+                        JSON.stringify({
+                          city: 'Şanlıurfa',
+                          district: 'Karaköprü',
+                          neighborhood: 'Akpıyar',
+                          attribution: 'Mobil audit'
+                        }),
+                        {
+                          status: 200,
+                          headers: {'Content-Type': 'application/json'}
+                        }
+                      );
+                    }
+
+                    return originalFetch(input, init);
+                  };
+
+                  Object.defineProperty(
+                    navigator,
+                    'geolocation',
+                    {
+                      configurable: true,
+                      value: {
+                        getCurrentPosition(success) {
+                          success({
+                            coords: {
+                              latitude: 37.1674,
+                              longitude: 38.7955
+                            }
+                          });
+                        }
+                      }
+                    }
+                  );
+                }
+                """
+            )
+
+            capture = page.locator("[data-listing-location-capture]").first
+            if capture.count() == 0:
+                raise AssertionError("Konumumu bul düğmesi bulunamadı")
+
+            capture.click()
+
+            page.wait_for_function(
+                """() => {
+                  const city =
+                    document.querySelector('[data-location-city]')?.value;
+                  const district =
+                    document.querySelector('[data-location-district]')?.value;
+                  const neighborhood =
+                    document.querySelector('[data-location-neighborhood]')?.value;
+                  const button =
+                    document.querySelector('[data-listing-location-capture]');
+
+                  return city === 'Şanlıurfa'
+                    && district === 'Karaköprü'
+                    && neighborhood === 'Akpıyar'
+                    && button?.classList.contains('is-captured');
+                }""",
+                timeout=5000,
+            )
+
+            coordinates = page.evaluate(
+                """() => ({
+                  lat: document.querySelector(
+                    '[data-listing-latitude]'
+                  )?.value,
+                  lng: document.querySelector(
+                    '[data-listing-longitude]'
+                  )?.value
+                })"""
+            )
+
+            if coordinates["lat"] != "37.167":
+                raise AssertionError(
+                    f"GPS enlem doldurulmadı: {coordinates['lat']}"
+                )
+            if coordinates["lng"] != "38.795":
+                raise AssertionError(
+                    f"GPS boylam doldurulmadı: {coordinates['lng']}"
+                )
+
+        check("ilan-sihirbazi-gps", wizard_gps_check)
+
     return errors
 
 
