@@ -168,3 +168,31 @@ document.addEventListener("DOMContentLoaded", () => {
       if (i > 0) el.style.display = "none";
     });
 });
+
+/* v1.25.2 mobile detail final placements */
+document.addEventListener("DOMContentLoaded", () => {
+  if (!window.matchMedia("(max-width:780px)").matches) return;
+
+  const page = document.querySelector("[data-v123-detail-page]");
+  if (!page) return;
+
+  const gallery = page.querySelector(".v123-gallery-main");
+  const actions = page.querySelector(".v16-detail-heading-actions");
+
+  if (gallery && actions) {
+    gallery.appendChild(actions);
+    actions.classList.add("v1252-gallery-actions");
+  }
+
+  const report = page.querySelector(".detail-report");
+  const main = page.querySelector(".v123-detail-main");
+  const guide = main?.querySelector(".v141-price-guide-mobile");
+
+  if (report && main) {
+    (guide || main.lastElementChild)?.insertAdjacentElement("afterend", report);
+    report.classList.add("v1252-mobile-report");
+  }
+
+  const locationLink = page.querySelector("#konum .detail-location-box a");
+  if (locationLink) locationLink.textContent = "Bölgedeki ilanları gör →";
+});

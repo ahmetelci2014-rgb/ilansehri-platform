@@ -2546,3 +2546,354 @@ body.page-update [data-listing-form] [data-kind-field][hidden]{
     display:none!important;
   }
 }
+
+/* v1.25.2 MOBIL DETAIL FINAL POLISH */
+@media(max-width:780px){
+body.v1252-compact-detail{background:#fff!important}
+body.v1252-compact-detail .v123-detail-page{padding-bottom:6px!important}
+
+body.v1252-compact-detail .v123-gallery-shell{margin:0!important}
+body.v1252-compact-detail .v123-gallery-main{height:76vw!important;max-height:360px!important}
+
+body.v1252-compact-detail .v123-detail-heading{
+margin:0!important;padding:9px 12px 6px!important;background:#fff!important
+}
+body.v1252-compact-detail .v123-detail-heading h1{
+font-size:18px!important;margin-bottom:3px!important
+}
+
+body.v1252-compact-detail .v123-mobile-price-summary{
+margin:0!important;padding:8px 12px!important;
+border:0!important;border-top:1px solid #edf0f3!important;
+border-radius:0!important
+}
+body.v1252-compact-detail .v123-mobile-price-summary strong{font-size:22px!important}
+
+body.v1252-compact-detail .v131-mobile-facts{
+margin:0!important;padding:5px 12px 9px!important;
+border:0!important;border-bottom:7px solid #f3f4f6!important;
+border-radius:0!important
+}
+body.v1252-compact-detail .v131-mobile-facts>span{
+padding:6px 8px!important;min-width:90px!important;
+border:1px solid #edf0f3!important;background:#fafafa!important
+}
+
+body.v1252-compact-detail .v123-mobile-seller-strip{
+margin:0!important;padding:9px 12px!important;
+border:0!important;border-bottom:7px solid #f3f4f6!important;
+border-radius:0!important;box-shadow:none!important
+}
+
+body.v1252-compact-detail .v16-detail-panels{
+margin:0!important;gap:0!important
+}
+body.v1252-compact-detail .v16-detail-panel{
+padding:10px 12px!important;margin:0!important;
+border:0!important;border-bottom:1px solid #e9edf1!important;
+border-radius:0!important;box-shadow:none!important
+}
+
+body.v1252-compact-detail .v123-description-copy{
+padding-top:3px!important;line-height:1.45!important
+}
+body.v1252-compact-detail .v1252-detail-toggle{
+margin-top:5px!important;min-height:34px!important
+}
+
+body.v1252-compact-detail .v1252-fold-button{
+min-height:44px!important;padding:9px 12px!important;
+border-radius:0!important;border-bottom:1px solid #e9edf1!important
+}
+
+body.v1252-compact-detail .v141-price-guide-mobile{
+margin:0!important;border-radius:0!important;
+border-left:0!important;border-right:0!important
+}
+
+body.v1252-compact-detail .v123-summary-card{
+margin:0!important;min-height:0!important
+}
+
+body.v1252-compact-detail .v123-related-feed{
+margin:0!important;padding:10px 12px 0!important;
+border-top:7px solid #f3f4f6!important
+}
+body.v1252-compact-detail .v16-section-heading{margin-bottom:7px!important}
+body.v1252-compact-detail .v16-section-heading h2{font-size:16px!important}
+}
+
+/* v1.25.2 DETAIL SITE INTEGRATION */
+@media(max-width:780px){
+
+body.v1252-compact-detail{
+  background:#f4f6f8!important;
+}
+
+body.v1252-compact-detail .v123-detail-page{
+  width:calc(100% - 24px)!important;
+  margin:10px auto 0!important;
+  padding:0 0 8px!important;
+}
+
+body.v1252-compact-detail .v123-gallery-shell{
+  margin:0 0 8px!important;
+  border:1px solid #dbe3ec!important;
+  border-radius:16px!important;
+  overflow:hidden!important;
+  background:#fff!important;
+}
+
+body.v1252-compact-detail .v123-gallery-main{
+  border-radius:15px 15px 0 0!important;
+}
+
+body.v1252-compact-detail .v123-detail-heading,
+body.v1252-compact-detail .v123-mobile-price-summary,
+body.v1252-compact-detail .v131-mobile-facts,
+body.v1252-compact-detail .v123-mobile-seller-strip,
+body.v1252-compact-detail .v16-detail-panel,
+body.v1252-compact-detail .v141-price-guide-mobile{
+  margin-left:0!important;
+  margin-right:0!important;
+}
+
+body.v1252-compact-detail .v123-detail-heading{
+  margin-bottom:7px!important;
+  padding:11px 12px!important;
+  border:1px solid #dbe3ec!important;
+  border-radius:14px!important;
+  background:#fff!important;
+}
+
+body.v1252-compact-detail .v123-mobile-price-summary{
+  border:1px solid #dbe3ec!important;
+  border-bottom:0!important;
+  border-radius:14px 14px 0 0!important;
+}
+
+body.v1252-compact-detail .v131-mobile-facts{
+  padding:6px 8px 9px!important;
+  border:1px solid #dbe3ec!important;
+  border-top:0!important;
+  border-radius:0 0 14px 14px!important;
+}
+
+body.v1252-compact-detail .v123-mobile-seller-strip{
+  margin-top:8px!important;
+  margin-bottom:8px!important;
+  border:1px solid #dbe3ec!important;
+  border-radius:14px!important;
+}
+
+body.v1252-compact-detail .v16-detail-panels{
+  margin:0!important;
+  gap:7px!important;
+}
+
+body.v1252-compact-detail .v16-detail-panel,
+body.v1252-compact-detail .v141-price-guide-mobile{
+  border:1px solid #dbe3ec!important;
+  border-radius:14px!important;
+  background:#fff!important;
+}
+
+body.v1252-compact-detail .v123-related-feed{
+  margin-top:10px!important;
+  padding:11px 0 0!important;
+  border-top:1px solid #dbe3ec!important;
+}
+
+}
+
+/* v1.25.2 DETAIL LAST TOUCH */
+@media(max-width:780px){
+
+body.v1252-compact-detail .v123-gallery-thumbs{
+  padding:7px 8px!important;
+  gap:6px!important;
+  background:#fff!important;
+}
+
+body.v1252-compact-detail .v123-gallery-thumbs button{
+  width:58px!important;
+  height:50px!important;
+  flex-basis:58px!important;
+  border-radius:9px!important;
+  overflow:hidden!important;
+  box-shadow:none!important;
+}
+
+body.v1252-compact-detail .v123-gallery-thumbs button.active{
+  border-color:#2563eb!important;
+  box-shadow:0 0 0 1px #bfdbfe!important;
+}
+
+body.v1252-compact-detail .v16-circle-action{
+  width:35px!important;
+  height:35px!important;
+  min-height:35px!important;
+  border:1px solid #dbe3ec!important;
+  border-radius:11px!important;
+  background:#f8fafc!important;
+  box-shadow:none!important;
+}
+
+body.v1252-compact-detail .v16-circle-action.active{
+  background:#eff6ff!important;
+  border-color:#bfdbfe!important;
+  color:#2563eb!important;
+}
+
+body.v1252-compact-detail .v1252-fold-button{
+  color:#172554!important;
+  font-weight:800!important;
+}
+
+body.v1252-compact-detail .is-open>.v1252-fold-button span{
+  transform:rotate(180deg);
+}
+
+body.v1252-compact-detail .v1252-fold-button span{
+  color:#64748b!important;
+  transition:transform .18s ease;
+}
+
+body.v1252-compact-detail .v123-mobile-contact-bar{
+  left:12px!important;
+  right:12px!important;
+  bottom:calc(var(--v113-mobile-nav,68px) + 7px + env(safe-area-inset-bottom))!important;
+  padding:7px!important;
+  border:1px solid #dbe3ec!important;
+  border-radius:15px!important;
+  background:rgba(255,255,255,.98)!important;
+  box-shadow:0 8px 28px rgba(15,23,42,.16)!important;
+}
+
+body.v1252-compact-detail .v123-mobile-contact-bar>a,
+body.v1252-compact-detail .v123-mobile-contact-bar>button{
+  border-radius:10px!important;
+}
+
+body.v1252-compact-detail .v123-photo-counter{
+  border-radius:9px!important;
+}
+
+body.v1252-compact-detail .v123-related-feed .v16-feed-label{
+  font-size:9px!important;
+}
+
+body.v1252-compact-detail #aciklama .v123-panel-title>div>span{
+  display:none!important;
+}
+
+}
+
+/* v1.25.2 MOBILE DETAIL ACTION CLEANUP */
+@media(max-width:780px){
+
+body.v1252-compact-detail .v123-gallery-main{
+  position:relative!important;
+}
+
+body.v1252-compact-detail .v123-detail-heading h1{
+  margin-right:0!important;
+  padding-right:0!important;
+}
+
+/* Paylaş + favori fotoğraf üzerinde */
+body.v1252-compact-detail .v1252-gallery-actions{
+  position:absolute!important;
+  z-index:12!important;
+  top:10px!important;
+  right:10px!important;
+  display:flex!important;
+  gap:7px!important;
+  margin:0!important;
+}
+
+body.v1252-compact-detail .v1252-gallery-actions .v16-circle-action{
+  width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  border:1px solid rgba(255,255,255,.8)!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.94)!important;
+  color:#0f172a!important;
+  box-shadow:0 3px 12px rgba(15,23,42,.16)!important;
+  backdrop-filter:blur(8px);
+}
+
+/* Kopyala + karşılaştır mobil detayda görünmesin */
+body.v1252-compact-detail
+.v1252-gallery-actions>button:nth-of-type(2),
+body.v1252-compact-detail
+.v1252-gallery-actions>form:first-of-type{
+  display:none!important;
+}
+
+/* Konum tek kompakt satır */
+body.v1252-compact-detail #konum{
+  padding:0!important;
+}
+
+body.v1252-compact-detail #konum>h2{
+  display:none!important;
+}
+
+body.v1252-compact-detail #konum .detail-location-box{
+  margin:0!important;
+  padding:10px 12px!important;
+  display:grid!important;
+  grid-template-columns:34px minmax(0,1fr)!important;
+  gap:9px!important;
+  align-items:center!important;
+  border:0!important;
+  background:#fff!important;
+}
+
+body.v1252-compact-detail #konum .detail-location-box>span{
+  width:34px!important;
+  height:34px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:10px!important;
+  background:#eff6ff!important;
+  color:#2563eb!important;
+}
+
+body.v1252-compact-detail #konum .detail-location-box b{
+  font-size:12px!important;
+}
+
+body.v1252-compact-detail #konum .detail-location-box p{
+  display:none!important;
+}
+
+body.v1252-compact-detail #konum .detail-location-box a{
+  margin-top:2px!important;
+  font-size:10px!important;
+}
+
+/* Şikayet artık ana içerik değil */
+body.v1252-compact-detail .v1252-mobile-report{
+  margin:5px 0 0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+
+body.v1252-compact-detail .v1252-mobile-report>summary{
+  padding:8px 4px!important;
+  color:#64748b!important;
+  font-size:10px!important;
+  text-align:center!important;
+  list-style:none!important;
+  cursor:pointer;
+}
+
+body.v1252-compact-detail .v1252-mobile-report>summary::before{
+  content:"⚑ ";
+}
+
+}
