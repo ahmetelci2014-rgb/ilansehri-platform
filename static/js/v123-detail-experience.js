@@ -107,3 +107,64 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("[data-open-offer]")?.addEventListener("click", () => openBox("[data-v123-offer-box]"));
   document.querySelector("[data-open-message]")?.addEventListener("click", (event) => { event.preventDefault(); openBox("[data-v123-message-box]"); });
 });
+
+
+/* v1.25.2 COMPACT DETAIL */
+document.addEventListener("DOMContentLoaded", () => {
+  if (!window.matchMedia("(max-width:780px)").matches) return;
+
+  const page = document.querySelector("[data-v123-detail-page]");
+  if (!page) return;
+
+  document.body.classList.add("v1252-compact-detail");
+
+  const description = page.querySelector("#aciklama .v123-description-copy");
+
+  if (description && description.textContent.trim().length > 220) {
+    description.classList.add("v1252-clamped");
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "v1252-detail-toggle";
+    btn.textContent = "Devamını gör";
+
+    description.after(btn);
+
+    btn.addEventListener("click", () => {
+      const closed = description.classList.toggle("v1252-clamped");
+      btn.textContent = closed ? "Devamını gör" : "Daha az göster";
+    });
+  }
+
+  const fold = (selector, title) => {
+    const box = page.querySelector(selector);
+    if (!box || box.dataset.compactDone) return;
+
+    box.dataset.compactDone = "1";
+
+    const body = document.createElement("div");
+    body.className = "v1252-fold-body";
+
+    while (box.firstChild) body.appendChild(box.firstChild);
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "v1252-fold-button";
+    btn.innerHTML = `<b>${title}</b><span>⌄</span>`;
+
+    box.append(btn, body);
+
+    btn.addEventListener("click", () => {
+      box.classList.toggle("is-open");
+    });
+  };
+
+  fold("#ozellikler", "İlan özellikleri");
+  fold("#fiyat-gecmisi", "Fiyat geçmişi");
+  fold(".v141-price-guide-mobile", "Fiyat değerlendirmesi");
+
+  page.querySelectorAll("#degerlendirmeler .seller-review-grid > *")
+    .forEach((el, i) => {
+      if (i > 0) el.style.display = "none";
+    });
+});
