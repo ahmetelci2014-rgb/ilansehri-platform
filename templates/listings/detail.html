@@ -34,22 +34,6 @@
     </div>
   </header>
 
-  <div class="v113-mobile-price-summary v123-mobile-price-summary" aria-label="İlan fiyat özeti">
-    <div><strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><small>{{ listing.location_text }} · {{ listing.created_at|timesince }} önce</small></div>
-    {% if listing.is_negotiable %}<span>Pazarlık var</span>{% elif listing.management_mode == 'full' %}<span>Güvenceli</span>{% else %}<span>{{ listing.get_action_display }}</span>{% endif %}
-  </div>
-
-  <div class="v131-mobile-facts" aria-label="Öne çıkan ilan özellikleri">
-    {% if listing.kind == 'vehicle' %}
-      {% if listing.model_year %}<span><small>Model yılı</small><b>{{ listing.model_year }}</b></span>{% endif %}{% if listing.mileage %}<span><small>Kilometre</small><b>{{ listing.mileage|floatformat:"0g" }} km</b></span>{% endif %}{% if listing.transmission %}<span><small>Vites</small><b>{{ listing.get_transmission_display }}</b></span>{% endif %}
-    {% elif listing.kind == 'real_estate' %}
-      {% if listing.room_count %}<span><small>Oda</small><b>{{ listing.room_count }}</b></span>{% endif %}{% if listing.area_m2 %}<span><small>Alan</small><b>{{ listing.area_m2|floatformat:"0g" }} m²</b></span>{% endif %}{% if listing.floor_location %}<span><small>Kat</small><b>{{ listing.floor_location }}</b></span>{% endif %}
-    {% else %}
-      {% if listing.brand %}<span><small>Marka</small><b>{{ listing.brand|truncatechars:18 }}</b></span>{% endif %}{% if listing.model_name %}<span><small>Model</small><b>{{ listing.model_name|truncatechars:18 }}</b></span>{% endif %}{% if listing.condition %}<span><small>Durum</small><b>{{ listing.condition|truncatechars:18 }}</b></span>{% endif %}{% if listing.delivery_type %}<span><small>Teslimat</small><b>{{ listing.get_delivery_type_display }}</b></span>{% endif %}
-    {% endif %}
-  </div>
-
-  {% include 'listings/_price_guide.html' with guide=price_guide variant='mobile' %}
   {% if user == listing.owner and listing.status == 'published' %}<a class="v114-owner-match-card" href="{% url 'listings:matches' %}?tab={{ owner_match_tab|default:'wanted' }}"><div><span>◎</span><div><b>{% if owner_match_tab == 'wanted' %}Bu arama için {{ owner_match_count }} uygun ilan{% else %}Bu ilanı arayan {{ owner_match_count }} kullanıcı ilanı{% endif %}</b><small>Akıllı eşleşme sonuçlarını incele</small></div></div><strong>Sonuçları aç →</strong></a>{% endif %}
 
   <section class="v16-detail-grid v123-detail-grid">
@@ -67,6 +51,22 @@
           {% if gallery_count %}<span class="v123-gallery-hint">Büyütmek için dokun</span>{% endif %}
         </div>
       </div>
+
+      <div class="v113-mobile-price-summary v123-mobile-price-summary" aria-label="İlan fiyat özeti">
+        <div><strong>{% if listing.price_on_request %}Teklif alıyor{% elif listing.price %}{{ listing.price|floatformat:"0g" }} TL{% else %}Fiyat belirtilmedi{% endif %}</strong><small>{{ listing.location_text }} · {{ listing.created_at|timesince }} önce</small></div>
+        {% if listing.is_negotiable %}<span>Pazarlık var</span>{% elif listing.management_mode == 'full' %}<span>Güvenceli</span>{% else %}<span>{{ listing.get_action_display }}</span>{% endif %}
+      </div>
+
+      <div class="v131-mobile-facts" aria-label="Öne çıkan ilan özellikleri">
+        {% if listing.kind == 'vehicle' %}
+          {% if listing.model_year %}<span><small>Model yılı</small><b>{{ listing.model_year }}</b></span>{% endif %}{% if listing.mileage %}<span><small>Kilometre</small><b>{{ listing.mileage|floatformat:"0g" }} km</b></span>{% endif %}{% if listing.transmission %}<span><small>Vites</small><b>{{ listing.get_transmission_display }}</b></span>{% endif %}
+        {% elif listing.kind == 'real_estate' %}
+          {% if listing.room_count %}<span><small>Oda</small><b>{{ listing.room_count }}</b></span>{% endif %}{% if listing.area_m2 %}<span><small>Alan</small><b>{{ listing.area_m2|floatformat:"0g" }} m²</b></span>{% endif %}{% if listing.floor_location %}<span><small>Kat</small><b>{{ listing.floor_location }}</b></span>{% endif %}
+        {% else %}
+          {% if listing.brand %}<span><small>Marka</small><b>{{ listing.brand|truncatechars:18 }}</b></span>{% endif %}{% if listing.model_name %}<span><small>Model</small><b>{{ listing.model_name|truncatechars:18 }}</b></span>{% endif %}{% if listing.condition %}<span><small>Durum</small><b>{{ listing.condition|truncatechars:18 }}</b></span>{% endif %}{% if listing.delivery_type %}<span><small>Teslimat</small><b>{{ listing.get_delivery_type_display }}</b></span>{% endif %}
+        {% endif %}
+      </div>
+
 
       <div class="v123-buyer-assurance" aria-label="Alıcı için hızlı bilgiler">
         <span><i>⌖</i><b>Yaklaşık konum</b><small>{{ listing.city }}{% if listing.district %} / {{ listing.district }}{% endif %}</small></span>
@@ -86,6 +86,7 @@
         <article class="v16-detail-panel" id="konum"><h2>Yaklaşık konum</h2><div class="detail-location-box v123-location-box"><span>⌖</span><div><b>{{ listing.location_text }}</b><p>Güvenlik için açık adres gösterilmez. Buluşma noktasını platform mesajları üzerinden belirle.</p><a href="{% url 'listings:list' %}?city={{ listing.city|urlencode }}{% if listing.district %}&district={{ listing.district|urlencode }}{% endif %}">Bu bölgedeki diğer ilanları gör →</a></div></div></article>
         {% if owner_reviews %}<article class="v16-detail-panel" id="degerlendirmeler"><div class="market-panel-head"><h2>Satıcı değerlendirmeleri</h2><a href="{% url 'accounts:public_profile' listing.owner.username %}">Tüm profil →</a></div><div class="seller-review-grid">{% for review in owner_reviews %}<div><b>★ {{ review.rating }}/5</b><p>{{ review.comment|default:'Puan verildi.'|truncatechars:150 }}</p><small>{{ review.reviewer.display_name }} · {{ review.created_at|date:'d.m.Y' }}</small></div>{% endfor %}</div></article>{% endif %}
       </div>
+      {% include 'listings/_price_guide.html' with guide=price_guide variant='mobile' %}
     </div>
 
     <aside class="v16-summary-card v123-summary-card" data-v123-summary-card>

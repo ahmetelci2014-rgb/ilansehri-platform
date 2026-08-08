@@ -2231,78 +2231,41 @@ body.page-update [data-listing-form] [data-kind-field][hidden]{
   display:none!important;
 }
 
-/* v1.25.2 — mobil ilan detay profesyonel hiyerarşi */
+/* v1.25.2 — mobil ilan detay doğal DOM akışı */
 @media(max-width:780px){
 
   /*
-   * Mobil DOM'u görsel sıraya sok.
-   * Backend ve mevcut ilan özellikleri değişmez.
+   * Sayfa sırası artık HTML içinde doğru.
+   * Flex/order/display:contents ile yapıyı zorlamıyoruz.
    */
-  body.page-detail .v123-detail-page{
-    display:flex;
-    flex-direction:column;
-  }
 
-  body.page-detail .v123-detail-grid,
-  body.page-detail .v123-detail-main{
-    display:contents!important;
-  }
-
-  /* 1 — Başlık */
-  body.page-detail .v123-detail-heading{
-    order:10;
-  }
-
-  /* 2 — Fotoğraflar */
   body.page-detail .v123-gallery-shell{
-    order:20;
-    margin-top:2px;
-    margin-bottom:9px;
-    overflow:hidden;
-    border:1px solid #e2e8f0;
-    border-radius:17px;
-    background:#fff;
+    margin-bottom:8px;
   }
 
-  body.page-detail .v123-gallery-main{
-    border-radius:16px;
-  }
-
-  /* Küçük fotoğraflar ana görselin altında */
-  body.page-detail .v123-gallery-thumbs{
-    order:2;
-    margin:0;
-    padding:7px 7px 5px;
-    overflow-x:auto;
-    scrollbar-width:none;
-  }
-
-  body.page-detail .v123-gallery-thumbs::-webkit-scrollbar{
-    display:none;
-  }
-
-  /* 3 — Fiyat */
-  body.page-detail .v123-mobile-price-summary{
-    order:30;
+  body.page-detail
+  .v123-detail-main
+  >.v123-mobile-price-summary{
     margin:0 0 8px;
-    padding:12px 13px;
   }
 
-  /* 4 — En önemli 2-4 özellik */
-  body.page-detail .v131-mobile-facts{
-    order:40;
-
-    display:flex!important;
-    flex-wrap:nowrap!important;
-    gap:7px;
-
-    width:100%;
+  body.page-detail
+  .v123-detail-main
+  >.v131-mobile-facts{
     margin:0 0 9px;
-    padding:0 0 3px;
+  }
 
+  /*
+   * İlk ekranda yalnız karar vermeye yarayan
+   * birkaç temel özellik yatay olarak gösterilir.
+   */
+  body.page-detail .v131-mobile-facts{
+    display:flex;
+    flex-wrap:nowrap;
+    gap:7px;
     overflow-x:auto;
+    padding-bottom:3px;
     scrollbar-width:none;
-    scroll-snap-type:x proximity;
   }
 
   body.page-detail .v131-mobile-facts::-webkit-scrollbar{
@@ -2311,160 +2274,32 @@ body.page-update [data-listing-form] [data-kind-field][hidden]{
 
   body.page-detail .v131-mobile-facts>span{
     flex:0 0 auto;
-    min-width:118px;
-    max-width:165px;
-    scroll-snap-align:start;
-  }
-
-  /* Eski tekrar kartları mobilde zaten gereksiz */
-  body.page-detail .v123-buyer-assurance,
-  body.page-detail .v16-detail-nav{
-    display:none!important;
-  }
-
-  /* 5 — Satıcı */
-  body.page-detail .v123-mobile-seller-strip{
-    order:50;
-    margin:0 0 10px;
-  }
-
-  /* İlan sahibinin eşleşme bilgisi */
-  body.page-detail .v114-owner-match-card{
-    order:55;
-    margin:0 0 10px;
-  }
-
-  /* 6 — Açıklama ve gerçek ilan ayrıntıları */
-  body.page-detail .v16-detail-panels{
-    order:60;
-    gap:9px;
-  }
-
-  body.page-detail .v16-detail-panel{
-    border:1px solid #e2e8f0;
-    box-shadow:none;
+    min-width:112px;
   }
 
   /*
-   * Normal ziyaretçide kalite puanı zaten gizleniyordu.
-   * İlan sahibi/personelde yönetim bilgisi olarak kalır.
+   * Bunlar mobilde tekrar eden bilgiler.
+   * İçerikleri silinmez, masaüstünde korunur.
    */
+  body.page-detail .v123-buyer-assurance,
+  body.page-detail .v16-detail-nav,
   body.page-detail .v131-quality-public{
     display:none!important;
   }
 
-  /* Özellik listesi daha okunabilir */
-  body.page-detail .market-spec-grid{
-    grid-template-columns:1fr 1fr;
-    gap:7px;
-  }
-
-  body.page-detail .market-spec-grid>div{
-    min-width:0;
-    padding:10px;
-    border-radius:11px;
-  }
-
-  body.page-detail .market-spec-grid dt{
-    font-size:8px;
-  }
-
-  body.page-detail .market-spec-grid dd{
-    margin-top:2px;
-    font-size:11px;
-    overflow-wrap:anywhere;
-  }
-
-  /* 7 — Fiyat rehberi ilk ekranı kalabalıklaştırmasın */
-  body.page-detail .v141-price-guide-mobile{
-    order:70;
+  /*
+   * Fiyat rehberi artık açıklama/özelliklerin
+   * arkasında doğal akışta bulunur.
+   */
+  body.page-detail
+  .v123-detail-main
+  >.v141-price-guide-mobile{
     margin:10px 0 0;
-  }
-
-  body.page-detail .v141-price-guide-mobile .v141-price-guide-head{
-    gap:8px;
-  }
-
-  body.page-detail .v141-price-guide-mobile>p{
-    display:none;
-  }
-
-  body.page-detail .v141-price-guide-mobile details{
-    margin-top:6px;
   }
 
   /*
-   * 8 — Masaüstü sağ kolon mobilde yalnız işlemler için kullanılır.
-   * Fiyat, güven ve güvenlik tekrarları gizlenir.
+   * Alt sabit iletişim barı son içeriğin üstünü kapatmasın.
    */
-  body.page-detail .v123-summary-card{
-    order:80;
-
-    position:static!important;
-    top:auto!important;
-
-    width:100%;
-    margin:10px 0 0;
-    padding:0;
-
-    border:0;
-    background:transparent;
-    box-shadow:none;
-  }
-
-  body.page-detail .v123-summary-card>.v123-summary-price,
-  body.page-detail .v123-summary-card>.v141-price-guide-aside,
-  body.page-detail .v123-summary-card>.v123-trust-card,
-  body.page-detail .v123-summary-card>.v123-safe-buying{
-    display:none!important;
-  }
-
-  /* Satıcı takip ikincil işlem olarak kompakt */
-  body.page-detail .v123-summary-card>.detail-follow-form{
-    margin:0 0 8px;
-  }
-
-  body.page-detail
-  .v123-summary-card
-  >.detail-follow-form
-  button{
-    min-height:42px;
-    border-radius:12px;
-    font-size:10px;
-  }
-
-  /* Teklif / mesaj formları sade işlem çekmeceleri */
-  body.page-detail .v123-contact-stack{
-    display:grid;
-    gap:7px;
-    margin:0;
-  }
-
-  body.page-detail .v123-contact-stack .market-action-box{
-    margin:0;
-    border:1px solid #dfe7ef;
-    border-radius:13px;
-    background:#fff;
-    box-shadow:none;
-  }
-
-  body.page-detail
-  .v123-contact-stack
-  .market-action-box>summary{
-    min-height:45px;
-    display:flex;
-    align-items:center;
-    padding:10px 12px;
-    font-size:11px;
-  }
-
-  body.page-detail
-  .v123-contact-stack
-  .market-action-box[open]{
-    padding-bottom:8px;
-  }
-
-  /* Sabit mobil iletişim barının arkasında içerik kalmasın */
   body.page-detail .v123-detail-page{
     padding-bottom:calc(
       92px +
@@ -2475,12 +2310,7 @@ body.page-update [data-listing-form] [data-kind-field][hidden]{
 }
 
 @media(max-width:390px){
-
-  body.page-detail .market-spec-grid{
-    grid-template-columns:1fr;
-  }
-
   body.page-detail .v131-mobile-facts>span{
-    min-width:108px;
+    min-width:104px;
   }
 }
