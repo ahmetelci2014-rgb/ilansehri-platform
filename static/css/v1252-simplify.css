@@ -114,3 +114,192 @@
     display:none!important;
   }
 }
+
+/* v1.25.2 mobil ana sayfa sadeleştirme */
+
+@media(max-width:780px){
+
+  /* Ana sayfanın ilk ekranı: arama + kısa yönlendirme */
+  body.page-home .v16-home-hero{
+    background:#fff;
+    border-bottom:1px solid #e4eaf0;
+  }
+
+  body.page-home .v16-home-hero-grid{
+    display:block;
+    padding:14px 0 12px;
+    min-height:0;
+  }
+
+  body.page-home .v16-home-copy{
+    max-width:none;
+  }
+
+  body.page-home .v16-eyebrow{
+    margin-bottom:0;
+    padding:5px 8px;
+    font-size:9px;
+    box-shadow:none;
+  }
+
+  body.page-home .v16-home-copy h1{
+    margin:9px 0 4px;
+    font-size:25px;
+    line-height:1.08;
+    letter-spacing:-1px;
+  }
+
+  /* Mobil üst aramada zaten anlatıldığı için tekrar metni azalt */
+  body.page-home .v16-home-copy>p{
+    display:none!important;
+  }
+
+  /* Masaüstü ana vitrin mobilde gerekli değil */
+  body.page-home .v16-spotlight{
+    display:none!important;
+  }
+
+  /* Aynı faydaları tekrar eden satırı kaldır */
+  body.page-home .v16-hero-benefits{
+    display:none!important;
+  }
+
+  /* Popüler aramalar: kısa, tek satır */
+  body.page-home .v16-hero-chips{
+    margin-top:9px;
+    padding-bottom:0;
+  }
+
+  body.page-home .v16-hero-chips a{
+    min-height:34px;
+    display:inline-flex;
+    align-items:center;
+    padding:5px 10px;
+  }
+
+  /* Mobilde ilk üç popüler arama yeterli */
+  body.page-home .v16-hero-chips a:nth-of-type(n+4){
+    display:none;
+  }
+
+
+  /* =======================================================
+     HIZLI KEŞİF: 5 YERİNE 3 ANA İŞLEM
+     Yakınımda + Yeni + Fiyatı düşen
+     ======================================================= */
+
+  body.page-home .v18-market-shortcuts{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    margin:8px auto 0;
+    padding:2px 0 7px;
+    scrollbar-width:none;
+    scroll-snap-type:x proximity;
+  }
+
+  body.page-home .v18-market-shortcuts::-webkit-scrollbar{
+    display:none;
+  }
+
+  body.page-home .v18-market-shortcuts>button,
+  body.page-home .v18-market-shortcuts>a{
+    flex:0 0 min(76vw,260px);
+    min-width:0;
+    min-height:62px;
+    scroll-snap-align:start;
+  }
+
+  /* Doğrulanmış ve takas ana ekrandan kaldırılır;
+     işlevleri kategori/filtrelerde aynen devam eder. */
+  body.page-home .v18-market-shortcuts>a:nth-of-type(n+3){
+    display:none!important;
+  }
+
+
+  /* =======================================================
+     KATEGORİLER: MOBİLİN ANA KEŞİF NOKTASI
+     ======================================================= */
+
+  body.page-home .v16-category-zone{
+    margin-top:0;
+  }
+
+  body.page-home .v16-section-shell{
+    padding-top:15px;
+    padding-bottom:12px;
+  }
+
+  body.page-home .v122-category-hub{
+    gap:8px;
+  }
+
+  body.page-home .v122-category-card{
+    min-width:128px;
+  }
+
+  /* Mobil alt navigasyonda zaten İlan Ver var.
+     İkinci büyük CTA tekrarını kaldır. */
+  body.page-home .v16-home-stats{
+    display:none!important;
+  }
+
+
+  /* =======================================================
+     İLAN AKIŞI
+     ======================================================= */
+
+  body.page-home .v16-feed{
+    padding-top:18px;
+    padding-bottom:18px;
+  }
+
+  body.page-home .v16-feed .v16-section-heading{
+    margin-bottom:10px;
+  }
+
+  body.page-home .v16-feed .v16-section-heading h2{
+    font-size:18px;
+  }
+
+  /* Kategori hub zaten var.
+     Mobil ana sayfada tekrar uzun kategori vitrinleri gösterme. */
+  body.page-home .v1252-secondary-home-feed{
+    display:none!important;
+  }
+
+  /* Alt menüde ilan verme bulunduğu için tekrar banner kaldır */
+  body.page-home .v16-market-banner{
+    display:none!important;
+  }
+
+  /* Güven uyarısı kalsın ancak daha kompakt olsun */
+  body.page-home .market-trust-strip{
+    margin-top:8px;
+    margin-bottom:14px;
+    padding:13px;
+  }
+
+  body.page-home .market-trust-strip p{
+    display:none;
+  }
+}
+
+
+/* Çok küçük telefonlarda daha da kompakt */
+@media(max-width:390px){
+
+  body.page-home .v16-home-copy h1{
+    font-size:23px;
+  }
+
+  body.page-home .v16-hero-chips a{
+    font-size:10px;
+  }
+
+  body.page-home .v18-market-shortcuts>button,
+  body.page-home .v18-market-shortcuts>a{
+    flex-basis:82vw;
+  }
+}
+
