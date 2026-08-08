@@ -5131,3 +5131,99 @@ body.page-list .v121-location-group select{
     box-shadow:0 4px 12px rgba(37,99,235,.13);
   }
 }
+
+/* =========================================================
+   v1.25.2 — Mobil alt menü aktif sayfa
+   ========================================================= */
+
+@media(max-width:780px){
+
+  .market-mobile-nav>a{
+    position:relative;
+    transition:
+      color .15s ease,
+      background .15s ease,
+      transform .12s ease;
+  }
+
+  .market-mobile-nav>a:active{
+    transform:scale(.94);
+  }
+
+  body.app-core.page-home
+  .market-mobile-nav>a:nth-child(1),
+
+  body.app-listings.page-list
+  .market-mobile-nav>a:nth-child(2),
+
+  body.app-listings.page-kind_landing
+  .market-mobile-nav>a:nth-child(2),
+
+  body.app-listings.page-detail
+  .market-mobile-nav>a:nth-child(2),
+
+  body.app-listings.page-create
+  .market-mobile-nav>a:nth-child(3),
+
+  body.app-listings.page-update
+  .market-mobile-nav>a:nth-child(3),
+
+  body.app-listings.page-conversation_list
+  .market-mobile-nav>a:nth-child(4),
+
+  body.app-accounts.page-dashboard
+  .market-mobile-nav>a:nth-child(5),
+
+  body.app-accounts.page-login
+  .market-mobile-nav>a:nth-child(5){
+    color:#2563eb;
+  }
+
+  body.app-core.page-home
+  .market-mobile-nav>a:nth-child(1)::after,
+
+  body.app-listings.page-list
+  .market-mobile-nav>a:nth-child(2)::after,
+
+  body.app-listings.page-kind_landing
+  .market-mobile-nav>a:nth-child(2)::after,
+
+  body.app-listings.page-detail
+  .market-mobile-nav>a:nth-child(2)::after,
+
+  body.app-listings.page-create
+  .market-mobile-nav>a:nth-child(3)::after,
+
+  body.app-listings.page-update
+  .market-mobile-nav>a:nth-child(3)::after,
+
+  body.app-listings.page-conversation_list
+  .market-mobile-nav>a:nth-child(4)::after,
+
+  body.app-accounts.page-dashboard
+  .market-mobile-nav>a:nth-child(5)::after,
+
+  body.app-accounts.page-login
+  .market-mobile-nav>a:nth-child(5)::after{
+    content:"";
+    position:absolute;
+    top:3px;
+    left:50%;
+    width:22px;
+    height:3px;
+    border-radius:999px;
+    background:#2563eb;
+    transform:translateX(-50%);
+  }
+
+  .market-mobile-nav>a.mobile-post{
+    color:inherit;
+  }
+
+  body.app-listings.page-create
+  .market-mobile-nav>a.mobile-post,
+  body.app-listings.page-update
+  .market-mobile-nav>a.mobile-post{
+    color:#fff;
+  }
+}
