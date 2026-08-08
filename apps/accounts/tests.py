@@ -208,8 +208,9 @@ class TrustAndUserReportTests(TestCase):
             reverse("accounts:public_profile", kwargs={"username": self.seller.username})
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "GÜVENİLİR SATICI PROFİLİ")
+        self.assertContains(response, "Satıcının ilanları")
         self.assertContains(response, "Telefon doğrulandı")
+        self.assertContains(response, "güven")
 
     def test_user_can_submit_one_open_account_report(self):
         self.client.force_login(self.reporter)
